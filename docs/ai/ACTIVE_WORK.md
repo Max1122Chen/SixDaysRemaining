@@ -4,7 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `SHLT-F01` / `feat/shelter` | Planned | Max | 讨论庇护所 + NPC 设计范围与验收 |
+| P0 | `SHLT-F01` / `feat/shelter` | Review | Max | 已提交；待 merge `main` 后启动 COMB-F01 |
 | — | `CORE-F02` | Done | Max | 已合并 `main` |
 | — | `COMB-F01` | Blocked | Max | 依赖 `SHLT-F01` 合并 |
 | — | `EVT-F01` | Deferred | Max | 事件系统设计明朗后再启动 |

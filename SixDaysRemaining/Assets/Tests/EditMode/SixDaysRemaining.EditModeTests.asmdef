@@ -2,7 +2,8 @@
   "name": "SixDaysRemaining.EditModeTests",
   "rootNamespace": "SixDaysRemaining.Tests.EditMode",
   "references": [
-    "SixDaysRemaining.Gameplay"
+    "SixDaysRemaining.Gameplay",
+    "SixDaysRemaining.Shelter"
   ],
   "includePlatforms": [
     "Editor"

@@ -80,3 +80,18 @@
 - 下一步行动：
   - merge `feat/gameplay-framework` → `main`；启动 `SHLT-F01` 设计讨论。
 
+## 2026-07-29（Shelter 实现）
+
+- 范围：`SHLT-F01` / `feat/shelter`
+- 已完成：
+  - 设计师反馈摘要：`docs/designs/designer-feedback-2026-07-29.md`
+  - `SHLT-F01` 设计文档与 Shelter 代码骨架。
+  - `Survivor` / `SurvivorStatus`、`ShelterManager`（入库、分配、日结、状态机）。
+  - `GameInstance` 集成与 Debug 方法。
+  - Edit Mode 测试 `ShelterManagerTests`。
+- 验证：
+  - Unity Test Runner EditMode：`ShelterManagerTests` + `GameplayFlowTests` 全绿。
+  - 修复 Shelter 相关 `.meta` GUID 无效导致程序集被忽略的问题。
+- 下一步行动：
+  - merge `feat/shelter` → `main`；启动 `COMB-F01` 战斗设计。
+

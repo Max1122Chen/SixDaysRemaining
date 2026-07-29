@@ -1,9 +1,8 @@
 {
-  "name": "SixDaysRemaining.Bootstrap",
-  "rootNamespace": "SixDaysRemaining.Bootstrap",
+  "name": "SixDaysRemaining.Shelter",
+  "rootNamespace": "SixDaysRemaining.Shelter",
   "references": [
-    "SixDaysRemaining.Gameplay",
-    "SixDaysRemaining.Shelter"
+    "SixDaysRemaining.Gameplay"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
