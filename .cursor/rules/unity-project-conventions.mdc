@@ -1,0 +1,14 @@
+﻿---
+description: Unity 项目约定（目录、场景、原型工作流）
+alwaysApply: true
+---
+
+# Unity 原型约定
+
+- 新的游戏脚本放到 `SixDaysRemaining/Assets/Scripts/`，并按域拆分子目录，例如 `Gameplay`、`Player`、`UI`、`World`。
+- 避免把“只服务某个场景的临时代码”放在项目根目录；放到离它最近的域目录里。
+- 早期原型阶段尽量只用一个启动/引导场景（bootstrap scene）；当你新增场景时要记录它的用途。
+- 如果某个预制体或场景对象依赖必要引用：让失败显性（通过校验或启动日志）。
+- 当你要新增系统并开始扩展实现前：先在 `docs/ai/designs/` 里记录它服务 first playable 的目的。
+- 如果你发现了“需要后续删除/替换的临时 workaround”：把它写进 `docs/ai/TECH_DEBT.md`。
+

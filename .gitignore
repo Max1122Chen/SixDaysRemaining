@@ -1,0 +1,35 @@
+﻿# Unity generated folders
+SixDaysRemaining/[Ll]ibrary/
+SixDaysRemaining/[Tt]emp/
+SixDaysRemaining/[Oo]bj/
+SixDaysRemaining/[Bb]uild/
+SixDaysRemaining/[Bb]uilds/
+SixDaysRemaining/[Ll]ogs/
+SixDaysRemaining/[Uu]ser[Ss]ettings/
+SixDaysRemaining/[Mm]emoryCaptures/
+SixDaysRemaining/[Rr]ecordings/
+
+# Unity generated files
+SixDaysRemaining/*.csproj
+SixDaysRemaining/*.unityproj
+SixDaysRemaining/*.sln
+SixDaysRemaining/*.suo
+SixDaysRemaining/*.tmp
+SixDaysRemaining/*.user
+SixDaysRemaining/*.userprefs
+SixDaysRemaining/*.pidb
+SixDaysRemaining/*.booproj
+SixDaysRemaining/*.svd
+SixDaysRemaining/*.pdb
+SixDaysRemaining/*.mdb
+SixDaysRemaining/*.opendb
+SixDaysRemaining/*.VC.db
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.DotSettings.user
+
+# OS / editor noise
+.DS_Store
+Thumbs.db

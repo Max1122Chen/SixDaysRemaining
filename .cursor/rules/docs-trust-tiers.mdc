@@ -1,0 +1,25 @@
+﻿---
+description: 规定哪些文档可以驱动计划，哪些只能作为参考
+alwaysApply: true
+---
+
+# 文档可信分层（Trust Tiers）
+
+## 计划来源（高可信）
+
+- `docs/ai/ACTIVE_WORK.md`
+- `docs/ai/FEATURE_REGISTRY.md`（In Progress / Planned）
+- `docs/ai/TECH_DEBT.md`（Open）
+- 最近的 `docs/ai/PROGRESS_LOG.md`
+- 代码、tests/verify 命令输出
+- 当前 Feature 明确关联的设计源文档
+
+## 参考来源（不自动生成 backlog）
+
+- 旧路线图文件
+- 标记为 Snapshot / Archived / Reference 的文档
+- 历史设计文档里陈旧且未经核对的 checklist 段落
+
+## 冲突处理
+
+如果文档与运行时/验证输出冲突，以代码与 tests/verify 的结果为准。

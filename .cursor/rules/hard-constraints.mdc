@@ -1,0 +1,29 @@
+﻿---
+description: 协作与提交安全硬约束
+alwaysApply: true
+---
+
+# 硬约束
+
+## 1) 提交准备闸门（prepare commit）
+
+- “prepare commit”只表示：草拟提交信息 + 就绪检查；不代表立刻执行提交。
+- 未经你明确指令，不要执行 `git commit`、也不要 push。
+- 提交草案要基于真实 diff，不要凭空推断意图。
+
+## 2) 计划来源纪律
+
+- 优先使用可信计划源：`docs/ai/ACTIVE_WORK.md`、`docs/ai/FEATURE_REGISTRY.md`、`docs/ai/TECH_DEBT.md`、最近的 `docs/ai/PROGRESS_LOG.md`、代码与 tests/verify。
+- 不要从旧快照/归档/参考类文档里推导 backlog。
+
+## 3) 重构边界纪律
+
+- 重构要指向一个清晰的结束状态。
+- 避免留下“静默的双路径临时代码”；要么删掉，要么登记为 debt。
+
+## 4) 上下文恢复
+
+当上下文可能过期时，从这些文档重新 bootstrap：
+- `docs/ai/BOOTSTRAP_DIGEST.md`
+- `docs/ai/PROJECT_CONTEXT.md`
+- `docs/ai/ACTIVE_WORK.md`

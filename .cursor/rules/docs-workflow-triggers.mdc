@@ -1,0 +1,23 @@
+﻿---
+description: 触发工作流产物的轻量规则
+alwaysApply: true
+---
+
+# 文档工作流触发器
+
+当用户意图触发下面任意一种情况时，在进行“大改动”前先建议使用对应工作流产物：
+
+- 计划 / 路线图 / 优先级调整：
+  - 先检查 `ACTIVE_WORK.md`、`FEATURE_REGISTRY.md` 和可信计划源
+- 新 Feature / 重构：
+  - 先注册 Feature ID，再创建/更新 Design Spec，最后写 Implementation Plan
+- 范围不清且风险较大：
+  - 做一个简短 pre-flight（依赖、风险、debt、验证路径）
+- Bug / 回归：
+  - 建立/更新 bug 记录（包含复现和回归检查）
+- 交接 / 会话切换：
+  - 追加 progress entry，并把未完成 slice 标为 Blocked/Deferred
+- 完成一个有意义的批次：
+  - 做完 DoD 检查后，再提出“prepare commit”
+- 你请求准备提交：
+  - 草拟提交信息并等待你明确“执行提交”的指令

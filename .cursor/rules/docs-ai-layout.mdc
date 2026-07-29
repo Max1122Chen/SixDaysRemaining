@@ -1,0 +1,31 @@
+﻿---
+description: 让协作文档结构清晰且易于查找
+alwaysApply: true
+---
+
+# 文档布局（Docs AI Layout）
+
+## 核心文件分工
+
+- `docs/ai/PROJECT_CONTEXT.md` - 项目稳定快照
+- `docs/ai/BOOTSTRAP_DIGEST.md` - 会话恢复（短）
+- `docs/ai/ACTIVE_WORK.md` - 当前工作队列
+- `docs/ai/FEATURE_REGISTRY.md` - Feature 注册表
+- `docs/ai/PROGRESS_LOG.md` - 追加式事实时间线
+- `docs/ai/TECH_DEBT.md` - 明确登记的技术债
+- `docs/ai/designs/` - 为实现提炼后的设计说明
+- `docs/ai/plans/` - 基于 slice 的实现计划
+- `docs/ai/templates/` - 可复用的文档模板
+
+## 命名建议
+
+- Feature ID：`<DOMAIN>-F<nn>`
+- Slice ID：`<FeatureID>-S<nn>`
+- Bug ID：`BUG-<DOMAIN>-<nnn>`
+- ADR ID：`ADR-<yyyyMMdd>-<nn>`
+
+## 放置规则
+
+- 新设计文档默认放 `docs/ai/designs/`（除非有更明确的域目录选择）。
+- 新实现计划放 `docs/ai/plans/`。
+- 模板示例只放在 `docs/ai/templates/`。
