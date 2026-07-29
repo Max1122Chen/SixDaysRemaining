@@ -10,6 +10,7 @@
   - `Packages/`：Unity 包依赖
   - `ProjectSettings/`：Unity 项目设置
 - `docs/ai/`：项目协作与工程决策文档（设计-实现工作流）
+  - `ROADMAP.md`：技术设计大纲与开发路线图（实现主计划）
   - `PROJECT_CONTEXT.md`：项目目标、阶段、协作约定、验证基线
   - `ACTIVE_WORK.md`：当前任务队列
   - `FEATURE_REGISTRY.md`：功能注册表（先注册再实现）
@@ -18,6 +19,8 @@
   - `designs/`：设计说明（Design Spec）
   - `plans/`：实现计划（Implementation Plan）
   - `templates/`：文档模板
+- `docs/designs/`：产品设计文档（面向策划/设计）
+  - `六日英雄—技术演示文档.pdf`：当前玩法设计源
 - `.cursor/rules/`：面向 Cursor Agent 的项目规则（代码风格/文档流程/协作边界）
 - `.gitignore`：Unity 与 IDE 生成文件忽略规则
 
@@ -27,7 +30,7 @@
   - 先看 `docs/ai/PROJECT_CONTEXT.md` 和 `docs/ai/designs/`
   - 关注 `ACTIVE_WORK.md` 了解当前实现节奏与下一步
 - 技术协作者（程序/TA/技术策划）：
-  - 开发前先看 `FEATURE_REGISTRY.md` 与对应 `designs/`、`plans/`
+  - 开发前先看 `ROADMAP.md`、`FEATURE_REGISTRY.md` 与对应 `plans/`
   - 过程记录统一写入 `PROGRESS_LOG.md`
   - 临时方案或待清理项登记到 `TECH_DEBT.md`
 
@@ -55,4 +58,4 @@
 - Unity 忽略规则配置
 - 协作文档体系与 Cursor 规则建立
 
-接下来将进入：设计文档摄入与首个可玩核心循环（first playable loop）规划。
+当前状态：`ROADMAP.md` 技术架构规划待审阅 commit；通过后按 feat 纪律推进 `CORE-F02` → `feat/gameplay-framework`。

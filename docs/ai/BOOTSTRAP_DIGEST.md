@@ -6,11 +6,12 @@
 ## 新会话的读取顺序
 
 1. `PROJECT_CONTEXT.md`
-2. `PROGRESS_LOG.md`（只看最近的条目）
-3. `ACTIVE_WORK.md`
-4. `FEATURE_REGISTRY.md`（In Progress / Planned）
-5. `TECH_DEBT.md`（Open）
-6. 任务对应的设计文档（`designs/` 下）或用户明确提供的产品设计源
+2. `ROADMAP.md`（技术实现主计划）
+3. `PROGRESS_LOG.md`（只看最近的条目）
+4. `ACTIVE_WORK.md`
+5. `FEATURE_REGISTRY.md`（In Progress / Planned）
+6. `TECH_DEBT.md`（Open）
+7. 产品设计源：`docs/designs/六日英雄—技术演示文档.pdf`
 
 ## 不可协商的协作规则
 
@@ -29,8 +30,10 @@
 
 ## 域代码（Domain codes）
 
-- `CORE` - 核心循环、游戏状态、进度
-- `PLYR` - 玩家控制与交互
+- `CORE` - 核心循环、游戏状态、阶段编排
+- `SHLT` - 庇护所、NPC、饱食度
+- `COMB` - 卡牌战斗
+- `EVT` - 突发事件（延后）
 - `UI` - 用户界面与反馈
 - `LVL` - 场景布局、关卡脚本、环境
 - `TECH` - 启动、工具、流水线、基础设施

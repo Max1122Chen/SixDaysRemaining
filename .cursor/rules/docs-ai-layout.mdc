@@ -7,6 +7,7 @@ alwaysApply: true
 
 ## 核心文件分工
 
+- `docs/ai/ROADMAP.md` - 技术设计大纲与开发路线图（实现主计划）
 - `docs/ai/PROJECT_CONTEXT.md` - 项目稳定快照
 - `docs/ai/BOOTSTRAP_DIGEST.md` - 会话恢复（短）
 - `docs/ai/ACTIVE_WORK.md` - 当前工作队列

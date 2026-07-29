@@ -3,7 +3,7 @@
 ## 元信息
 - **ID:** `TECH-F01`
 - **类型:** `Feature`
-- **状态:** `In Progress`
+- **状态:** `Done`
 - **负责人:** `Max`
 - **最后更新：** `2026-07-29`
 - **相关：** `[Feature 注册表](../FEATURE_REGISTRY.md)`, `[实现计划](../plans/TECH-F01-agent-workflow-bootstrap-plan.md)`

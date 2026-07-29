@@ -1,16 +1,15 @@
 ﻿# 当前工作（Active Work）
 
-人工维护的短 backlog（推荐：1-5 条处于活跃状态的项）。
-
-## 规则
-
-- 只放“可操作且当前仍然有效”的工作。
-- 每一条都必须关联到已注册的 Feature ID。
-- 状态要保持新鲜；陈旧条目应当归档或移走。
-
 ## 当前队列
 
-| 优先级 | Feature ID | 切片 ID | 状态 | 负责人 | 下一步行动 |
-|--------|------------|----------|------|-------|-------------|
-| P0 | `TECH-F01` | `TECH-F01-S01` | In Progress | Max | 完成工作流 bootstrap，并确认规则集可用 |
-| P0 | `CORE-F01` | `CORE-F01-S01` | Planned | Max | 摄入设计文档，并把它转成可落地的首个可玩方案 |
+| 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
+|--------|------|------|--------|-------------|
+| P0 | `ROADMAP.md` + `CORE-F02` design | Review | Max | 审阅后执行 commit；再批准开 `feat/gameplay-framework` |
+| — | `SHLT-F01` / `COMB-F01` | Blocked | Max | 依序在前序 feat 合并后再写 design |
+| — | `EVT-F01` | Deferred | Max | 事件系统设计明朗后再启动 |
+
+## Feat 开发纪律（摘要）
+
+1. 登记 Feature ID → 写 design → **审阅**
+2. 拉 `feat/*` → 实现 → Edit Mode 测试绿 → **prepare commit 审阅** → commit
+3. feat 验收通过 → merge `main` → 更新 `PROGRESS_LOG`

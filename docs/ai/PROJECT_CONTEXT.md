@@ -1,6 +1,6 @@
 ﻿# 项目背景（Project Context）
 
-最后更新：2026-07-29
+最后更新：2026-07-29（GameState；feat 顺序与工作流纪律）
 
 ## 1) 项目目标
 
@@ -14,24 +14,25 @@
 ## 2) 架构方向
 
 总体架构概述：
-- Unity 2022.3 的 2D 项目，从一个最小场景开始，当前不引入自定义玩法脚本。
-- 原型阶段优先使用简单的 MonoBehaviour 驱动玩法。
-- 系统尽量保持小而明确：按职责拆分，便于迭代中替换或调整。
+- Unity 2022.3 的 2D 项目；卡牌生存 + 文字事件驱动（详见 `docs/designs/六日英雄—技术演示文档.pdf`）。
+- 技术拆分见 `docs/ai/ROADMAP.md`：`GameInstance` -> `GameplaySubsystem` -> `ShelterManager` / `CombatManager` / `EventDirector`。
+- 局内全局状态由 `GameState` 统一管理（天数、食物存量、腐蚀度、标记位、随机种子、当前阶段）。
+- Feat 顺序见 `ROADMAP.md`：`gameplay-framework` → `shelter` → `combat`；事件系统延后。
 
-核心模块（Core modules）：
-- `Gameplay` - 规则、状态流转、胜负条件、进度循环
-- `Player` - 输入、移动、交互、反馈
-- `World` - 可交互物、危险区域、触发器、场景对象
-- `UI` - HUD、提示、菜单、游戏状态反馈
-- `Bootstrap` - 场景启动的装配/连线与全局引用
+脚本域划分（`SixDaysRemaining/Assets/Scripts/`）：
+- `Bootstrap` - `GameInstance`、场景与模式切换
+- `Gameplay` - `GameplaySubsystem`、`GameState`、日循环阶段机
+- `Shelter` - 庇护所 NPC、饱食度日结（道具延后）
+- `Combat` - `CombatManager`、`CombatSession`、战斗组件与牌组运行时
+- `UI` - 各阶段界面（庇护所、战斗、事件、结局）
 
 ## 3) 当前阶段
 
 当前阶段：
-- 前置准备：初始化工作流、约定与设计输入（design intake）。
+- 技术架构规划（`ROADMAP.md`）待审阅；待 commit 批准后进入 `CORE-F02` 设计阶段。
 
 下一里程碑：
-- 把设计文档转成一个注册过的 Feature，并为首个可玩循环写基于 slice 的实现计划（Implementation Plan）。
+- 批准「技术架构规划」commit → 编写 `CORE-F02` design/plan → 审阅 → `feat/gameplay-framework`。
 
 ## 4) 协作约定
 
