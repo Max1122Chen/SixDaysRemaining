@@ -7,8 +7,8 @@
 |------------|------|----|------|----------|----------|------|--------|------|
 | `TECH-F01` | 为 Unity 原型配置 agent 工作流 | TECH | Done | `designs/TECH-F01-agent-workflow-bootstrap.md` | `plans/TECH-F01-agent-workflow-bootstrap-plan.md` | — | Max | 已完成 |
 | — | 技术设计大纲与开发路线图 | — | Review | `ROADMAP.md` | — | — | Max | 与 CORE-F02 设计同批 commit |
-| `CORE-F02` | Gameplay Framework（阶段框架） | CORE | Review | `designs/CORE-F02-gameplay-framework.md` | （合并在 design 内） | `feat/gameplay-framework` | Max | Edit Mode 测试驱动阶段机 |
-| `SHLT-F01` | 庇护所 + NPC（无道具） | SHLT | Planned | 待编写 | — | `feat/shelter` | Max | 依赖 CORE-F02 合并 |
+| `CORE-F02` | Gameplay Framework（阶段框架） | CORE | Done | `designs/CORE-F02-gameplay-framework.md` | （合并在 design 内） | `feat/gameplay-framework` | Max | 已合并 `main` |
+| `SHLT-F01` | 庇护所 + NPC（无道具） | SHLT | Planned | 待编写 | — | `feat/shelter` | Max | 设计讨论中；依赖 CORE-F02 已满足 |
 | `COMB-F01` | 卡牌战斗基础 | COMB | Planned | 待编写 | — | `feat/combat` | Max | 依赖 SHLT-F01 合并 |
 | `EVT-F01` | 突发事件系统 | EVT | Deferred | — | — | `feat/events` | Max | 设计明朗后再写 design |
 

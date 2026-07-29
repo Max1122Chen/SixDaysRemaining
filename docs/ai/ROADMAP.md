@@ -35,10 +35,10 @@ GameInstance（应用层服务）
   ├─ 存档读写入口（后续 feat）
   └─ 模式切换（主菜单 / 对局中）
 
-GameplaySubsystem（局内编排 / 阶段导演）
+GameplaySubsystem（局内编排）
   ├─ 持有 GameState（当前局全局状态）
-  ├─ 日循环阶段机：Shelter -> Combat -> Event -> NextDay
-  ├─ 阶段切换与准入；调用各域 Manager 的入口/出口
+  ├─ 日循环阶段机：出征准备 -> 战斗 -> 凯旋 ->（下一天或结局）
+  ├─ 本层只维护阶段枚举切换；业务由 Shelter/Combat 等后续 feat 填充
   └─ 结局结算触发（EndingEvaluator，可与事件 feat 一并落地）
 
 ShelterManager（庇护所域）
@@ -74,7 +74,7 @@ Content/Data（配置层）
 
 ### 2.3 暂缓项
 
-- **EventDirector / 突发事件阶段具体逻辑**：设计未明朗，不在前三条 feat 内实现；阶段机上可保留 `EventPhase` 占位并自动跳过。
+- **EventDirector / 突发事件**：设计未明朗，不在前三条 feat 内实现；不塞进首版日循环状态机，等 `feat/events`。
 - **庇护所道具**：不在 `feat/shelter` 范围内。
 - **GameplayEventSystem + Channel**：系统数量少时不引入。
 - **图鉴 / 碎片化彩蛋**：低优先级。
@@ -92,7 +92,7 @@ corruption          // 腐蚀度（全局）
 rngSeed             // 本局随机种子
 flags               // 长线事件布尔标记集
 population          // 可由 NPC 列表推导，或冗余缓存
-currentPhase        // 当前阶段（Shelter / Combat / Event / …）
+currentPhase        // ExpeditionPrep / Combat / TriumphReturn / Ending
 ```
 
 ### 3.2 战斗相关数据
@@ -117,18 +117,16 @@ currentPhase        // 当前阶段（Shelter / Combat / Event / …）
 
 ```text
 [NewRun]
-  -> ShelterPhase      （feat/shelter 填充逻辑）
-  -> CombatPhase       （feat/combat 填充逻辑）
-  -> EventPhase        （占位；feat/events 之前自动跳过或空跑）
-  -> DayAdvance
-       -> day++
-       -> if day > 6: EndingPhase else ShelterPhase
+  -> ExpeditionPrep（出征准备）  （feat/shelter 填充业务）
+  -> Combat（战斗）              （feat/combat 填充业务）
+  -> TriumphReturn（凯旋）       （回庇护所结算/反馈；业务后续填充）
+  -> day++；若 day > 6 则 Ending，否则回到 ExpeditionPrep
 
-[EndingPhase]          （可与 feat/events 或后续 feat 一并实现）
+[Ending]                         （可与后续 feat 一并实现）
   -> EndingEvaluator -> 展示
 ```
 
-`feat/gameplay-framework` 的目标：**把上述阶段切换跑通**（日志/占位回调即可），不实现各阶段业务细节。
+`feat/gameplay-framework` 的目标：由 `GameplaySubsystem` **直接维护阶段枚举切换**（不拆 Director、不用 IPhaseHandler），跑通抽象流程即可。
 
 ---
 
@@ -142,14 +140,13 @@ currentPhase        // 当前阶段（Shelter / Combat / Event / …）
 | 步骤 | 内容 |
 |------|------|
 | F1-1 | `GameInstance`：初始化、主菜单/对局模式切换骨架 |
-| F1-2 | `GameState` 数据结构（字段可先占位） |
-| F1-3 | `GameplaySubsystem`：阶段枚举、阶段切换、各阶段 Enter/Exit 钩子（空实现或 Debug 日志） |
-| F1-4 | 脚本域目录：`Bootstrap`、`Gameplay`、`Shelter`、`Combat`（及 asmdef，如需要） |
-| F1-5 | `ShelterManager` / `CombatManager` / `EventDirector` **空壳类**（仅被 Subsystem 调度的接口） |
+| F1-2 | `GameState` + `GameplayPhase`（出征准备 / 战斗 / 凯旋 / 结局） |
+| F1-3 | `GameplaySubsystem`：直接维护阶段状态机（`StartNewRun` / `AdvancePhase`） |
+| F1-4 | 脚本目录雏形 + Edit Mode 抽象流程测试 |
 
-**范围外：** 饱食度、NPC 行为、出牌、事件抽取等具体逻辑。
+**范围外：** 饱食度、NPC、出牌、事件；不拆 DayLoopDirector / IPhaseHandler；不强制空壳 Manager。
 
-**验收：** Console 无编译错误；Play Mode 下可观察到阶段按顺序切换（如 Shelter → Combat → Event(跳过) → DayAdvance）。
+**验收：** Edit Mode 证明「出征准备 → 战斗 → 凯旋 → 次日准备」；编译无错。详见 `designs/CORE-F02-gameplay-framework.md`。
 
 ### Feat 2 — 庇护所 + NPC · `feat/shelter`
 
@@ -163,7 +160,7 @@ currentPhase        // 当前阶段（Shelter / Combat / Event / …）
 
 **范围外：** 庇护所道具刷新与交互（等需求明朗再做）。
 
-**验收：** 在 `ShelterPhase` 内完成一次完整庇护所日结，NPC 状态按规则变化。
+**验收：** 在 `ExpeditionPrep`（出征准备）内完成一次庇护所日结，NPC 状态按规则变化。
 
 ### Feat 3 — 战斗 · `feat/combat`
 

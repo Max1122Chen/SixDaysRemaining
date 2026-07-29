@@ -1,0 +1,76 @@
+namespace SixDaysRemaining.Gameplay
+{
+    /// <summary>
+    /// 局内玩法子系统：持有 GameState，并维护日循环阶段状态机。
+    /// 非 MonoBehaviour，便于 Edit Mode 测试；由 GameInstance 持有。
+    /// </summary>
+    public class GameplaySubsystem
+    {
+        public const int MaxDay = 6;
+
+        public GameState State { get; private set; }
+
+        public GameplayPhase CurrentPhase
+        {
+            get { return State != null ? State.currentPhase : GameplayPhase.Ending; }
+        }
+
+        public GameplaySubsystem()
+        {
+            State = new GameState();
+        }
+
+        /// <summary>
+        /// 开始新的一局。
+        /// </summary>
+        public void StartNewRun(int seed)
+        {
+            State = new GameState();
+            State.day = 1;
+            State.foodStock = 0;
+            State.corruption = 0;
+            State.rngSeed = seed;
+            State.population = 0;
+            State.currentPhase = GameplayPhase.ExpeditionPrep;
+        }
+
+        /// <summary>
+        /// 推进到下一阶段。已在 Ending 时不再变化。
+        /// </summary>
+        public void AdvancePhase()
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            if (State.currentPhase == GameplayPhase.Ending)
+            {
+                return;
+            }
+
+            switch (State.currentPhase)
+            {
+                case GameplayPhase.ExpeditionPrep:
+                    State.currentPhase = GameplayPhase.Combat;
+                    break;
+
+                case GameplayPhase.Combat:
+                    State.currentPhase = GameplayPhase.TriumphReturn;
+                    break;
+
+                case GameplayPhase.TriumphReturn:
+                    State.day += 1;
+                    if (State.day > MaxDay)
+                    {
+                        State.currentPhase = GameplayPhase.Ending;
+                    }
+                    else
+                    {
+                        State.currentPhase = GameplayPhase.ExpeditionPrep;
+                    }
+                    break;
+            }
+        }
+    }
+}

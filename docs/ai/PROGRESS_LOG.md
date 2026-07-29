@@ -54,3 +54,29 @@
   - 明确本 feat 不另写 plan；验收以 Unity Test Framework Edit Mode 为主。
 - 下一步行动：
   - 负责人审阅并批准 commit；再批准拉 `feat/gameplay-framework`。
+
+## 2026-07-29（夜·修订）
+
+- 范围：`CORE-F02` 设计简化
+- 已完成：
+  - 去掉 `DayLoopDirector` / `IPhaseHandler`；由 `GameplaySubsystem` 直管阶段枚举。
+  - 阶段语义改为：出征准备（ExpeditionPrep）→ 战斗 → 凯旋（TriumphReturn）→ 次日或结局。
+  - 测试重点改为模拟抽象一日流程；文件少拆。
+  - 同步更新 `ROADMAP.md`、`TECH_DEBT.md`。
+- 下一步行动：
+  - 负责人审阅修订后的 `CORE-F02`；通过后开 `feat/gameplay-framework`。
+
+## 2026-07-29（实现）
+
+- 范围：`CORE-F02` / `feat/gameplay-framework`
+- 已完成：
+  - 新增 `GameState`、`GameplayPhase`、`GameplaySubsystem`（纯 C# 阶段机）。
+  - 新增 `GameInstance` 单例骨架（持有 Subsystem、主菜单/对局模式）。
+  - 新增 Edit Mode 测试：准备→战斗→凯旋→次日，以及第六天后 Ending。
+  - 配置 Gameplay / Bootstrap / EditModeTests asmdef。
+- 验证：
+  - Unity Test Runner EditMode：`GameplayFlowTests` 6 项全绿。
+  - 修复 EditModeTests asmdef 与 `TestAssemblies` 重复引用导致的编译失败。
+- 下一步行动：
+  - merge `feat/gameplay-framework` → `main`；启动 `SHLT-F01` 设计讨论。
+
