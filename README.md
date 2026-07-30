@@ -1,61 +1,91 @@
 # SixDaysRemaining（项目协作说明）
 
-这个仓库用于承载 `SixDaysRemaining` 的 Unity 游戏项目与协作文档。
-本文档面向**设计师**与**技术协作者**，用于快速理解项目结构、协作方式与入口位置。
+这个仓库用于承载《六日英雄》Unity 原型与协作文档。  
+本文档面向**设计师**、**程序**与**UI 协作者**。
 
 ## 项目结构（根目录）
 
-- `SixDaysRemaining/`：Unity 工程目录（可直接用 Unity Hub 打开）
-  - `Assets/`：游戏资源、场景、脚本（后续在 `Assets/Scripts/` 下按域拆分）
-  - `Packages/`：Unity 包依赖
-  - `ProjectSettings/`：Unity 项目设置
-- `docs/ai/`：项目协作与工程决策文档（设计-实现工作流）
-  - `ROADMAP.md`：技术设计大纲与开发路线图（实现主计划）
-  - `PROJECT_CONTEXT.md`：项目目标、阶段、协作约定、验证基线
-  - `ACTIVE_WORK.md`：当前任务队列
-  - `FEATURE_REGISTRY.md`：功能注册表（先注册再实现）
-  - `PROGRESS_LOG.md`：进度日志（追加式记录）
-  - `TECH_DEBT.md`：技术债登记
-  - `designs/`：设计说明（Design Spec）
-  - `plans/`：实现计划（Implementation Plan）
-  - `templates/`：文档模板
-- `docs/designs/`：产品设计文档（面向策划/设计）
-  - `六日英雄—技术演示文档.pdf`：当前玩法设计源
-- `.cursor/rules/`：面向 Cursor Agent 的项目规则（代码风格/文档流程/协作边界）
-- `.gitignore`：Unity 与 IDE 生成文件忽略规则
+- `SixDaysRemaining/`：Unity 工程（用 Unity Hub 打开此目录）
+  - `Assets/Scripts/`：按域拆分
+    - `Bootstrap/`：`GameInstance`
+    - `Gameplay/`：阶段机、`GameState`
+    - `Shelter/`：庇护所、幸存者
+    - `Combat/`：战斗 ASC、卡牌、Manager
+    - `UI/`：**Demo 面板与可玩接入**（`AppFlowController`、`*Panel`、`PlayableLoopBootstrap`）
+  - `Assets/Scenes/SampleScene.unity`：当前可直接 Play（可为空场景）
+  - `Assets/Tests/EditMode/`：逻辑回归测试
+- `docs/ai/`：工程协作与设计
+  - **`UI_HANDOFF.md`：UI Demo 交接说明（UI 同学优先读）**
+  - `ROADMAP.md`：技术路线图
+  - `PROJECT_CONTEXT.md` / `BOOTSTRAP_DIGEST.md`：项目快照与会话恢复
+  - `ACTIVE_WORK.md` / `FEATURE_REGISTRY.md` / `PROGRESS_LOG.md` / `TECH_DEBT.md`
+  - `designs/`：Feature 设计（含 `CORE-F03-playable-loop.md`）
+- `docs/designs/`：产品设计源（含 PDF、设计师反馈）
+- `.cursor/rules/`：Agent 协作规则
+
+## 当前可玩 Demo（给 UI 接手）
+
+**状态：** 主线已可在 Play Mode 跑通（主菜单 → 庇护所 → 战斗选 5 Commit → 凯旋 → 次日）。  
+**表现：** 运行时生成的极简 uGUI（灰底按钮 + 文本），细节靠 Console Log（`[Flow]` / `[Shelter]` / `[Combat]`）。
+
+### 怎么跑
+
+1. Unity `2022.3.62f3c1` 打开 `SixDaysRemaining/`
+2. 打开 `SampleScene` → Play（无需在场景里预挂脚本；`PlayableLoopBootstrap` 会自动拉起）
+3. Start → Depart → `1`–`8` 选满 5 张 → Enter 提交（或 F 逃离）→ Continue
+
+### UI 相关入口
+
+| 内容 | 位置 |
+|------|------|
+| 交接全文（面板、命名、接口表、重构建议） | [`docs/ai/UI_HANDOFF.md`](docs/ai/UI_HANDOFF.md) |
+| 可玩接入设计 | [`docs/ai/designs/CORE-F03-playable-loop.md`](docs/ai/designs/CORE-F03-playable-loop.md) |
+| UI 脚本 | `SixDaysRemaining/Assets/Scripts/UI/` |
+| 编排胶水 | `AppFlowController`（切面板、出门开战、凯旋结算） |
+| 业务门面 | `GameInstance` → `Gameplay` / `Shelter` / `Combat`；打牌只调 `PlayerCombatComponent` |
+
+**UI 重构原则：** 可换 Prefab/美术/布局；不要在 UI 内重写伤害或日结；新交互优先接已有 API。
+
+### 推荐分支
+
+- 可玩 Demo + UI 胶水：`feat/playable-loop`
+- 战斗逻辑：`feat/combat`（若尚未合入，请基于或先合并后再做正式 UI）
 
 ## 适用对象与使用建议
 
-- 设计师：
-  - 先看 `docs/ai/PROJECT_CONTEXT.md` 和 `docs/ai/designs/`
-  - 关注 `ACTIVE_WORK.md` 了解当前实现节奏与下一步
-- 技术协作者（程序/TA/技术策划）：
-  - 开发前先看 `ROADMAP.md`、`FEATURE_REGISTRY.md` 与对应 `plans/`
-  - 过程记录统一写入 `PROGRESS_LOG.md`
-  - 临时方案或待清理项登记到 `TECH_DEBT.md`
+- **UI / 表现：** 先读 `docs/ai/UI_HANDOFF.md`，再看 `Scripts/UI/`
+- **设计师：** `PROJECT_CONTEXT.md`、`docs/designs/`、`ACTIVE_WORK.md`
+- **程序：** `ROADMAP.md`、`FEATURE_REGISTRY.md`、对应 `designs/`；进度写 `PROGRESS_LOG.md`
 
 ## 协作原则（当前）
 
-- 文档、进度记录、提交信息：中文优先
-- 代码注释：中文表达；点名函数/变量/类型时可直接使用英文标识符
-- 命名约定：
-  - 类型、属性（property）使用 `PascalCase`
-  - 除属性外，字段与变量使用 `camelCase`
-- 全局系统命名（`Manager` / `SubSystem`）按系统性质选择，由需求讨论后确定
+- 文档、进度、提交信息：中文优先
+- 代码注释：中文；标识符英文
+- 命名：类型/属性 `PascalCase`；字段与局部变量 `camelCase`
+- UI 控件建议前缀：`Txt_` / `Btn_`（见交接文档）
 
 ## 打开与验证
 
-- Unity 版本：`2022.3.62f3c1`
-- 打开方式：用 Unity Hub 打开 `SixDaysRemaining/`
-- 基线检查：
+- Unity：`2022.3.62f3c1`
+- 打开：`SixDaysRemaining/`
+- 基线：
   - Console 无编译错误
-  - `SixDaysRemaining/Assets/Scenes/SampleScene.unity` 可进入 Play Mode
+  - `SampleScene` Play 能完成至少一天循环
+  - Edit Mode：`Assets/Tests/EditMode` 相关测试通过
 
 ## 当前阶段
 
-项目处于初始化阶段，已完成：
-- 仓库初始化与远端绑定
-- Unity 忽略规则配置
-- 协作文档体系与 Cursor 规则建立
+已完成（逻辑 + Demo 接入）：
 
-当前状态：`ROADMAP.md` 技术架构规划待审阅 commit；通过后按 feat 纪律推进 `CORE-F02` → `feat/gameplay-framework`。
+- Gameplay 阶段机、庇护所幸存者、卡牌战斗编排
+- 单场景可玩 Demo UI（Log 反馈为主）
+
+交接中：
+
+- **正式 UI 表现**交给 UI 协作者（见 `UI_HANDOFF.md`）
+
+讨论中 / 未开：
+
+- 幸存者特质与庇护所交互（`SHLT` 下一 feat）
+- 突发事件系统（`EVT-F01`，延后）
+- 黑化牌等战斗进阶

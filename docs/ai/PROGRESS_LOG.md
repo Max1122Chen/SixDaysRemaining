@@ -163,3 +163,12 @@
 - 下一步行动：
   - Play 验收通过后 prepare commit
 
+## 2026-07-30（UI 交接文档）
+
+- 范围：给 UI 协作者的交接材料
+- 已完成：
+  - 新增 `docs/ai/UI_HANDOFF.md`（Demo 形态、面板、命名、AppFlow/业务 API、重构建议）
+  - 更新根 `README.md`、`PROJECT_CONTEXT.md`、`BOOTSTRAP_DIGEST.md`、`ACTIVE_WORK.md`
+- 下一步行动：
+  - UI 同学按 `UI_HANDOFF.md` 接手表现层；程序侧讨论 `SHLT-F02`（未编码）
+

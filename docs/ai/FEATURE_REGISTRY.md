@@ -14,7 +14,7 @@
 | `COMB-F03` | PlayerCombat + 选 5 Commit | COMB | Done | `designs/COMB-F03-player-cards.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F04` | EnemyCombat + 行为表 + 轻量 Session | COMB | Done | `designs/COMB-F04-enemy-pattern.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F05` | CombatManager + 编排 + 结算 | COMB | Done | `designs/COMB-F05-combat-manager.md` | — | `feat/combat` | Max | 同分支 |
-| `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | In Progress | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | PlayableLoopBootstrap 运行时搭 UI |
+| `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Review | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | Demo 已交；正式 UI 见 `UI_HANDOFF.md` |
 | `EVT-F01` | 突发事件系统 | EVT | Deferred | — | — | `feat/events` | Max | 设计明朗后再写 design |
 
 ## 域代码

@@ -1,17 +1,25 @@
 ﻿# 启动摘要（Bootstrap Digest）
 
-最后更新：2026-07-29
+最后更新：2026-07-30  
 目的：在 2 分钟内恢复协作上下文。
 
 ## 新会话的读取顺序
 
 1. `PROJECT_CONTEXT.md`
-2. `ROADMAP.md`（技术实现主计划）
-3. `PROGRESS_LOG.md`（只看最近的条目）
-4. `ACTIVE_WORK.md`
-5. `FEATURE_REGISTRY.md`（In Progress / Planned）
-6. `TECH_DEBT.md`（Open）
-7. 产品设计源：`docs/designs/六日英雄—技术演示文档.pdf`
+2. **若做 UI：** `UI_HANDOFF.md`（必读）
+3. `ROADMAP.md`（技术实现主计划）
+4. `PROGRESS_LOG.md`（只看最近的条目）
+5. `ACTIVE_WORK.md`
+6. `FEATURE_REGISTRY.md`（In Progress / Planned）
+7. `TECH_DEBT.md`（Open）
+8. 产品设计源：`docs/designs/六日英雄—技术演示文档.pdf`
+
+## 当前快照（2026-07-30）
+
+- 可玩 Demo 在分支 `feat/playable-loop`：Play `SampleScene` 即可（`PlayableLoopBootstrap` 自动拉起）。
+- 逻辑：Gameplay 阶段机 + Shelter + Combat（选 5 Commit）已通。
+- UI：极简 Demo；正式表现交给 UI 协作者（见 `UI_HANDOFF.md`）。
+- 下一讨论：幸存者行为 / 交互（SHLT）；突发事件仍延后（EVT）。
 
 ## 不可协商的协作规则
 
@@ -30,8 +38,8 @@
 
 ## 域代码（Domain codes）
 
-- `CORE` - 核心循环、游戏状态、阶段编排
-- `SHLT` - 庇护所、NPC、饱食度
+- `CORE` - 核心循环、游戏状态、阶段编排、可玩接入
+- `SHLT` - 庇护所、幸存者、饱食度
 - `COMB` - 卡牌战斗
 - `EVT` - 突发事件（延后）
 - `UI` - 用户界面与反馈
@@ -42,7 +50,7 @@
 ## 验证基线
 
 - 验证命令：用 Unity `2022.3.62f3c1` 打开 `SixDaysRemaining/`，并确认 Console 没有编译错误。
-- 冒烟测试命令：打开 `SixDaysRemaining/Assets/Scenes/SampleScene.unity` 并成功进入 Play Mode。
+- 冒烟：`SampleScene` Play 跑完至少一天（含凯旋后次日可再出门）。
 
 ## 交接触发点（Handoff trigger cues）
 
@@ -50,4 +58,4 @@
 - 若任务是多步骤或尚未完成，写一条会话说明
 - 追加一条 progress log
 - 把未完成的 slice 标为 Blocked/Deferred，并给出原因与解除阻塞条件
-
+- UI 交接以 `UI_HANDOFF.md` 为准

@@ -4,9 +4,9 @@
 
 - **ID:** `CORE-F03`
 - **类型:** `Feature`
-- **状态:** `In Progress`
+- **状态:** `Review`（Demo 已实现并提交；正式 UI 交接手中）
 - **负责人:** `Max`
-- **最后更新：** `2026-07-30`（实现中：`feat/playable-loop`）
+- **最后更新：** `2026-07-30`（交接：`UI_HANDOFF.md`）
 - **分支（建议）：** `feat/playable-loop`
 - **相关：** `CORE-F02`、`SHLT-F01`、COMB 战斗链、`ROADMAP.md`、`FEATURE_REGISTRY.md`
 
