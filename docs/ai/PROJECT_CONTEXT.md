@@ -51,3 +51,8 @@
 选择一种模式：
 - 双轨：外部或产品视角的设计真相可以放在 `docs/ai/` 之外；该目录主要存放实现工作流与提炼后的工程决策。
 
+## 7) 外部参考
+
+- 卡牌 / 轻量 GAS 实践：[CardGameDemo](https://github.com/Max1122Chen/CardGameDemo.git)（本地 `D:\Dev\GitRepo\CardGameDemo`）
+- 索引见 `docs/ai/REFERENCES.md`；重点读其 `docs/design/systems/attributes.md` 与 `gameplay-framework.md`。
+

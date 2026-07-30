@@ -4,7 +4,7 @@
 
 - **ID:** `SHLT-F01`
 - **类型:** `Feature`
-- **状态:** `Review`（实现完成，待 merge）
+- **状态:** `Done`（已合并 `main`）
 - **负责人:** `Max`
 - **最后更新：** `2026-07-29`（Edit Mode 全绿；命名 Survivor）
 - **分支：** `feat/shelter`

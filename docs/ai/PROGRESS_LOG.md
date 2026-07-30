@@ -95,3 +95,19 @@
 - 下一步行动：
   - merge `feat/shelter` → `main`；启动 `COMB-F01` 战斗设计。
 
+## 2026-07-29（Shelter 合并）
+
+- 范围：`SHLT-F01` merge → `main`
+- 已完成：fast-forward 合并 `feat/shelter`（`0900f2c`）。
+- 下一步行动：讨论并编写 `COMB-F01` 设计。
+
+## 2026-07-30（COMB 设计链）
+
+- 范围：`COMB-F01`～`COMB-F05` 设计 + `feat/combat`
+- 已完成：
+  - 设计链：`COMB-feat-chain.md`；F01 ASC、F02 伤害管线、F03 选 5 Commit、F04 敌人行为表、F05 Manager/Flee/结算。
+  - 外部参考：`REFERENCES.md`（CardGameDemo）。
+  - 约定：打牌在 Player；Manager 只编排；`FoodGained` 暂 int。
+- 下一步行动：
+  - 在 `feat/combat` 从 `COMB-F01` 起按序实现。
+
