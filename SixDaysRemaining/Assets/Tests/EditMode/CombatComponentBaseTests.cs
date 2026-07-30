@@ -6,6 +6,20 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class CombatComponentBaseTests
     {
+        private CombatTestHost host;
+
+        [SetUp]
+        public void SetUp()
+        {
+            host = new CombatTestHost();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            host.Dispose();
+        }
+
         private sealed class FooSet : AttributeSet
         {
             public float Foo
@@ -77,7 +91,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void RegisterSet_GetSet_ReturnsRegisteredInstances()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             FooSet foo = new FooSet();
             BarSet bar = new BarSet();
 
@@ -91,7 +105,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Set_UpdatesValue_AndRaisesOnAttributeChanged()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             FooSet foo = new FooSet();
             component.RegisterSet(foo);
 
@@ -112,7 +126,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Set_SameValue_DoesNotRaiseOnAttributeChanged()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             FooSet foo = new FooSet();
             component.RegisterSet(foo);
             foo.Foo = 5f;
@@ -127,7 +141,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void PreAttributeChange_ClampsValue()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             ClampedSet set = new ClampedSet();
             component.RegisterSet(set);
 
@@ -139,7 +153,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void RegisterSet_DuplicateType_Throws()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             component.RegisterSet(new FooSet());
 
             Assert.Throws<InvalidOperationException>(() => component.RegisterSet(new FooSet()));
@@ -148,7 +162,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Get_UnboundSet_Throws()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             FooSet unbound = new FooSet();
 
             Assert.Throws<InvalidOperationException>(() => component.Get(unbound, "Foo"));
@@ -157,7 +171,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Set_UnboundSet_Throws()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
             FooSet unbound = new FooSet();
 
             Assert.Throws<InvalidOperationException>(() => component.Set(unbound, "Foo", 1f));
@@ -166,7 +180,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void GetSet_MissingType_Throws()
         {
-            CombatComponentBase component = new CombatComponentBase();
+            CombatComponentBase component = host.AddBase();
 
             Assert.Throws<InvalidOperationException>(() => component.GetSet<FooSet>());
         }

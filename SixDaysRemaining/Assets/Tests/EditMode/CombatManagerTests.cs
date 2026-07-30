@@ -8,18 +8,44 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class CombatManagerTests
     {
+        private CombatTestHost host;
+        private CombatManager manager;
+        private PlayerCombatComponent player;
+
+        [SetUp]
+        public void SetUp()
+        {
+            host = new CombatTestHost();
+            manager = new CombatManager();
+            player = host.AddPlayer();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (manager != null)
+            {
+                manager.CleanupSpawnedEnemy();
+            }
+
+            host.Dispose();
+        }
+
+        private void Start(CombatStartConfig config)
+        {
+            manager.StartBattleOnly(config, player, enemyPrefab: null, combatRoot: null);
+        }
+
         [Test]
         public void NotifyPlayerCommitted_ClearsPlayerBlock_ThenEnemyActs()
         {
-            CombatManager manager = new CombatManager();
-            manager.StartBattleOnly(new CombatStartConfig
+            Start(new CombatStartConfig
             {
                 PlayerMaxHp = 40f,
                 EnemyMaxHp = 100f,
                 DeckSeed = 1
             });
 
-            PlayerCombatComponent player = manager.Session.Player;
             EnemyCombatComponent enemy = manager.Session.Enemies[0];
             player.GainBlock(5f);
 
@@ -31,15 +57,13 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(0f, player.Attributes.Block);
             Assert.IsTrue(manager.IsPlayerTurn);
-            // 敌人第一步通常攻击；若 pattern 第一步是攻击则 HP 下降
             Assert.LessOrEqual(player.Attributes.HP, playerHpBeforeEnemy);
         }
 
         [Test]
         public void FightUntilWin_SetsFoodAndCorruption()
         {
-            CombatManager manager = new CombatManager();
-            manager.StartBattleOnly(new CombatStartConfig
+            Start(new CombatStartConfig
             {
                 PlayerMaxHp = 100f,
                 EnemyMaxHp = 1f,
@@ -49,10 +73,7 @@ namespace SixDaysRemaining.Tests.EditMode
                 EnemyPattern = EnemyPatternCatalog.BasicAttackDefendLoop
             });
 
-            // 强制用全 strike 迅速击杀
-            PlayerCombatComponent player = manager.Session.Player;
             RebuildDeckAllStrike(player);
-
             EnemyCombatComponent enemy = manager.Session.Enemies[0];
             SelectFive(player);
             Assert.IsTrue(player.CommitPlay(enemy));
@@ -67,7 +88,6 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void EnemyKillsPlayer_Lose()
         {
-            CombatManager manager = new CombatManager();
             EnemyPatternDef lethal = new EnemyPatternDef
             {
                 Turns = new[]
@@ -87,7 +107,7 @@ namespace SixDaysRemaining.Tests.EditMode
                 }
             };
 
-            manager.StartBattleOnly(new CombatStartConfig
+            Start(new CombatStartConfig
             {
                 PlayerMaxHp = 10f,
                 EnemyMaxHp = 100f,
@@ -95,7 +115,6 @@ namespace SixDaysRemaining.Tests.EditMode
                 DeckSeed = 1
             });
 
-            PlayerCombatComponent player = manager.Session.Player;
             EnemyCombatComponent enemy = manager.Session.Enemies[0];
             SelectFive(player);
             Assert.IsTrue(player.CommitPlay(enemy));
@@ -109,8 +128,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Flee_EndsWithZeroFood()
         {
-            CombatManager manager = new CombatManager();
-            manager.StartBattleOnly(new CombatStartConfig
+            Start(new CombatStartConfig
             {
                 PlayerMaxHp = 30f,
                 EnemyMaxHp = 40f
@@ -141,23 +159,22 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void AfterFinish_NotifyIsNoOp()
         {
-            CombatManager manager = new CombatManager();
-            manager.StartBattleOnly(new CombatStartConfig());
+            Start(new CombatStartConfig());
             Assert.IsTrue(manager.Flee());
             CombatResult before = manager.Result;
             manager.NotifyPlayerCommitted();
             Assert.AreEqual(before.Outcome, manager.Result.Outcome);
         }
 
-        private static void SelectFive(PlayerCombatComponent player)
+        private static void SelectFive(PlayerCombatComponent p)
         {
             for (int i = 0; i < PlayerCombatComponent.CommitCount; i++)
             {
-                Assert.IsTrue(player.SelectFromHand(i));
+                Assert.IsTrue(p.SelectFromHand(i));
             }
         }
 
-        private static void RebuildDeckAllStrike(PlayerCombatComponent player)
+        private static void RebuildDeckAllStrike(PlayerCombatComponent p)
         {
             List<CardDef> defs = new List<CardDef>();
             for (int i = 0; i < 10; i++)
@@ -165,8 +182,7 @@ namespace SixDaysRemaining.Tests.EditMode
                 defs.Add(CardCatalog.Strike);
             }
 
-            player.SetupDeck(defs, seed: 0);
-            // SetupDeck 已抽满手；战斗已 OnPlayerTurnStart 过，手牌应为 8
+            p.SetupDeck(defs, seed: 0);
         }
     }
 }

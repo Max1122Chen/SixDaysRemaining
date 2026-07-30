@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace SixDaysRemaining.Combat
 {
@@ -9,21 +10,39 @@ namespace SixDaysRemaining.Combat
     /// </summary>
     public class CombatComponent : CombatComponentBase
     {
-        private readonly CombatAttributeSet combatAttributes;
+        private CombatAttributeSet combatAttributes;
+        private bool attributesReady;
 
-        public CombatComponent()
+        protected virtual void Awake()
         {
+            EnsureCombatAttributes();
+        }
+
+        protected void EnsureCombatAttributes()
+        {
+            if (attributesReady)
+            {
+                return;
+            }
+
             combatAttributes = new CombatAttributeSet();
             RegisterSet(combatAttributes);
+            attributesReady = true;
         }
 
         public CombatAttributeSet Attributes
         {
-            get { return combatAttributes; }
+            get
+            {
+                EnsureCombatAttributes();
+                return combatAttributes;
+            }
         }
 
         public void InitCombatant(float maxHp, float currentHp = -1f)
         {
+            EnsureCombatAttributes();
+
             if (currentHp < 0f)
             {
                 currentHp = maxHp;
@@ -39,16 +58,19 @@ namespace SixDaysRemaining.Combat
 
         public void SetDamage(float panelDamage)
         {
+            EnsureCombatAttributes();
             combatAttributes.Damage = panelDamage * combatAttributes.DamageMultiplier;
         }
 
         public void DealDamage(CombatComponent target)
         {
+            EnsureCombatAttributes();
             if (target == null)
             {
                 return;
             }
 
+            target.EnsureCombatAttributes();
             target.combatAttributes.DamageToTake = combatAttributes.Damage;
             target.TakeDamage();
             combatAttributes.Damage = 0f;
@@ -56,6 +78,7 @@ namespace SixDaysRemaining.Combat
 
         public void TakeDamage()
         {
+            EnsureCombatAttributes();
             float amount = combatAttributes.DamageToTake;
             float blocked = Math.Min(combatAttributes.Block, amount);
             LoseBlock(blocked);
@@ -67,6 +90,7 @@ namespace SixDaysRemaining.Combat
 
         public void GainBlock(float amount)
         {
+            EnsureCombatAttributes();
             if (amount > 0f)
             {
                 combatAttributes.Block += amount;
@@ -75,6 +99,7 @@ namespace SixDaysRemaining.Combat
 
         public void LoseBlock(float amount)
         {
+            EnsureCombatAttributes();
             if (amount <= 0f)
             {
                 return;
@@ -85,6 +110,7 @@ namespace SixDaysRemaining.Combat
 
         public void SetBlock(float value)
         {
+            EnsureCombatAttributes();
             combatAttributes.Block = Math.Max(0f, value);
         }
     }

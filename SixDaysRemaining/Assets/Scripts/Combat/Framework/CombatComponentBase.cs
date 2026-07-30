@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SixDaysRemaining.Combat.Framework
 {
     /// <summary>
     /// 轻量 ASC：持有 AttributeSet，提供统一 Get/Set 与变更通知。无 Modifier/GE。
+    /// 挂在战斗单位 GameObject 上。
     /// </summary>
-    public class CombatComponentBase
+    public class CombatComponentBase : MonoBehaviour
     {
         private readonly List<AttributeSet> sets = new List<AttributeSet>();
         private readonly Dictionary<Type, AttributeSet> setsByType = new Dictionary<Type, AttributeSet>();

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SixDaysRemaining.Combat.Cards;
+using UnityEngine;
 
 namespace SixDaysRemaining.Combat
 {
@@ -21,7 +22,7 @@ namespace SixDaysRemaining.Combat
     public class CombatStartConfig
     {
         public float PlayerMaxHp = 30f;
-        public float EnemyMaxHp = 40f;
+        public float EnemyMaxHp = 10f;
         public EnemyPatternDef EnemyPattern = EnemyPatternCatalog.BasicAttackDefendLoop;
         public IReadOnlyList<CardDef> StarterCards;
         public int DeckSeed = 1;
@@ -31,6 +32,7 @@ namespace SixDaysRemaining.Combat
 
     /// <summary>
     /// 战斗编排：回合、清挡、Flee、结算。不提供选牌/出牌 API。
+    /// 敌人由本类 Instantiate；玩家由外部传入场景组件。
     /// </summary>
     public class CombatManager
     {
@@ -41,6 +43,7 @@ namespace SixDaysRemaining.Combat
         private bool battleOnly;
         private int turnsElapsed;
         private CombatResult result;
+        private GameObject spawnedEnemyGo;
 
         public CombatSession Session
         {
@@ -67,14 +70,22 @@ namespace SixDaysRemaining.Combat
             get { return result; }
         }
 
-        public void StartCombat(CombatStartConfig startConfig)
+        public void StartCombat(
+            CombatStartConfig startConfig,
+            PlayerCombatComponent player,
+            EnemyCombatComponent enemyPrefab,
+            Transform combatRoot)
         {
-            Begin(startConfig, isBattleOnly: false);
+            Begin(startConfig, isBattleOnly: false, player, enemyPrefab, combatRoot);
         }
 
-        public void StartBattleOnly(CombatStartConfig startConfig)
+        public void StartBattleOnly(
+            CombatStartConfig startConfig,
+            PlayerCombatComponent player,
+            EnemyCombatComponent enemyPrefab,
+            Transform combatRoot)
         {
-            Begin(startConfig, isBattleOnly: true);
+            Begin(startConfig, isBattleOnly: true, player, enemyPrefab, combatRoot);
         }
 
         public void NotifyPlayerCommitted()
@@ -104,21 +115,54 @@ namespace SixDaysRemaining.Combat
             return true;
         }
 
-        private void Begin(CombatStartConfig startConfig, bool isBattleOnly)
+        /// <summary>
+        /// 清理本场生成的敌人（战斗结束或测试 TearDown）。
+        /// </summary>
+        public void CleanupSpawnedEnemy()
         {
+            if (spawnedEnemyGo == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Object.Destroy(spawnedEnemyGo);
+            }
+            else
+            {
+                Object.DestroyImmediate(spawnedEnemyGo);
+            }
+
+            spawnedEnemyGo = null;
+        }
+
+        private void Begin(
+            CombatStartConfig startConfig,
+            bool isBattleOnly,
+            PlayerCombatComponent player,
+            EnemyCombatComponent enemyPrefab,
+            Transform combatRoot)
+        {
+            if (player == null)
+            {
+                throw new System.ArgumentNullException("player");
+            }
+
+            CleanupSpawnedEnemy();
+
             config = startConfig ?? new CombatStartConfig();
             battleOnly = isBattleOnly;
             finished = false;
             turnsElapsed = 0;
             result = default(CombatResult);
 
-            PlayerCombatComponent player = new PlayerCombatComponent();
             player.InitCombatant(config.PlayerMaxHp);
 
             IReadOnlyList<CardDef> starter = config.StarterCards ?? CardCatalog.CreateDefaultStarterDefs();
             player.SetupDeck(starter, config.DeckSeed);
 
-            EnemyCombatComponent enemy = new EnemyCombatComponent();
+            EnemyCombatComponent enemy = SpawnEnemy(enemyPrefab, combatRoot);
             enemy.InitCombatant(config.EnemyMaxHp);
             enemy.BindPattern(config.EnemyPattern ?? EnemyPatternCatalog.BasicAttackDefendLoop);
 
@@ -128,6 +172,32 @@ namespace SixDaysRemaining.Combat
 
             playerTurn = true;
             player.OnPlayerTurnStart();
+        }
+
+        private EnemyCombatComponent SpawnEnemy(EnemyCombatComponent enemyPrefab, Transform combatRoot)
+        {
+            if (enemyPrefab != null)
+            {
+                GameObject go = Object.Instantiate(enemyPrefab.gameObject, combatRoot);
+                go.name = "Enemy";
+                go.SetActive(true);
+                spawnedEnemyGo = go;
+                EnemyCombatComponent component = go.GetComponent<EnemyCombatComponent>();
+                if (component == null)
+                {
+                    throw new System.InvalidOperationException("enemyPrefab 缺少 EnemyCombatComponent。");
+                }
+
+                return component;
+            }
+
+            spawnedEnemyGo = new GameObject("Enemy");
+            if (combatRoot != null)
+            {
+                spawnedEnemyGo.transform.SetParent(combatRoot, false);
+            }
+
+            return spawnedEnemyGo.AddComponent<EnemyCombatComponent>();
         }
 
         private void RunEnemyTurn()
@@ -199,6 +269,8 @@ namespace SixDaysRemaining.Combat
             result.FoodGained = foodGained;
             result.CorruptionDelta = config != null ? config.CorruptionDelta : 3;
             result.TurnsElapsed = turnsElapsed;
+            CleanupSpawnedEnemy();
+            session = null;
         }
     }
 }

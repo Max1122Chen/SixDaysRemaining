@@ -5,10 +5,24 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class CombatComponentTests
     {
+        private CombatTestHost host;
+
+        [SetUp]
+        public void SetUp()
+        {
+            host = new CombatTestHost();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            host.Dispose();
+        }
+
         [Test]
         public void SetDamage_AppliesMultiplier()
         {
-            CombatComponent attacker = new CombatComponent();
+            CombatComponent attacker = host.AddCombatant("Atk");
             attacker.InitCombatant(20f);
 
             attacker.SetDamage(10f);
@@ -22,8 +36,8 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void DealDamage_ConsumesBlock_ThenFloorsHpLoss()
         {
-            CombatComponent attacker = new CombatComponent();
-            CombatComponent target = new CombatComponent();
+            CombatComponent attacker = host.AddCombatant("Atk");
+            CombatComponent target = host.AddCombatant("Tgt");
             attacker.InitCombatant(20f);
             target.InitCombatant(20f);
             target.GainBlock(3f);
@@ -40,8 +54,8 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void DealDamage_WithFractionalRemainder_FloorsHpLoss()
         {
-            CombatComponent attacker = new CombatComponent();
-            CombatComponent target = new CombatComponent();
+            CombatComponent attacker = host.AddCombatant("Atk");
+            CombatComponent target = host.AddCombatant("Tgt");
             attacker.InitCombatant(20f);
             target.InitCombatant(20f);
             target.GainBlock(1f);
@@ -50,7 +64,6 @@ namespace SixDaysRemaining.Tests.EditMode
             attacker.SetDamage(3.9f);
             attacker.DealDamage(target);
 
-            // amount 3.9 - block 1 = 2.9 → Floor → 2
             Assert.AreEqual(18f, target.Attributes.HP);
             Assert.AreEqual(0f, target.Attributes.Block);
         }
@@ -58,7 +71,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void DealDamage_NullTarget_IsIgnored()
         {
-            CombatComponent attacker = new CombatComponent();
+            CombatComponent attacker = host.AddCombatant("Atk");
             attacker.InitCombatant(20f);
             attacker.SetDamage(5f);
 
@@ -70,7 +83,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void BlockPrimitives_GainLoseSet()
         {
-            CombatComponent unit = new CombatComponent();
+            CombatComponent unit = host.AddCombatant("Unit");
             unit.InitCombatant(10f);
 
             unit.GainBlock(5f);
@@ -89,7 +102,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void HP_ClampedToMaxAndZero()
         {
-            CombatComponent unit = new CombatComponent();
+            CombatComponent unit = host.AddCombatant("Unit");
             unit.InitCombatant(10f);
 
             unit.Attributes.HP = 99f;
@@ -102,8 +115,8 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void TakeDamage_DoesNotClearRemainingBlock()
         {
-            CombatComponent attacker = new CombatComponent();
-            CombatComponent target = new CombatComponent();
+            CombatComponent attacker = host.AddCombatant("Atk");
+            CombatComponent target = host.AddCombatant("Tgt");
             attacker.InitCombatant(20f);
             target.InitCombatant(20f);
             target.GainBlock(10f);

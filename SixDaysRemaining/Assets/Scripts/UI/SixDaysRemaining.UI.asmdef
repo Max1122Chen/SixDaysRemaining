@@ -1,7 +1,8 @@
 {
-  "name": "SixDaysRemaining.Bootstrap",
-  "rootNamespace": "SixDaysRemaining.Bootstrap",
+  "name": "SixDaysRemaining.UI",
+  "rootNamespace": "SixDaysRemaining.UI",
   "references": [
+    "SixDaysRemaining.Bootstrap",
     "SixDaysRemaining.Gameplay",
     "SixDaysRemaining.Shelter",
     "SixDaysRemaining.Combat"

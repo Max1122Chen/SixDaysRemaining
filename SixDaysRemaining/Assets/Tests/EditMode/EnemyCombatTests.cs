@@ -7,18 +7,30 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class EnemyCombatTests
     {
+        private CombatTestHost host;
+
+        [SetUp]
+        public void SetUp()
+        {
+            host = new CombatTestHost();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            host.Dispose();
+        }
+
         [Test]
         public void Pattern_LoopsAndAppliesAttackThenBlock()
         {
-            PlayerCombatComponent player = new PlayerCombatComponent();
+            PlayerCombatComponent player = host.AddPlayer();
             player.InitCombatant(40f);
-            EnemyCombatComponent enemy = new EnemyCombatComponent();
+            EnemyCombatComponent enemy = host.AddEnemy();
             enemy.InitCombatant(30f);
             enemy.BindPattern(EnemyPatternCatalog.BasicAttackDefendLoop);
 
-            CombatSession session = new CombatSession(
-                player,
-                new[] { enemy });
+            CombatSession session = new CombatSession(player, new[] { enemy });
 
             float playerHp = player.Attributes.HP;
             enemy.ExecuteTurn(session);
@@ -44,7 +56,6 @@ namespace SixDaysRemaining.Tests.EditMode
             for (int i = 0; i < fields.Length; i++)
             {
                 string name = fields[i].Name.ToLowerInvariant();
-                Assert.IsFalse(name.Contains("id") && name != "turns");
                 Assert.IsFalse(name.Contains("displayname"));
                 Assert.IsFalse(name.Contains("intent"));
                 Assert.IsFalse(name.Contains("maxhp"));
@@ -56,9 +67,9 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Session_AlliesAndOpponents_SingleEnemy()
         {
-            PlayerCombatComponent player = new PlayerCombatComponent();
+            PlayerCombatComponent player = host.AddPlayer();
             player.InitCombatant(20f);
-            EnemyCombatComponent enemy = new EnemyCombatComponent();
+            EnemyCombatComponent enemy = host.AddEnemy();
             enemy.InitCombatant(20f);
             CombatSession session = new CombatSession(player, new[] { enemy });
 

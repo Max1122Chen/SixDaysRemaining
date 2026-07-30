@@ -7,17 +7,25 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class PlayerCombatCardTests
     {
+        private CombatTestHost host;
         private PlayerCombatComponent player;
         private CombatComponent enemy;
 
         [SetUp]
         public void SetUp()
         {
-            player = new PlayerCombatComponent();
+            host = new CombatTestHost();
+            player = host.AddPlayer();
             player.InitCombatant(30f);
-            enemy = new CombatComponent();
+            enemy = host.AddCombatant("EnemyTarget");
             enemy.InitCombatant(50f);
             player.SetupDeck(CardCatalog.CreateDefaultStarterDefs(), seed: 1);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            host.Dispose();
         }
 
         [Test]
@@ -77,31 +85,14 @@ namespace SixDaysRemaining.Tests.EditMode
             }
         }
 
-        private static bool ContainsHand(PlayerCombatComponent p, CardInstance card)
-        {
-            for (int i = 0; i < p.Deck.Hand.Count; i++)
-            {
-                if (p.Deck.Hand[i] == card)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private bool ContainsHand(CardInstance card)
-        {
-            return ContainsHand(player, card);
-        }
-
         [Test]
         public void CommitPlay_ResolvesInSelectionOrder()
         {
-            // 构造可控手牌：先选 strike 再 defend
-            player = new PlayerCombatComponent();
+            host.Dispose();
+            host = new CombatTestHost();
+            player = host.AddPlayer();
             player.InitCombatant(30f);
-            enemy = new CombatComponent();
+            enemy = host.AddCombatant("EnemyTarget");
             enemy.InitCombatant(50f);
 
             List<CardDef> defs = new List<CardDef>
@@ -119,18 +110,15 @@ namespace SixDaysRemaining.Tests.EditMode
             };
             player.SetupDeck(defs, seed: 0);
 
-            // seed 0 洗牌后手牌顺序不确定；按 Def.Id 选 strike 再 defend
             int strikeIndex = IndexOfIdInHand("strike");
             int defendIndex = IndexOfIdInHand("defend");
             Assert.GreaterOrEqual(strikeIndex, 0);
             Assert.GreaterOrEqual(defendIndex, 0);
 
             Assert.IsTrue(player.SelectFromHand(strikeIndex));
-            // 选后手牌未变，defendIndex 可能需重找
             defendIndex = IndexOfUnselectedIdInHand("defend");
             Assert.IsTrue(player.SelectFromHand(defendIndex));
 
-            // 再凑满 5：选剩余任意未选
             while (player.Deck.Selection.Count < 5)
             {
                 int next = FirstUnselectedHandIndex();
@@ -183,9 +171,11 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Bash_DealsDamageAndGainsBlock()
         {
-            player = new PlayerCombatComponent();
+            host.Dispose();
+            host = new CombatTestHost();
+            player = host.AddPlayer();
             player.InitCombatant(30f);
-            enemy = new CombatComponent();
+            enemy = host.AddCombatant("EnemyTarget");
             enemy.InitCombatant(50f);
 
             List<CardDef> defs = new List<CardDef>();
@@ -203,6 +193,19 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.IsTrue(player.CommitPlay(enemy));
             Assert.AreEqual(50f - 4f * 5f, enemy.Attributes.HP);
             Assert.AreEqual(2f * 5f, player.Attributes.Block);
+        }
+
+        private bool ContainsHand(CardInstance card)
+        {
+            for (int i = 0; i < player.Deck.Hand.Count; i++)
+            {
+                if (player.Deck.Hand[i] == card)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private int IndexOfIdInHand(string id)

@@ -136,7 +136,30 @@
   - Edit Mode：`CombatComponentBaseTests` / `CombatComponentTests` / `PlayerCombatCardTests` / `EnemyCombatTests` / `CombatManagerTests`
 - 验证：
   - 全部 Combat 源码 `dotnet` netstandard2.1 编译 0 错误（无 UnityEngine 依赖）
-  - **待**本机 Unity Test Runner Edit Mode 全绿
+  - Unity Edit Mode 已由负责人确认全绿；已提交 `78115f1`
 - 下一步行动：
-  - Unity Edit Mode → prepare commit（不 merge `main` 直至明确指令）
+  - merge `feat/combat` → `main`（待指令）；启动可玩接入层设计
+
+## 2026-07-30（CORE-F03 设计草案）
+
+- 范围：单场景可玩接入（输入 + Log）
+- 已完成：
+  - 注册 `CORE-F03`；撰写 `designs/CORE-F03-playable-loop.md`
+  - 拍板写入设计：单场景多面板；战斗 UI+数字键；反馈以 Debug.Log 为主；业务保持纯 C#
+- 下一步行动：
+  - 负责人审阅 design；通过后开 `feat/playable-loop` 实现
+
+## 2026-07-30（CORE-F03 实现）
+
+- 范围：`feat/playable-loop` 可玩接入
+- 已完成：
+  - `CombatComponentBase : MonoBehaviour`；Player/Enemy 挂 GO；`CombatManager` Instantiate 敌人并 Destroy
+  - Edit Mode 测试改为 `CombatTestHost` + `AddComponent`
+  - `GameInstance` 引用 Player/EnemyPrefab/CombatRoot；开局 `foodStock=5`
+  - UI：`*Panel` + `AppFlowController`；`PlayableLoopBootstrap` 运行时搭建 Demo（含 AfterSceneLoad 自动拉起）
+  - 战斗输入：按钮 + 数字键；反馈以 `[Flow]/[Shelter]/[Combat]` Log 为主
+- 验证：
+  - 待本机：Edit Mode 全绿；Play `SampleScene` → Start → Depart → 选 5 Commit / Flee → Continue
+- 下一步行动：
+  - Play 验收通过后 prepare commit
 
