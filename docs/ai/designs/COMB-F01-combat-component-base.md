@@ -4,10 +4,10 @@
 
 - **ID:** `COMB-F01`
 - **类型:** `Feature`
-- **状态:** `Planned`（已批准；**COMB 设计链完成前暂缓实现**）
+- **状态:** `In Progress`（实现中）
 - **负责人:** `Max`
-- **最后更新：** `2026-07-30`（批准；与 F02+ 一并设计完再动工）
-- **分支：** `feat/combat-asc`（审阅通过后从 `main` 拉取；与业务战斗 `COMB-F02` 分开）
+- **最后更新：** `2026-07-30`（开始编码）
+- **分支：** `feat/combat`
 - **相关：** `[REFERENCES](../REFERENCES.md)`（CardGameDemo / UE GAS）、`[Feature Registry](../FEATURE_REGISTRY.md)`、下一 feat `COMB-F02`
 
 ## TL;DR
@@ -200,12 +200,7 @@ Assets/Tests/EditMode/
 
 ## 验收清单
 
-- [ ] `CombatComponentBase` / `AttributeSet` / `AttributeData` 就位，无业务属性名
-- [ ] 值存在 Set 侧；Get/Set/OnChange 可测
-- [ ] Edit Mode 全绿；Console 无编译错误
-- [ ] `FEATURE_REGISTRY` / `ACTIVE_WORK` 同步
-
-## 审阅通过后
-
-1. 拉 `feat/combat-asc`（或并入更大的 `feat/combat` 若你希望单分支多 feat——默认建议 **本 feat 独立分支**，合并后再开 F02）
-2. 实现 → 测试绿 → prepare commit
+- [x] `CombatComponentBase` / `AttributeSet` / `AttributeData` 就位，无业务属性名
+- [x] 值存在 Set 侧；Get/Set/OnChange 可测
+- [ ] Edit Mode 全绿；Console 无编译错误（待 Unity Test Runner）
+- [x] `FEATURE_REGISTRY` / `ACTIVE_WORK` 同步

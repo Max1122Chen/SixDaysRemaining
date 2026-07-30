@@ -6,11 +6,11 @@
 ## 总览
 
 ```text
-COMB-F01  CombatComponentBase + AttributeSet     ← feat/combat 实现中
-COMB-F02  CombatAttributeSet + CombatComponent   ← 已批准，待实现
-COMB-F03  PlayerCombat + 选 5 Commit               ← 已批准，待实现
-COMB-F04  EnemyCombat + 行为表 + 轻量 Session    ← 已批准，待实现
-COMB-F05  CombatManager + 编排 + 结算            ← 已批准，待实现
+COMB-F01  CombatComponentBase + AttributeSet     ← 代码已落（Review）
+COMB-F02  CombatAttributeSet + CombatComponent   ← 代码已落（Review）
+COMB-F03  PlayerCombat + 选 5 Commit               ← 代码已落（Review）
+COMB-F04  EnemyCombat + 行为表 + 轻量 Session    ← 代码已落（Review）
+COMB-F05  CombatManager + 编排 + 结算            ← 代码已落（Review）
 （后续）Item 食物列表结算 / EnemyData / 入口 UI / 意图
 ```
 
@@ -35,13 +35,13 @@ COMB-F05  CombatManager + 编排 + 结算            ← 已批准，待实现
 
 | ID | 状态 | 设计文档 |
 |----|------|----------|
-| F01 | In Progress（`feat/combat`） | `COMB-F01-combat-component-base.md` |
-| F02 | Planned（已批准，待实现） | `COMB-F02-combat-pipeline.md` |
-| F03 | Planned（已批准，待实现） | `COMB-F03-player-cards.md` |
-| F04 | Planned（已批准，待实现） | `COMB-F04-enemy-pattern.md` |
-| F05 | Planned（已批准，待实现） | `COMB-F05-combat-manager.md` |
+| F01 | Review（代码已落） | `COMB-F01-combat-component-base.md` |
+| F02 | Review（代码已落） | `COMB-F02-combat-pipeline.md` |
+| F03 | Review（代码已落） | `COMB-F03-player-cards.md` |
+| F04 | Review（代码已落） | `COMB-F04-enemy-pattern.md` |
+| F05 | Review（代码已落） | `COMB-F05-combat-manager.md` |
 
 ## 下一步
 
-1. 在 `feat/combat` 按 F01 → F02 → F03 → F04 → F05 顺序实现  
-2. 每段 Edit Mode 全绿后再进入下一段
+1. 本机 Unity Test Runner：Edit Mode 全绿  
+2. prepare commit → 审阅 → commit（勿自动 merge `main`）

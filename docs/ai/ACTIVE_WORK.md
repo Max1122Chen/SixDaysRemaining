@@ -4,8 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `COMB` / `feat/combat` | In Progress | Max | 按 F01→F05 实现；当前从 COMB-F01 开始 |
-| — | `COMB-F01`～`F05` | Planned | Max | 设计已批准，见 `COMB-feat-chain.md` |
+| P0 | `COMB-F01`～`F05` / `feat/combat` | Review | Max | 代码链已落；请本机 Unity Edit Mode 全绿后 prepare commit |
 | — | `SHLT-F01` | Done | Max | 已合并 `main` |
 | — | `CORE-F02` | Done | Max | 已合并 `main` |
 | — | `EVT-F01` | Deferred | Max | 事件系统设计明朗后再启动 |

@@ -1,0 +1,14 @@
+{
+  "name": "SixDaysRemaining.Combat",
+  "rootNamespace": "SixDaysRemaining.Combat",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

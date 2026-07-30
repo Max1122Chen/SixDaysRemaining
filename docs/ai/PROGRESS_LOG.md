@@ -111,3 +111,32 @@
 - 下一步行动：
   - 在 `feat/combat` 从 `COMB-F01` 起按序实现。
 
+## 2026-07-30（COMB-F01 实现）
+
+- 范围：`COMB-F01` / `feat/combat`
+- 已完成：
+  - `Assets/Scripts/Combat/Framework/`：`AttributeData`、`AttributeSet`、`CombatComponentBase`。
+  - 程序集 `SixDaysRemaining.Combat`；Edit Mode 测试 `CombatComponentBaseTests`。
+  - 约定落地：值在 Set 侧 Dictionary；同类型 Set 唯一；未绑定 Get/Set 抛异常；`PreAttributeChange` 可 clamp。
+- 验证：
+  - Framework 源码可用 `dotnet`/netstandard2.1 编译检查（无 Unity 依赖）。
+  - Unity Edit Mode 待本机 Test Runner 确认全绿。
+- 下一步行动：
+  - Unity 跑 Edit Mode → 通过后进入 `COMB-F02`。
+
+## 2026-07-30（COMB-F01～F05 实现链）
+
+- 范围：`feat/combat` 全 COMB 实现链
+- 已完成：
+  - F01：`Combat/Framework` ASC 骨架
+  - F02：`CombatAttributeSet` + `CombatComponent`（Deal/Take/Block，Floor）
+  - F03：`PlayerCombatComponent` 选 5 Commit；`Cards/`（CardDef/Catalog/Deck/Executor）
+  - F04：`EnemyCombatComponent` + Pattern + 轻量 `CombatSession`；Executor Session 重载
+  - F05：`CombatManager`（Notify/Flee/清 Block/Result）；BattleOnly
+  - Edit Mode：`CombatComponentBaseTests` / `CombatComponentTests` / `PlayerCombatCardTests` / `EnemyCombatTests` / `CombatManagerTests`
+- 验证：
+  - 全部 Combat 源码 `dotnet` netstandard2.1 编译 0 错误（无 UnityEngine 依赖）
+  - **待**本机 Unity Test Runner Edit Mode 全绿
+- 下一步行动：
+  - Unity Edit Mode → prepare commit（不 merge `main` 直至明确指令）
+

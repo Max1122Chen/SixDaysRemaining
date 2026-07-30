@@ -3,7 +3,8 @@
   "rootNamespace": "SixDaysRemaining.Tests.EditMode",
   "references": [
     "SixDaysRemaining.Gameplay",
-    "SixDaysRemaining.Shelter"
+    "SixDaysRemaining.Shelter",
+    "SixDaysRemaining.Combat"
   ],
   "includePlatforms": [
     "Editor"
