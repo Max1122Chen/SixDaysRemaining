@@ -6,89 +6,44 @@ using UnityEngine;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 阶段面板路由与开战/结算胶水。
+    /// 阶段面板路由与开战/结算胶水。UI 视图只调用这里的公开方法，不在视图里重写伤害或日结公式。
     /// </summary>
     public class AppFlowController : MonoBehaviour
     {
-        [SerializeField]
         private GameInstance gameInstance;
+        private StartScreenView startView;
+        private StoryIntroView storyView;
+        private ShelterView shelterView;
+        private CombatView combatView;
+        private SettlementView settlementView;
+        private EndingView endingView;
+        private SettingsView settingsView;
+        private CreditsView creditsView;
 
-        [SerializeField]
-        private GameObject mainMenuPanel;
-
-        [SerializeField]
-        private GameObject shelterPanel;
-
-        [SerializeField]
-        private GameObject combatPanel;
-
-        [SerializeField]
-        private GameObject triumphPanel;
-
-        [SerializeField]
-        private GameObject endingPanel;
-
-        [SerializeField]
-        private MainMenuPanel mainMenu;
-
-        [SerializeField]
-        private ShelterPanel shelter;
-
-        [SerializeField]
-        private CombatPanel combat;
-
-        [SerializeField]
-        private TriumphPanel triumph;
-
-        [SerializeField]
-        private EndingPanel ending;
-
+        private GameObject activeScreen;
+        private GameObject activeOverlay;
         private CombatResult pendingResult;
 
         public void Bind(
             GameInstance instance,
-            GameObject mainMenuGo,
-            GameObject shelterGo,
-            GameObject combatGo,
-            GameObject triumphGo,
-            GameObject endingGo)
+            StartScreenView start,
+            StoryIntroView story,
+            ShelterView shelter,
+            CombatView combat,
+            SettlementView settlement,
+            EndingView ending,
+            SettingsView settings,
+            CreditsView credits)
         {
             gameInstance = instance;
-            mainMenuPanel = mainMenuGo;
-            shelterPanel = shelterGo;
-            combatPanel = combatGo;
-            triumphPanel = triumphGo;
-            endingPanel = endingGo;
-            mainMenu = mainMenuGo.GetComponent<MainMenuPanel>();
-            shelter = shelterGo.GetComponent<ShelterPanel>();
-            combat = combatGo.GetComponent<CombatPanel>();
-            triumph = triumphGo.GetComponent<TriumphPanel>();
-            ending = endingGo.GetComponent<EndingPanel>();
-
-            if (mainMenu != null)
-            {
-                mainMenu.Bind(this);
-            }
-
-            if (shelter != null)
-            {
-                shelter.Bind(this);
-            }
-
-            if (combat != null)
-            {
-                combat.Bind(this);
-            }
-
-            if (triumph != null)
-            {
-                triumph.Bind(this);
-            }
-
-            if (ending != null)
-            {
-                ending.Bind(this);
-            }
+            startView = start;
+            storyView = story;
+            shelterView = shelter;
+            combatView = combat;
+            settlementView = settlement;
+            endingView = ending;
+            settingsView = settings;
+            creditsView = credits;
         }
 
         public GameInstance Game
@@ -96,34 +51,71 @@ namespace SixDaysRemaining.UI
             get { return gameInstance != null ? gameInstance : GameInstance.Instance; }
         }
 
-        public void ShowMainMenu()
+        public void ShowStart()
         {
-            SetOnly(mainMenuPanel);
-            Debug.Log("[Flow] Panel=MainMenu");
+            SwitchScreen(startView.gameObject);
         }
 
-        public void OnStartNewGame()
+        public void ShowStoryIntro()
         {
-            GameInstance gi = Game;
-            if (gi == null)
-            {
-                Debug.LogError("[Flow] GameInstance 缺失。");
-                return;
-            }
-
-            gi.StartNewGame(GameInstance.DefaultNewGameSeed);
-            ShowShelter();
+            SwitchScreen(storyView.gameObject);
+            storyView.Play();
         }
 
         public void ShowShelter()
         {
-            SetOnly(shelterPanel);
-            if (shelter != null)
+            SwitchScreen(shelterView.gameObject);
+            shelterView.Refresh();
+        }
+
+        public void ShowCombat()
+        {
+            SwitchScreen(combatView.gameObject);
+            combatView.OpenCombat();
+        }
+
+        public void ShowEnding()
+        {
+            SwitchScreen(endingView.gameObject);
+            endingView.Refresh();
+        }
+
+        public void ShowSettings()
+        {
+            ShowOverlay(settingsView.gameObject);
+            settingsView.Refresh();
+        }
+
+        public void ShowCredits()
+        {
+            ShowOverlay(creditsView.gameObject);
+        }
+
+        public void CloseOverlay()
+        {
+            if (activeOverlay != null)
             {
-                shelter.Refresh();
+                activeOverlay.SetActive(false);
             }
 
-            Debug.Log("[Flow] Panel=Shelter phase=" + Game.Gameplay.CurrentPhase);
+            activeOverlay = null;
+        }
+
+        public void OnStartGame()
+        {
+            Game.StartNewGame(GameInstance.DefaultNewGameSeed);
+            ShowStoryIntro();
+        }
+
+        public void OnNewGame()
+        {
+            Game.StartNewGame(GameInstance.DefaultNewGameSeed);
+            ShowStoryIntro();
+        }
+
+        public void OnStorySkip()
+        {
+            ShowShelter();
         }
 
         public void OnDepart()
@@ -136,63 +128,37 @@ namespace SixDaysRemaining.UI
 
             if (gi.Gameplay.CurrentPhase != GameplayPhase.ExpeditionPrep)
             {
-                Debug.LogWarning("[Flow] Depart 忽略：当前阶段=" + gi.Gameplay.CurrentPhase);
                 return;
             }
 
             if (gi.PlayerCombat == null || gi.EnemyPrefab == null)
             {
-                Debug.LogError("[Flow] Depart 失败：缺少 Player 或 EnemyPrefab。");
                 return;
             }
 
             gi.Gameplay.AdvancePhase();
             CombatStartConfig config = new CombatStartConfig();
-            // 局种子 + 天数 → 同局不同天牌序不同；同种子开局可复现同一天
+            // 同局不同天洗牌不同；标准化数据模板接入后替换这里的临时配置。
             config.DeckSeed = unchecked(gi.Gameplay.State.rngSeed + gi.Gameplay.State.day * 997);
             config.EnemyMaxHp = 10f;
             gi.Combat.StartCombat(config, gi.PlayerCombat, gi.EnemyPrefab, gi.CombatRoot);
-            Debug.Log("[Flow] Combat started. deckSeed=" + config.DeckSeed
-                + " day=" + gi.Gameplay.State.day);
             ShowCombat();
-        }
-
-        public void ShowCombat()
-        {
-            SetOnly(combatPanel);
-            if (combat != null)
-            {
-                combat.Refresh();
-            }
-
-            Debug.Log("[Flow] Panel=Combat");
         }
 
         public void OnCombatFinished(CombatResult result)
         {
             pendingResult = result;
-
             GameInstance gi = Game;
-            if (gi != null && gi.Gameplay != null
-                && gi.Gameplay.CurrentPhase == GameplayPhase.Combat)
+            if (gi != null && gi.Gameplay != null && gi.Gameplay.CurrentPhase == GameplayPhase.Combat)
             {
-                // Combat → TriumphReturn（结算面板对应凯旋阶段）
                 gi.Gameplay.AdvancePhase();
             }
 
-            SetOnly(triumphPanel);
-            if (triumph != null)
-            {
-                triumph.ShowResult(result);
-            }
-
-            Debug.Log("[Flow] Triumph outcome=" + result.Outcome
-                + " food=" + result.FoodGained
-                + " corruptionDelta=" + result.CorruptionDelta
-                + " phase=" + (gi != null ? gi.Gameplay.CurrentPhase.ToString() : "?"));
+            ShowOverlay(settlementView.gameObject);
+            settlementView.ShowResult(result, gi);
         }
 
-        public void OnTriumphContinue()
+        public void OnSettlementContinue()
         {
             GameInstance gi = Game;
             if (gi == null || gi.Shelter == null)
@@ -203,14 +169,8 @@ namespace SixDaysRemaining.UI
             gi.Shelter.DepositFood(pendingResult.FoodGained);
             gi.Gameplay.State.corruption += pendingResult.CorruptionDelta;
             gi.Shelter.ProcessEndOfDay();
-            Debug.Log("[Shelter] 回写 food+=" + pendingResult.FoodGained
-                + " corruption=" + gi.Gameplay.State.corruption
-                + " stock=" + gi.Gameplay.State.foodStock);
-
-            // TriumphReturn → 次日 ExpeditionPrep（或 Ending）
             gi.Gameplay.AdvancePhase();
-            Debug.Log("[Flow] After triumph continue phase=" + gi.Gameplay.CurrentPhase
-                + " day=" + gi.Gameplay.State.day);
+            CloseOverlay();
 
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
@@ -222,37 +182,56 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        public void ShowEnding()
-        {
-            SetOnly(endingPanel);
-            if (ending != null)
-            {
-                ending.Refresh();
-            }
-
-            Debug.Log("[Flow] Panel=Ending day=" + Game.Gameplay.State.day);
-        }
-
         public void OnBackToMenu()
         {
             Game.ReturnToMainMenu();
-            ShowMainMenu();
+            CloseOverlay();
+            ShowStart();
         }
 
-        private void SetOnly(GameObject active)
+        public void OnQuit()
         {
-            SetActive(mainMenuPanel, active == mainMenuPanel);
-            SetActive(shelterPanel, active == shelterPanel);
-            SetActive(combatPanel, active == combatPanel);
-            SetActive(triumphPanel, active == triumphPanel);
-            SetActive(endingPanel, active == endingPanel);
+            Application.Quit();
         }
 
-        private static void SetActive(GameObject go, bool on)
+        private void SwitchScreen(GameObject go)
         {
-            if (go != null && go.activeSelf != on)
+            CloseOverlay();
+            if (settingsView != null)
             {
-                go.SetActive(on);
+                settingsView.gameObject.SetActive(false);
+            }
+
+            if (creditsView != null)
+            {
+                creditsView.gameObject.SetActive(false);
+            }
+
+            SetActive(startView, go == startView.gameObject);
+            SetActive(storyView, go == storyView.gameObject);
+            SetActive(shelterView, go == shelterView.gameObject);
+            SetActive(combatView, go == combatView.gameObject);
+            SetActive(settlementView, go == settlementView.gameObject);
+            SetActive(endingView, go == endingView.gameObject);
+            activeScreen = go;
+        }
+
+        private void ShowOverlay(GameObject go)
+        {
+            if (activeOverlay != null && activeOverlay != go)
+            {
+                activeOverlay.SetActive(false);
+            }
+
+            go.SetActive(true);
+            activeOverlay = go;
+        }
+
+        private static void SetActive(MonoBehaviour view, bool on)
+        {
+            if (view != null && view.gameObject != null && view.gameObject.activeSelf != on)
+            {
+                view.gameObject.SetActive(on);
             }
         }
     }

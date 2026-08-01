@@ -20,6 +20,11 @@ namespace SixDaysRemaining.Combat
             get { return patternIndex; }
         }
 
+        public EnemyPatternDef Pattern
+        {
+            get { return pattern; }
+        }
+
         public void BindPattern(EnemyPatternDef patternDef)
         {
             pattern = patternDef;
