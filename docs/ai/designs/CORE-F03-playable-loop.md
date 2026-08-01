@@ -6,7 +6,7 @@
 - **类型:** `Feature`
 - **状态:** `Review`（Demo 已实现并提交；正式 UI 交接手中）
 - **负责人:** `Max`
-- **最后更新：** `2026-07-30`（交接：`UI_HANDOFF.md`）
+- **最后更新：** `2026-08-01`（Demo 文字改为 TMP）
 - **分支（建议）：** `feat/playable-loop`
 - **相关：** `CORE-F02`、`SHLT-F01`、COMB 战斗链、`ROADMAP.md`、`FEATURE_REGISTRY.md`
 
@@ -63,7 +63,8 @@ Player 场景预置并由 `GameInstance` 引用；Enemy 由 `CombatManager` Inst
 | 7 | Enemy 由 **`CombatManager` 生成**；结束默认 **Destroy** |
 | 8 | UI：**GO 与脚本均名 `XXXPanel`**（不用 Widget/Driver） |
 | 9 | 控件命名前缀：`Txt_` / `Btn_`（见 §6.0） |
-| 10 | 黑化等延后 |
+| 10 | Demo 文字组件一律 **TMP**（`TMP_Text` / `TextMeshProUGUI`） |
+| 11 | 黑化等延后 |
 
 ---
 
@@ -191,10 +192,12 @@ Ending → MainMenu
 
 | 前缀 | 用途 | 例 |
 |------|------|-----|
-| `Txt_` | Text / TMP_Text | `Txt_Status`, `Txt_HandHint` |
-| `Btn_` | Button | `Btn_Start`, `Btn_Hand1` |
+| `Txt_` | **TMP_Text**（`TextMeshProUGUI`） | `Txt_Status`, `Txt_HandHint` |
+| `Btn_` | Button（子节点 Label 为 TMP） | `Btn_Start`, `Btn_Hand1` |
 | `Img_` | 可选 Image（本 demo 尽量不用） | — |
 | `Root_` | 可选分区空节点 | `Root_HandButtons` |
+
+文字：**一律 TMP**（已拍板；程序集引用 `Unity.TextMeshPro`）。
 
 - **场景 Panel GO** 与 **脚本类名**一致：`ShelterPanel` GO ↔ `ShelterPanel.cs`。
 - 手牌按钮用 **`Btn_Hand1`…`Btn_Hand8`**（显示编号 1–8；代码 index = 编号−1）。
@@ -216,7 +219,7 @@ Canvas
 
 | 名称 | 类型 | 用途 |
 |------|------|------|
-| `Txt_Title` | Text | 「六日英雄 Demo」 |
+| `Txt_Title` | TMP_Text | 「六日英雄 Demo」 |
 | `Btn_Start` | Button | `StartNewGame(seed=42)` |
 | `Btn_Quit` | Button | 可选 Quit / Editor 仅 Log |
 
@@ -224,8 +227,8 @@ Canvas
 
 | 名称 | 类型 | 用途 |
 |------|------|------|
-| `Txt_Status` | Text | day / phase / food / corruption / population |
-| `Txt_Survivors` | Text | `[i] name hunger status` |
+| `Txt_Status` | TMP_Text | day / phase / food / corruption / population |
+| `Txt_Survivors` | TMP_Text | `[i] name hunger status` |
 | `Btn_Alloc0` / `Btn_Alloc1` | Button | 给对应幸存者 +1 食物 |
 | `Btn_DepositDebug` | Button | 可选 +3 存粮 |
 | `Btn_Refresh` | Button | 刷新 Text |
@@ -235,12 +238,12 @@ Canvas
 
 | 名称 | 类型 | 用途 |
 |------|------|------|
-| `Txt_Header` | Text | 敌我 HP/Block、是否玩家回合 |
-| `Txt_HandHint` | Text | 快捷键说明 |
-| `Txt_Selection` | Text | `Sel: 0,2,4 (3/5)` |
+| `Txt_Header` | TMP_Text | 敌我 HP/Block、是否玩家回合 |
+| `Txt_HandHint` | TMP_Text | 快捷键说明 |
+| `Txt_Selection` | TMP_Text | `Sel: 0,2,4 (3/5)` |
 | `Btn_Hand1`…`Btn_Hand8` | Button | 选牌；无牌禁用，文案 `—` |
 | `Btn_Commit` / `Btn_Clear` / `Btn_Flee` | Button | 见 §5 |
-| `Txt_LogHint` | Text | 「细节见 Console [Combat]」 |
+| `Txt_LogHint` | TMP_Text | 「细节见 Console [Combat]」 |
 
 **不做**选中变色；靠 `Txt_Selection` + Log。  
 每次操作后 `Refresh()` + `[Combat]` 手牌快照。
@@ -249,14 +252,14 @@ Canvas
 
 | 名称 | 类型 | 用途 |
 |------|------|------|
-| `Txt_Result` | Text | Outcome / Food / Corruption / Turns |
+| `Txt_Result` | TMP_Text | Outcome / Food / Corruption / Turns |
 | `Btn_Continue` | Button | 回写 + 日结 + Advance |
 
 #### 6.6 EndingPanel
 
 | 名称 | 类型 | 用途 |
 |------|------|------|
-| `Txt_Ending` | Text | 简单结束说明 |
+| `Txt_Ending` | TMP_Text | 简单结束说明 |
 | `Btn_ToMenu` | Button | 回主菜单 |
 
 #### 6.7 脚本职责
@@ -362,5 +365,5 @@ Assets/Scenes/Bootstrap.unity
 | 开局自动 `DepositDebug` 给点粮 | 开局 `foodStock=5` 便于测分配 | **建议拍板** |
 | Lose 后是否进 Triumph 还是专用失败文案 | 仍进 Triumph，`Txt_Result` 显示 Lose | 可默认 |
 | Combat 中 Shelter 幸存者是否只读展示 | 不展示，减少面板 | 可默认 |
-| UI 用 `UnityEngine.UI.Text` 还是 TMP | 默认 **uGUI Text**（少依赖） | 可默认 |
+| UI 用 `UnityEngine.UI.Text` 还是 TMP | **已拍板：TMP** | 已落地；Demo 用系统 CJK 动态字体（LiberationSans 无汉字） |
 | `feat/combat` 先 merge 再开本分支 | **是** | 建议确认 |

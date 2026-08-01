@@ -1,7 +1,11 @@
+using System;
+using System.IO;
 using SixDaysRemaining.Bootstrap;
 using SixDaysRemaining.Combat;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 
 namespace SixDaysRemaining.UI
@@ -13,10 +17,12 @@ namespace SixDaysRemaining.UI
     [DefaultExecutionOrder(-100)]
     public class PlayableLoopBootstrap : MonoBehaviour
     {
+        private static TMP_FontAsset cachedFont;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoBootIfNeeded()
         {
-            if (Object.FindObjectOfType<PlayableLoopBootstrap>() != null)
+            if (UnityEngine.Object.FindObjectOfType<PlayableLoopBootstrap>() != null)
             {
                 return;
             }
@@ -48,15 +54,152 @@ namespace SixDaysRemaining.UI
             Debug.Log("[Flow] PlayableLoopBootstrap ready. Click Start in Game 视图。");
         }
 
-        private static Font UiFont()
+        private static TMP_FontAsset UiFont()
         {
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null)
+            if (cachedFont != null)
             {
-                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                return cachedFont;
             }
 
-            return font;
+            // LiberationSans SDF 不含中文；Demo 优先用系统 CJK 字体动态建 TMP FontAsset。
+            cachedFont = TryCreateOsCjkFontAsset();
+            if (cachedFont != null)
+            {
+                return cachedFont;
+            }
+
+            Debug.LogWarning(
+                "[UI] No CJK OS font found; Chinese may show as □. " +
+                "Install Microsoft YaHei / PingFang SC, or assign a Chinese TMP Font Asset later.");
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                cachedFont = TMP_Settings.defaultFontAsset;
+                return cachedFont;
+            }
+
+            Font source = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (source == null)
+            {
+                source = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            }
+
+            if (source != null)
+            {
+                cachedFont = TMP_FontAsset.CreateFontAsset(source);
+            }
+
+            return cachedFont;
+        }
+
+        private static TMP_FontAsset TryCreateOsCjkFontAsset()
+        {
+            foreach (Font osFont in EnumerateOsCjkFonts())
+            {
+                if (osFont == null)
+                {
+                    continue;
+                }
+
+                TMP_FontAsset asset = TMP_FontAsset.CreateFontAsset(
+                    osFont,
+                    36,
+                    4,
+                    GlyphRenderMode.SDFAA,
+                    1024,
+                    1024,
+                    AtlasPopulationMode.Dynamic,
+                    true);
+
+                if (asset == null)
+                {
+                    continue;
+                }
+
+                asset.name = "DemoCJK_Dynamic";
+                Debug.Log($"[UI] Demo TMP font: {osFont.name} (dynamic CJK)");
+                return asset;
+            }
+
+            return null;
+        }
+
+        private static System.Collections.Generic.IEnumerable<Font> EnumerateOsCjkFonts()
+        {
+            // 1) Family name（Windows / macOS 常见中文字体）
+            Font byName = Font.CreateDynamicFontFromOSFont(
+                new[]
+                {
+                    "Microsoft YaHei UI",
+                    "Microsoft YaHei",
+                    "PingFang SC",
+                    "Hiragino Sans GB",
+                    "Noto Sans CJK SC",
+                    "Source Han Sans SC",
+                    "SimHei",
+                    "SimSun",
+                    "Arial Unicode MS",
+                },
+                36);
+            if (byName != null)
+            {
+                yield return byName;
+            }
+
+            // 2) 已知系统字体文件
+            string fontsDir = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+            string[] knownFiles =
+            {
+                "msyh.ttc",
+                "msyh.ttf",
+                "msyhl.ttc",
+                "simhei.ttf",
+                "simsun.ttc",
+                "PingFang.ttc",
+                "Hiragino Sans GB.ttc",
+            };
+
+            for (int i = 0; i < knownFiles.Length; i++)
+            {
+                string path = Path.Combine(fontsDir, knownFiles[i]);
+                if (File.Exists(path))
+                {
+                    yield return new Font(path);
+                }
+            }
+
+            // 3) 扫描 OS 字体路径关键字
+            string matchedPath = FindOsFontPath(new[]
+            {
+                "msyh", "yahei", "simhei", "simsun", "PingFang", "NotoSansCJK", "SourceHanSans",
+            });
+            if (!string.IsNullOrEmpty(matchedPath))
+            {
+                yield return new Font(matchedPath);
+            }
+        }
+
+        private static string FindOsFontPath(string[] keywords)
+        {
+            string[] paths = Font.GetPathsToOSFonts();
+            if (paths == null || paths.Length == 0)
+            {
+                return null;
+            }
+
+            for (int k = 0; k < keywords.Length; k++)
+            {
+                string keyword = keywords[k];
+                for (int i = 0; i < paths.Length; i++)
+                {
+                    if (paths[i].IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return paths[i];
+                    }
+                }
+            }
+
+            return null;
         }
 
         private static void EnsureEventSystem()
@@ -135,7 +278,7 @@ namespace SixDaysRemaining.UI
         {
             GameObject panel = CreatePanel(parent, "MainMenuPanel");
             MainMenuPanel script = panel.AddComponent<MainMenuPanel>();
-            Text title = CreateText(panel.transform, "Txt_Title", "六日英雄 Demo", 28, new Vector2(0f, 80f));
+            CreateText(panel.transform, "Txt_Title", "六日英雄 Demo", 28, new Vector2(0f, 80f));
             Button start = CreateButton(panel.transform, "Btn_Start", "Start", new Vector2(0f, 0f));
             Button quit = CreateButton(panel.transform, "Btn_Quit", "Quit", new Vector2(0f, -50f));
             script.BindButtons(start, quit);
@@ -146,8 +289,8 @@ namespace SixDaysRemaining.UI
         {
             GameObject panel = CreatePanel(parent, "ShelterPanel");
             ShelterPanel script = panel.AddComponent<ShelterPanel>();
-            Text status = CreateText(panel.transform, "Txt_Status", "", 16, new Vector2(-200f, 120f), new Vector2(360f, 140f));
-            Text survivors = CreateText(panel.transform, "Txt_Survivors", "", 14, new Vector2(200f, 120f), new Vector2(360f, 140f));
+            TMP_Text status = CreateText(panel.transform, "Txt_Status", "", 16, new Vector2(-200f, 120f), new Vector2(360f, 140f));
+            TMP_Text survivors = CreateText(panel.transform, "Txt_Survivors", "", 14, new Vector2(200f, 120f), new Vector2(360f, 140f));
             Button alloc0 = CreateButton(panel.transform, "Btn_Alloc0", "Alloc0 +1", new Vector2(-180f, -20f));
             Button alloc1 = CreateButton(panel.transform, "Btn_Alloc1", "Alloc1 +1", new Vector2(-20f, -20f));
             Button deposit = CreateButton(panel.transform, "Btn_DepositDebug", "+3 Food", new Vector2(140f, -20f));
@@ -161,9 +304,9 @@ namespace SixDaysRemaining.UI
         {
             GameObject panel = CreatePanel(parent, "CombatPanel");
             CombatPanel script = panel.AddComponent<CombatPanel>();
-            Text header = CreateText(panel.transform, "Txt_Header", "", 14, new Vector2(0f, 160f), new Vector2(900f, 40f));
-            Text hint = CreateText(panel.transform, "Txt_HandHint", "", 14, new Vector2(0f, 120f), new Vector2(900f, 30f));
-            Text selection = CreateText(panel.transform, "Txt_Selection", "", 14, new Vector2(0f, 90f), new Vector2(900f, 30f));
+            TMP_Text header = CreateText(panel.transform, "Txt_Header", "", 14, new Vector2(0f, 160f), new Vector2(900f, 40f));
+            TMP_Text hint = CreateText(panel.transform, "Txt_HandHint", "", 14, new Vector2(0f, 120f), new Vector2(900f, 30f));
+            TMP_Text selection = CreateText(panel.transform, "Txt_Selection", "", 14, new Vector2(0f, 90f), new Vector2(900f, 30f));
             Button[] hands = new Button[8];
             for (int i = 0; i < 8; i++)
             {
@@ -183,7 +326,7 @@ namespace SixDaysRemaining.UI
         {
             GameObject panel = CreatePanel(parent, "TriumphPanel");
             TriumphPanel script = panel.AddComponent<TriumphPanel>();
-            Text result = CreateText(panel.transform, "Txt_Result", "", 18, new Vector2(0f, 40f), new Vector2(500f, 120f));
+            TMP_Text result = CreateText(panel.transform, "Txt_Result", "", 18, new Vector2(0f, 40f), new Vector2(500f, 120f));
             Button cont = CreateButton(panel.transform, "Btn_Continue", "Continue", new Vector2(0f, -60f));
             script.BindRefs(result, cont);
             return panel;
@@ -193,7 +336,7 @@ namespace SixDaysRemaining.UI
         {
             GameObject panel = CreatePanel(parent, "EndingPanel");
             EndingPanel script = panel.AddComponent<EndingPanel>();
-            Text ending = CreateText(panel.transform, "Txt_Ending", "", 20, new Vector2(0f, 40f), new Vector2(400f, 80f));
+            TMP_Text ending = CreateText(panel.transform, "Txt_Ending", "", 20, new Vector2(0f, 40f), new Vector2(400f, 80f));
             Button toMenu = CreateButton(panel.transform, "Btn_ToMenu", "To Menu", new Vector2(0f, -40f));
             script.BindRefs(ending, toMenu);
             return panel;
@@ -211,7 +354,7 @@ namespace SixDaysRemaining.UI
             return panel;
         }
 
-        private static Text CreateText(
+        private static TMP_Text CreateText(
             Transform parent,
             string name,
             string content,
@@ -224,14 +367,14 @@ namespace SixDaysRemaining.UI
             RectTransform rt = go.AddComponent<RectTransform>();
             rt.sizeDelta = size ?? new Vector2(400f, 40f);
             rt.anchoredPosition = anchoredPos;
-            Text text = go.AddComponent<Text>();
+            TextMeshProUGUI text = go.AddComponent<TextMeshProUGUI>();
             text.font = UiFont();
             text.fontSize = fontSize;
             text.color = Color.white;
-            text.alignment = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignmentOptions.Center;
             text.text = content;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.enableWordWrapping = true;
+            text.overflowMode = TextOverflowModes.Overflow;
             return text;
         }
 
@@ -256,12 +399,13 @@ namespace SixDaysRemaining.UI
             textGo.transform.SetParent(go.transform, false);
             RectTransform textRt = textGo.AddComponent<RectTransform>();
             StretchFull(textRt);
-            Text text = textGo.AddComponent<Text>();
+            TextMeshProUGUI text = textGo.AddComponent<TextMeshProUGUI>();
             text.font = UiFont();
             text.fontSize = 14;
             text.color = Color.white;
-            text.alignment = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignmentOptions.Center;
             text.text = label;
+            text.raycastTarget = false;
             return button;
         }
 

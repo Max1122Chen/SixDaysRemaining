@@ -172,3 +172,13 @@
 - 下一步行动：
   - UI 同学按 `UI_HANDOFF.md` 接手表现层；程序侧讨论 `SHLT-F02`（未编码）
 
+## 2026-08-01（Demo UI 改用 TMP）
+
+- 范围：Demo 文字组件 `UnityEngine.UI.Text` → TextMeshPro
+- 已完成：
+  - `*Panel` / `PlayableLoopBootstrap` 改用 `TMP_Text` / `TextMeshProUGUI`
+  - UI asmdef 引用 `Unity.TextMeshPro`；Demo 优先系统 CJK 动态字体（LiberationSans 无汉字）
+  - 同步 `CORE-F03`、`UI_HANDOFF`、`README`
+- 下一步行动：
+  - 本机 Play 确认 TMP 文字正常显示
+

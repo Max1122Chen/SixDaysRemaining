@@ -26,7 +26,7 @@
 ## 当前可玩 Demo（给 UI 接手）
 
 **状态：** 主线已可在 Play Mode 跑通（主菜单 → 庇护所 → 战斗选 5 Commit → 凯旋 → 次日）。  
-**表现：** 运行时生成的极简 uGUI（灰底按钮 + 文本），细节靠 Console Log（`[Flow]` / `[Shelter]` / `[Combat]`）。
+**表现：** 运行时生成的极简 uGUI + **TMP 文本**（灰底按钮），细节靠 Console Log（`[Flow]` / `[Shelter]` / `[Combat]`）。
 
 ### 怎么跑
 

@@ -1,4 +1,5 @@
 using SixDaysRemaining.Combat;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +8,7 @@ namespace SixDaysRemaining.UI
     public class TriumphPanel : MonoBehaviour
     {
         [SerializeField]
-        private Text txtResult;
+        private TMP_Text txtResult;
 
         [SerializeField]
         private Button btnContinue;
@@ -24,7 +25,7 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        public void BindRefs(Text result, Button cont)
+        public void BindRefs(TMP_Text result, Button cont)
         {
             txtResult = result;
             btnContinue = cont;

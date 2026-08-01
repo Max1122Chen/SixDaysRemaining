@@ -1,4 +1,5 @@
 using SixDaysRemaining.Bootstrap;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +8,7 @@ namespace SixDaysRemaining.UI
     public class EndingPanel : MonoBehaviour
     {
         [SerializeField]
-        private Text txtEnding;
+        private TMP_Text txtEnding;
 
         [SerializeField]
         private Button btnToMenu;
@@ -24,7 +25,7 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        public void BindRefs(Text ending, Button toMenu)
+        public void BindRefs(TMP_Text ending, Button toMenu)
         {
             txtEnding = ending;
             btnToMenu = toMenu;

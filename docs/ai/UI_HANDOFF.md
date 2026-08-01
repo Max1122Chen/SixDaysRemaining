@@ -1,6 +1,6 @@
 # UI Demo 交接说明（给 UI / 程序协作者）
 
-> **最后更新：** `2026-07-30`  
+> **最后更新：** `2026-08-01`（Demo 文字改为 TMP）  
 > **分支：** `feat/playable-loop`（提交 `5cea410` 一带）  
 > **设计源：** `docs/ai/designs/CORE-F03-playable-loop.md`  
 > **目的：** 说明当前 **可玩 Demo UI** 长什么样、怎么跑起来、业务接口在哪、UI 层该碰什么/不该碰什么。
@@ -9,7 +9,7 @@
 
 ## 1. 一句话现状
 
-逻辑层（阶段机 / 庇护所 / 卡牌战斗）已可跑通；当前 UI 是 **运行时生成的极简 uGUI Demo**（灰底按钮 + 文本），反馈主要靠 **Console Log**，不是正式美术界面。
+逻辑层（阶段机 / 庇护所 / 卡牌战斗）已可跑通；当前 UI 是 **运行时生成的极简 uGUI Demo**（灰底按钮 + **TMP 文本**），反馈主要靠 **Console Log**，不是正式美术界面。
 
 **接手 UI 的人：** 可以用 Prefab/场景重做表现，但应继续调用现有 `AppFlowController` / `GameInstance` / 战斗与庇护所 API，**不要在 UI 里重写伤害或日结公式**。
 
@@ -46,16 +46,19 @@
 
 | 前缀 | 用途 | 例 |
 |------|------|-----|
-| `Txt_` | Text | `Txt_Status`, `Txt_Header`, `Txt_Selection` |
-| `Btn_` | Button | `Btn_Start`, `Btn_Depart`, `Btn_Hand1`…`Btn_Hand8` |
+| `Txt_` | `TMP_Text` / `TextMeshProUGUI` | `Txt_Status`, `Txt_Header`, `Txt_Selection` |
+| `Btn_` | Button（标签为 TMP） | `Btn_Start`, `Btn_Depart`, `Btn_Hand1`…`Btn_Hand8` |
 | `Root_` | 可选分区空节点 | `Root_HandButtons` |
 
 GO 名与脚本类名一致：`ShelterPanel` GO ↔ `ShelterPanel.cs`。
 
+**文字组件：** Demo 统一使用 **TextMeshPro**（`TMPro.TMP_Text`）。
+
+**中文字体（重要）：** 默认 `LiberationSans SDF` **不含汉字**（会变成 □ / 乱码警告）。`PlayableLoopBootstrap` 会优先从本机系统字体（如 Windows `msyh.ttc` / 微软雅黑、macOS PingFang）**运行时动态** `CreateFontAsset`（`AtlasPopulationMode.Dynamic`）。正式 UI 应收一份含中文的 TMP Font Asset（或 Dynamic OS Fallback），不要依赖 LiberationSans。
+
 ### 3.3 刻意没做的（留给正式 UI）
 
 - 卡面美术、选中高亮、血条 Fill、动画、多场景
-- TMP（当前用 `UnityEngine.UI.Text`）
 - 新 Input System Action Map
 
 ---

@@ -5,7 +5,8 @@
     "SixDaysRemaining.Bootstrap",
     "SixDaysRemaining.Gameplay",
     "SixDaysRemaining.Shelter",
-    "SixDaysRemaining.Combat"
+    "SixDaysRemaining.Combat",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

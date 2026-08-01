@@ -1,5 +1,6 @@
 using SixDaysRemaining.Bootstrap;
 using SixDaysRemaining.Shelter;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,10 +9,10 @@ namespace SixDaysRemaining.UI
     public class ShelterPanel : MonoBehaviour
     {
         [SerializeField]
-        private Text txtStatus;
+        private TMP_Text txtStatus;
 
         [SerializeField]
-        private Text txtSurvivors;
+        private TMP_Text txtSurvivors;
 
         [SerializeField]
         private Button btnAlloc0;
@@ -41,8 +42,8 @@ namespace SixDaysRemaining.UI
         }
 
         public void BindRefs(
-            Text status,
-            Text survivors,
+            TMP_Text status,
+            TMP_Text survivors,
             Button alloc0,
             Button alloc1,
             Button deposit,

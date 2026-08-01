@@ -2,6 +2,7 @@ using System.Text;
 using SixDaysRemaining.Bootstrap;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,13 +11,13 @@ namespace SixDaysRemaining.UI
     public class CombatPanel : MonoBehaviour
     {
         [SerializeField]
-        private Text txtHeader;
+        private TMP_Text txtHeader;
 
         [SerializeField]
-        private Text txtHandHint;
+        private TMP_Text txtHandHint;
 
         [SerializeField]
-        private Text txtSelection;
+        private TMP_Text txtSelection;
 
         [SerializeField]
         private Button[] btnHands = new Button[8];
@@ -52,9 +53,9 @@ namespace SixDaysRemaining.UI
         }
 
         public void BindRefs(
-            Text header,
-            Text handHint,
-            Text selection,
+            TMP_Text header,
+            TMP_Text handHint,
+            TMP_Text selection,
             Button[] hands,
             Button commit,
             Button clear,
@@ -159,7 +160,7 @@ namespace SixDaysRemaining.UI
                     continue;
                 }
 
-                Text label = button.GetComponentInChildren<Text>();
+                TMP_Text label = button.GetComponentInChildren<TMP_Text>();
                 if (i < player.Deck.Hand.Count)
                 {
                     button.interactable = gi.Combat.IsPlayerTurn;
