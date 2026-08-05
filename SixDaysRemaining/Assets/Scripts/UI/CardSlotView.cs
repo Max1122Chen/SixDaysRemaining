@@ -16,6 +16,7 @@ namespace SixDaysRemaining.UI
 
         private Color normalColor = new Color(0.42f, 0.45f, 0.52f, 0.55f);
         private Color highlightColor = new Color(0.55f, 0.80f, 1f, 0.9f);
+        private static readonly Color ActiveColor = new Color(1f, 0.78f, 0.25f, 0.95f);
 
         public static CardSlotView Create(Transform parent, int index, Vector2 pos, Vector2 size)
         {
@@ -52,6 +53,12 @@ namespace SixDaysRemaining.UI
         {
             frame.color = on ? highlightColor : normalColor;
             Rect.localScale = on ? new Vector3(1.06f, 1.06f, 1f) : Vector3.one;
+        }
+
+        public void SetActive(bool on)
+        {
+            frame.color = on ? ActiveColor : normalColor;
+            Rect.localScale = on ? new Vector3(1.08f, 1.08f, 1f) : Vector3.one;
         }
     }
 }

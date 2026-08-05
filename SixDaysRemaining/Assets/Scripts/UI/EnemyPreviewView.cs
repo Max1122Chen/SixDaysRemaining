@@ -53,24 +53,42 @@ namespace SixDaysRemaining.UI
                 + "  格挡 " + CardText.FormatNumber(enemy.Attributes.Block);
             statusText.text = status;
             phaseText.text = playerTurn ? "行动预告" : "敌人行动中";
-            intentText.text = playerTurn ? "下回合：" + DescribeNext(enemy) : "正在结算…";
+            intentText.text = playerTurn
+                ? "本回合 5 次行动：" + DescribeRound(enemy)
+                : "正在执行本回合行动…";
         }
 
-        private static string DescribeNext(EnemyCombatComponent e)
+        private static string DescribeRound(EnemyCombatComponent e)
         {
-            if (e.Pattern == null || e.Pattern.Turns == null || e.Pattern.Turns.Length == 0)
+            TurnAction[] actions = e.GetRoundActions();
+            if (actions == null || actions.Length == 0)
             {
                 return "准备中";
             }
 
-            int index = Mathf.Clamp(e.PatternIndex, 0, e.Pattern.Turns.Length - 1);
-            TurnAction action = e.Pattern.Turns[index];
-            if (action == null || action.Effects == null || action.Effects.Length == 0)
+            string[] parts = new string[actions.Length];
+            for (int i = 0; i < actions.Length; i++)
             {
-                return "蓄力";
+                TurnAction action = actions[i];
+                if (action == null)
+                {
+                    parts[i] = "空";
+                }
+                else if (!string.IsNullOrEmpty(action.DisplayName))
+                {
+                    parts[i] = action.DisplayName;
+                }
+                else if (action.Effects != null && action.Effects.Length > 0)
+                {
+                    parts[i] = CardText.DescribeEffects(action.Effects);
+                }
+                else
+                {
+                    parts[i] = "蓄力";
+                }
             }
 
-            return CardText.DescribeEffects(action.Effects);
+            return string.Join(" / ", parts);
         }
     }
 }

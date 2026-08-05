@@ -17,6 +17,7 @@ namespace SixDaysRemaining.Combat
         public int FoodGained;
         public int CorruptionDelta;
         public int TurnsElapsed;
+        public string RewardTier;
     }
 
     public class CombatStartConfig
@@ -28,6 +29,7 @@ namespace SixDaysRemaining.Combat
         public int DeckSeed = 1;
         public int WinFoodGained = 3;
         public int CorruptionDelta = 3;
+        public bool UseRoundRewards;
     }
 
     /// <summary>
@@ -42,6 +44,8 @@ namespace SixDaysRemaining.Combat
         private bool playerTurn;
         private bool battleOnly;
         private int turnsElapsed;
+        private bool roundActive;
+        private readonly List<CardInstance> roundCards = new List<CardInstance>();
         private CombatResult result;
         private GameObject spawnedEnemyGo;
 
@@ -65,6 +69,26 @@ namespace SixDaysRemaining.Combat
             get { return battleOnly; }
         }
 
+        public bool IsRoundActive
+        {
+            get { return roundActive && !finished; }
+        }
+
+        public int CurrentRound
+        {
+            get { return turnsElapsed; }
+        }
+
+        public int NextRound
+        {
+            get { return turnsElapsed + 1; }
+        }
+
+        public IReadOnlyList<CardInstance> RoundCards
+        {
+            get { return roundCards; }
+        }
+
         public CombatResult Result
         {
             get { return result; }
@@ -86,6 +110,93 @@ namespace SixDaysRemaining.Combat
             Transform combatRoot)
         {
             Begin(startConfig, isBattleOnly: true, player, enemyPrefab, combatRoot);
+        }
+
+        /// <summary>
+        /// Lock the current five-slot selection as this round's cards.
+        /// Enemy slot actions are read from the pattern on demand.
+        /// </summary>
+        public bool BeginRound()
+        {
+            if (finished || session == null || !playerTurn)
+            {
+                return false;
+            }
+
+            if (session.Player.Deck.Selection.Count != PlayerCombatComponent.CommitCount)
+            {
+                return false;
+            }
+
+            roundCards.Clear();
+            roundCards.AddRange(session.Player.Deck.TakeSelectionSnapshot());
+            roundActive = true;
+            playerTurn = false;
+            turnsElapsed++;
+            return true;
+        }
+
+        public CardInstance ResolvePlayerSlot(int slotIndex)
+        {
+            if (!roundActive || session == null || slotIndex < 0 || slotIndex >= roundCards.Count)
+            {
+                return null;
+            }
+
+            CardInstance card = roundCards[slotIndex];
+            session.Player.PlayResolved(card, session);
+            TryFinishByHp();
+            return card;
+        }
+
+        public bool ResolveEnemySlot(int slotIndex)
+        {
+            if (!roundActive || session == null || finished)
+            {
+                return false;
+            }
+
+            EnemyCombatComponent enemy = session.Enemies[0];
+            if (!enemy.IsAlive)
+            {
+                return false;
+            }
+
+            TurnAction action = enemy.GetSlotAction(slotIndex);
+            if (action != null)
+            {
+                CombatEffectExecutor.Execute(action.Effects, enemy, session);
+            }
+
+            TryFinishByHp();
+            return true;
+        }
+
+        /// <summary>
+        /// Finish a non-terminal round: clear block, cycle the enemy pattern,
+        /// and refill the hand to eight in draw order.
+        /// </summary>
+        public void EndRound()
+        {
+            if (!roundActive)
+            {
+                return;
+            }
+
+            roundActive = false;
+            if (finished || session == null)
+            {
+                roundCards.Clear();
+                return;
+            }
+
+            session.Player.SetBlock(0f);
+            EnemyCombatComponent enemy = session.Enemies[0];
+            enemy.SetBlock(0f);
+            enemy.AdvanceRoundPattern();
+            roundCards.Clear();
+            session.Player.OnPlayerTurnStart();
+            playerTurn = true;
         }
 
         public void NotifyPlayerCommitted()
@@ -155,6 +266,8 @@ namespace SixDaysRemaining.Combat
             battleOnly = isBattleOnly;
             finished = false;
             turnsElapsed = 0;
+            roundActive = false;
+            roundCards.Clear();
             result = default(CombatResult);
 
             player.InitCombatant(config.PlayerMaxHp);
@@ -265,10 +378,25 @@ namespace SixDaysRemaining.Combat
         {
             finished = true;
             playerTurn = false;
+            roundActive = false;
+            roundCards.Clear();
             result.Outcome = outcome;
-            result.FoodGained = foodGained;
-            result.CorruptionDelta = config != null ? config.CorruptionDelta : 3;
             result.TurnsElapsed = turnsElapsed;
+            result.RewardTier = "";
+
+            if (outcome == CombatOutcome.Win && config != null && config.UseRoundRewards)
+            {
+                CombatRewardTier tier = CombatRewardTable.GetTier(turnsElapsed);
+                result.FoodGained = tier.FoodGained;
+                result.CorruptionDelta = tier.CorruptionDelta;
+                result.RewardTier = tier.Label;
+            }
+            else
+            {
+                result.FoodGained = foodGained;
+                result.CorruptionDelta = config != null ? config.CorruptionDelta : 3;
+            }
+
             CleanupSpawnedEnemy();
             session = null;
         }

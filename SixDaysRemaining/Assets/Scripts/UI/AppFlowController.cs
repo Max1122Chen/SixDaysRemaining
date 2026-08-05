@@ -19,6 +19,7 @@ namespace SixDaysRemaining.UI
         private EndingView endingView;
         private SettingsView settingsView;
         private CreditsView creditsView;
+        private RandomEventView randomEventView;
 
         private GameObject activeScreen;
         private GameObject activeOverlay;
@@ -140,7 +141,9 @@ namespace SixDaysRemaining.UI
             CombatStartConfig config = new CombatStartConfig();
             // 同局不同天洗牌不同；标准化数据模板接入后替换这里的临时配置。
             config.DeckSeed = unchecked(gi.Gameplay.State.rngSeed + gi.Gameplay.State.day * 997);
-            config.EnemyMaxHp = 10f;
+            config.EnemyMaxHp = 30f;
+            config.EnemyPattern = EnemyPatternCatalog.FiveSlotLoop;
+            config.UseRoundRewards = true;
             gi.Combat.StartCombat(config, gi.PlayerCombat, gi.EnemyPrefab, gi.CombatRoot);
             ShowCombat();
         }
@@ -168,10 +171,49 @@ namespace SixDaysRemaining.UI
 
             gi.Shelter.DepositFood(pendingResult.FoodGained);
             gi.Gameplay.State.corruption += pendingResult.CorruptionDelta;
+
+            ShowShelter();
+
+            RandomEventDef eventDef = RandomEventCatalog.Pick(gi.Gameplay.State.rngSeed, gi.Gameplay.State.day);
+            RandomEventView view = EnsureRandomEventView();
+            ShowOverlay(view.gameObject);
+            view.ShowEvent(eventDef);
+        }
+
+        public void OnRandomEventChosen(RandomEventView view, RandomEventOption option)
+        {
+            GameInstance gi = Game;
+            if (gi == null || gi.Shelter == null || option == null)
+            {
+                return;
+            }
+
+            gi.Gameplay.State.foodStock = Mathf.Max(0, gi.Gameplay.State.foodStock + option.FoodDelta);
+            gi.Gameplay.State.corruption = Mathf.Max(0, gi.Gameplay.State.corruption + option.CorruptionDelta);
+            if (!string.IsNullOrEmpty(option.TakeInName))
+            {
+                gi.Shelter.TakeIn(option.TakeInName);
+            }
+
+            if (!string.IsNullOrEmpty(option.DriveAwayName))
+            {
+                gi.Shelter.Expel(option.DriveAwayName);
+            }
+
             gi.Shelter.ProcessEndOfDay();
+            view.ShowDayEnd(gi, gi.Shelter.ConsumePersonnelChanges());
+        }
+
+        public void OnDayEndContinue()
+        {
+            GameInstance gi = Game;
+            if (gi == null || gi.Gameplay == null)
+            {
+                return;
+            }
+
             gi.Gameplay.AdvancePhase();
             CloseOverlay();
-
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
                 ShowEnding();
@@ -192,6 +234,36 @@ namespace SixDaysRemaining.UI
         public void OnQuit()
         {
             Application.Quit();
+        }
+
+        private RandomEventView EnsureRandomEventView()
+        {
+            if (randomEventView == null)
+            {
+                randomEventView = RandomEventView.Build(GetUiRoot(), this);
+            }
+
+            return randomEventView;
+        }
+
+        private Transform GetUiRoot()
+        {
+            if (shelterView != null)
+            {
+                return shelterView.transform.parent;
+            }
+
+            if (combatView != null)
+            {
+                return combatView.transform.parent;
+            }
+
+            if (startView != null)
+            {
+                return startView.transform.parent;
+            }
+
+            return gameInstance != null ? gameInstance.transform : transform;
         }
 
         private void SwitchScreen(GameObject go)

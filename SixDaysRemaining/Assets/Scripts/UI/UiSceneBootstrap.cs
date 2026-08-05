@@ -94,6 +94,7 @@ namespace SixDaysRemaining.UI
             }
 
             TMP_FontAsset custom = null;
+            TMP_FontAsset typeface = null;
             TextMeshProUGUI[] texts = FindObjectsOfType<TextMeshProUGUI>(true);
             for (int i = 0; i < texts.Length; i++)
             {
@@ -103,18 +104,23 @@ namespace SixDaysRemaining.UI
                     continue;
                 }
 
+                if (font.name.IndexOf("hanyi", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return font;
+                }
+
                 if (custom == null)
                 {
                     custom = font;
                 }
 
-                if (font.name.IndexOf("typeface", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (typeface == null && font.name.IndexOf("typeface", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    return font;
+                    typeface = font;
                 }
             }
 
-            return custom != null ? custom : UiCjkFont.Load();
+            return typeface != null ? typeface : (custom != null ? custom : UiCjkFont.Load());
         }
 
         private static void ApplyFontToSceneUi(TMP_FontAsset font)

@@ -2,9 +2,20 @@ using SixDaysRemaining.Combat.Cards;
 
 namespace SixDaysRemaining.Combat
 {
+    public enum EnemyActionKind
+    {
+        Attack = 0,
+        Defend = 1,
+        Sleep = 2,
+        Confused = 3,
+        Empty = 4
+    }
+
     /// <summary>一轮敌方回合动作；可被行为表循环使用。</summary>
     public class TurnAction
     {
+        public string DisplayName;
+        public EnemyActionKind Kind;
         public EffectSpec[] Effects;
     }
 

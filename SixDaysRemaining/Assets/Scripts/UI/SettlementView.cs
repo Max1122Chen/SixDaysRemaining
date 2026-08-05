@@ -79,6 +79,11 @@ namespace SixDaysRemaining.UI
                     ? "撤退"
                     : "失败";
             yield return AddRow("战斗结果", outcome);
+            if (!string.IsNullOrEmpty(result.RewardTier))
+            {
+                yield return AddRow("奖励评级", result.RewardTier);
+            }
+
             yield return AddRow("获得食物", "+" + result.FoodGained);
             yield return AddRow("腐蚀", "+" + result.CorruptionDelta);
             yield return AddRow("战斗回合", result.TurnsElapsed.ToString());

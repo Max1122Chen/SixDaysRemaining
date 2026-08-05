@@ -19,6 +19,11 @@ namespace SixDaysRemaining.UI
         private const int SlotCount = 5;
         private static readonly Vector2 HandSize = new Vector2(140f, 190f);
         private static readonly Vector2 SlotSize = new Vector2(150f, 200f);
+        private static readonly Vector2 EnemyActionSlotSize = new Vector2(150f, 44f);
+        private static readonly Color HpFullColor = new Color(0.35f, 0.58f, 0.84f, 1f);
+        private static readonly Color HpMidColor = new Color(0.85f, 0.70f, 0.30f, 1f);
+        private static readonly Color HpLowColor = new Color(0.78f, 0.30f, 0.28f, 1f);
+        private static readonly Color HpBarColor = new Color(0.10f, 0.12f, 0.15f, 1f);
 
         private AppFlowController flow;
 
@@ -52,6 +57,30 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private EnemyPreviewView enemyPreview;
 
+        [SerializeField]
+        private Image roundProgressFill;
+
+        [SerializeField]
+        private TextMeshProUGUI roundProgressText;
+
+        [SerializeField]
+        private Image playerHpFill;
+
+        [SerializeField]
+        private TextMeshProUGUI playerHpText;
+
+        [SerializeField]
+        private Image enemyHpFill;
+
+        [SerializeField]
+        private TextMeshProUGUI enemyHpText;
+
+        [SerializeField]
+        private CanvasGroup transitionGroup;
+
+        [SerializeField]
+        private EnemyActionSlotView[] enemyActionSlots = new EnemyActionSlotView[SlotCount];
+
         private readonly List<CardView> handCards = new List<CardView>();
         private readonly CardView[] slotCards = new CardView[SlotCount];
 
@@ -82,11 +111,10 @@ namespace SixDaysRemaining.UI
             handLabel.color = new Color(0.75f, 0.78f, 0.82f, 1f);
             view.slotCountText = UiFactory.CreateText(panel.transform, "Txt_SlotCount", "0/5", 22, new Vector2(0f, 190f), new Vector2(120f, 30f));
 
-            view.commitButton = UiFactory.CreateButton(panel.transform, "Btn_Commit", "结算", null, new Vector2(-160f, -450f), new Vector2(140f, 52f), null, 22);
-            view.clearButton = UiFactory.CreateButton(panel.transform, "Btn_Clear", "清空", null, new Vector2(0f, -450f), new Vector2(120f, 48f), new Color(0.30f, 0.34f, 0.42f, 1f), 20);
-            view.fleeButton = UiFactory.CreateButton(panel.transform, "Btn_Flee", "撤退", null, new Vector2(160f, -450f), new Vector2(120f, 48f), UiFactory.Danger, 20);
+            view.commitButton = UiFactory.CreateButton(panel.transform, "Btn_Commit", "开始", null, new Vector2(-160f, -450f), new Vector2(140f, 52f), null, 22);
             view.settingsButton = UiFactory.CreateButton(panel.transform, "Btn_Settings", "设置", null, new Vector2(700f, -450f), new Vector2(110f, 44f), new Color(0.22f, 0.25f, 0.30f, 1f), 18);
 
+            view.BuildRoundProgress(panel.transform);
             view.bannerGroup = BuildBanner(panel.transform, out view.bannerText);
             view.Wire(flow);
             return view;
@@ -99,15 +127,22 @@ namespace SixDaysRemaining.UI
         {
             this.flow = flow;
             WireButton(commitButton, OnCommit);
-            WireButton(clearButton, OnClear);
-            WireButton(fleeButton, OnFlee);
+            if (clearButton != null)
+            {
+                clearButton.gameObject.SetActive(false);
+            }
+
+            if (fleeButton != null)
+            {
+                fleeButton.gameObject.SetActive(false);
+            }
+
+            SetButtonLabel(commitButton, "开始");
             if (settingsButton != null)
             {
                 settingsButton.onClick.RemoveAllListeners();
                 settingsButton.onClick.AddListener(flow.ShowSettings);
             }
-
-            ConfigureRaycastTargets();
 
             // 手动搭建场景时如果没有自己放 TurnBanner，自动补一个，避免 OpenCombat 崩溃。
             if (bannerGroup == null || bannerText == null)
@@ -122,6 +157,360 @@ namespace SixDaysRemaining.UI
                     slots[i].Setup(i);
                 }
             }
+
+            EnsureRoundProgress();
+            EnsureCombatStatusUi();
+            ConfigureRaycastTargets();
+        }
+
+        private void BuildRoundProgress(Transform parent)
+        {
+            Image bar = UiFactory.CreateImage(
+                parent,
+                "RoundProgressBar",
+                new Vector2(0f, 300f),
+                new Vector2(640f, 26f),
+                new Color(0.10f, 0.12f, 0.15f, 1f));
+            bar.raycastTarget = false;
+
+            Image fill = UiFactory.CreateImage(bar.transform, "Fill", Vector2.zero, Vector2.zero, UiFactory.Accent);
+            fill.raycastTarget = false;
+            RectTransform fillRt = fill.rectTransform;
+            fillRt.anchorMin = new Vector2(0f, 0f);
+            fillRt.anchorMax = new Vector2(0f, 1f);
+            fillRt.offsetMin = Vector2.zero;
+            fillRt.offsetMax = Vector2.zero;
+            roundProgressFill = fill;
+
+            Color markerColor = new Color(0.36f, 0.40f, 0.47f, 1f);
+            for (int i = 0; i < 2; i++)
+            {
+                int round = i == 0 ? 3 : 5;
+                float x = -320f + 640f * (round / (float)CombatRewardTable.MaxProgressRounds);
+                Image marker = UiFactory.CreateImage(bar.transform, "Marker" + round, new Vector2(x, 0f), new Vector2(3f, 26f), markerColor);
+                marker.raycastTarget = false;
+            }
+
+            roundProgressText = UiFactory.CreateText(parent, "Txt_RoundProgress", "", 18, new Vector2(0f, 262f), new Vector2(760f, 30f));
+            roundProgressText.raycastTarget = false;
+            roundProgressText.color = new Color(0.88f, 0.90f, 0.92f, 1f);
+            UpdateRoundProgress();
+        }
+
+        private void EnsureRoundProgress()
+        {
+            if (roundProgressFill == null || roundProgressText == null)
+            {
+                BuildRoundProgress(transform);
+            }
+            else
+            {
+                UpdateRoundProgress();
+            }
+        }
+
+        private void EnsureCombatStatusUi()
+        {
+            EnsureHpBars();
+            EnsureEnemyActionSlots();
+            EnsureTransitionOverlay();
+        }
+
+        private void EnsureHpBars()
+        {
+            if (playerHpFill == null || playerHpText == null)
+            {
+                BuildPlayerHpBar(transform);
+            }
+
+            if (enemyHpFill == null || enemyHpText == null)
+            {
+                BuildEnemyHpBar(transform);
+            }
+        }
+
+        private void BuildPlayerHpBar(Transform parent)
+        {
+            Image bar = UiFactory.CreateImage(
+                parent,
+                "PlayerHpBar",
+                new Vector2(140f, 190f),
+                new Vector2(320f, 24f),
+                HpBarColor);
+            RectTransform barRt = bar.rectTransform;
+            barRt.anchorMin = Vector2.zero;
+            barRt.anchorMax = Vector2.zero;
+            barRt.anchoredPosition = new Vector2(140f, 190f);
+            bar.raycastTarget = false;
+
+            playerHpFill = UiFactory.CreateImage(bar.transform, "Fill", Vector2.zero, Vector2.zero, HpFullColor);
+            playerHpFill.raycastTarget = false;
+            RectTransform fillRt = playerHpFill.rectTransform;
+            fillRt.anchorMin = new Vector2(0f, 0f);
+            fillRt.anchorMax = new Vector2(0f, 1f);
+            fillRt.offsetMin = Vector2.zero;
+            fillRt.offsetMax = Vector2.zero;
+
+            playerHpText = UiFactory.CreateText(parent, "Txt_PlayerHp", "HP -/-", 14, new Vector2(140f, 162f), new Vector2(320f, 22f));
+            RectTransform textRt = playerHpText.rectTransform;
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.zero;
+            textRt.anchoredPosition = new Vector2(140f, 162f);
+            playerHpText.raycastTarget = false;
+        }
+
+        private void BuildEnemyHpBar(Transform parent)
+        {
+            Image bar = UiFactory.CreateImage(
+                parent,
+                "EnemyHpBar",
+                new Vector2(-160f, -90f),
+                new Vector2(600f, 24f),
+                HpBarColor);
+            RectTransform barRt = bar.rectTransform;
+            barRt.anchorMin = Vector2.one;
+            barRt.anchorMax = Vector2.one;
+            barRt.anchoredPosition = new Vector2(-160f, -90f);
+            bar.raycastTarget = false;
+
+            enemyHpFill = UiFactory.CreateImage(bar.transform, "Fill", Vector2.zero, Vector2.zero, HpFullColor);
+            enemyHpFill.raycastTarget = false;
+            RectTransform fillRt = enemyHpFill.rectTransform;
+            fillRt.anchorMin = new Vector2(0f, 0f);
+            fillRt.anchorMax = new Vector2(0f, 1f);
+            fillRt.offsetMin = Vector2.zero;
+            fillRt.offsetMax = Vector2.zero;
+
+            enemyHpText = UiFactory.CreateText(parent, "Txt_EnemyHp", "HP -/-", 14, new Vector2(-160f, -120f), new Vector2(600f, 22f));
+            RectTransform textRt = enemyHpText.rectTransform;
+            textRt.anchorMin = Vector2.one;
+            textRt.anchorMax = Vector2.one;
+            textRt.anchoredPosition = new Vector2(-160f, -120f);
+            enemyHpText.raycastTarget = false;
+        }
+
+        private void EnsureEnemyActionSlots()
+        {
+            if (enemyActionSlots == null || enemyActionSlots.Length != SlotCount)
+            {
+                enemyActionSlots = new EnemyActionSlotView[SlotCount];
+            }
+
+            Transform slotParent = cardLayer != null ? cardLayer : transform;
+            for (int i = 0; i < enemyActionSlots.Length; i++)
+            {
+                if (enemyActionSlots[i] != null)
+                {
+                    enemyActionSlots[i].Setup(i);
+                    continue;
+                }
+
+                enemyActionSlots[i] = EnemyActionSlotView.Create(
+                    slotParent,
+                    i,
+                    EnemyActionSlotPos(i),
+                    EnemyActionSlotSize);
+            }
+        }
+
+        private Vector2 EnemyActionSlotPos(int index)
+        {
+            Vector2 pos = CurrentSlotPos(index);
+            pos.y += 190f;
+            return pos;
+        }
+
+        private void EnsureTransitionOverlay()
+        {
+            if (transitionGroup != null)
+            {
+                return;
+            }
+
+            GameObject overlay = UiFactory.CreatePanel(
+                transform,
+                "RoundTransition",
+                new Color(0.02f, 0.02f, 0.04f, 0.97f));
+            CanvasGroup group = overlay.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            overlay.SetActive(false);
+
+            TextMeshProUGUI label = UiFactory.CreateText(
+                overlay.transform,
+                "Txt_NextRound",
+                "下一回合",
+                34,
+                Vector2.zero,
+                new Vector2(800f, 80f));
+            label.color = Color.white;
+            transitionGroup = group;
+        }
+
+        private void RefreshHpBars()
+        {
+            GameInstance gi = flow != null ? flow.Game : null;
+            if (gi == null || gi.Combat == null || gi.Combat.Session == null)
+            {
+                return;
+            }
+
+            PlayerCombatComponent player = gi.Combat.Session.Player;
+            SetHpBar(
+                playerHpFill,
+                playerHpText,
+                player != null ? player.Attributes.HP : 0f,
+                player != null ? player.Attributes.MaxHP : 1f,
+                player != null ? player.Attributes.Block : 0f);
+
+            EnemyCombatComponent enemy = gi.Combat.Session.Enemies.Count > 0
+                ? gi.Combat.Session.Enemies[0]
+                : null;
+            SetHpBar(
+                enemyHpFill,
+                enemyHpText,
+                enemy != null ? enemy.Attributes.HP : 0f,
+                enemy != null ? enemy.Attributes.MaxHP : 1f,
+                enemy != null ? enemy.Attributes.Block : 0f);
+        }
+
+        private static void SetHpBar(
+            Image fill,
+            TextMeshProUGUI text,
+            float hp,
+            float maxHp,
+            float block)
+        {
+            if (fill == null || text == null)
+            {
+                return;
+            }
+
+            float ratio = maxHp > 0f ? Mathf.Clamp01(hp / maxHp) : 0f;
+            RectTransform rt = fill.rectTransform;
+            Vector2 anchorMax = rt.anchorMax;
+            anchorMax.x = ratio;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            fill.color = ratio <= 0.25f ? HpLowColor : (ratio <= 0.5f ? HpMidColor : HpFullColor);
+            text.text = "HP " + CardText.FormatNumber(hp)
+                + "/" + CardText.FormatNumber(maxHp)
+                + "  格挡 " + CardText.FormatNumber(block);
+        }
+
+        private void RefreshEnemyActions()
+        {
+            if (enemyActionSlots == null)
+            {
+                return;
+            }
+
+            GameInstance gi = flow != null ? flow.Game : null;
+            EnemyCombatComponent enemy = gi != null && gi.Combat != null && gi.Combat.Session != null
+                && gi.Combat.Session.Enemies.Count > 0
+                ? gi.Combat.Session.Enemies[0]
+                : null;
+            TurnAction[] actions = enemy != null ? enemy.GetRoundActions() : null;
+            for (int i = 0; i < enemyActionSlots.Length; i++)
+            {
+                if (enemyActionSlots[i] == null)
+                {
+                    continue;
+                }
+
+                enemyActionSlots[i].SetAction(
+                    actions != null && i < actions.Length ? actions[i] : null);
+            }
+        }
+
+        private void SetEnemyActionActive(int index, bool on)
+        {
+            if (enemyActionSlots == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < enemyActionSlots.Length; i++)
+            {
+                if (enemyActionSlots[i] != null)
+                {
+                    enemyActionSlots[i].SetActive(i == index && on);
+                }
+            }
+        }
+
+        private string DescribeEnemyAction(int index)
+        {
+            GameInstance gi = flow != null ? flow.Game : null;
+            if (gi == null || gi.Combat == null || gi.Combat.Session == null
+                || gi.Combat.Session.Enemies.Count == 0)
+            {
+                return "空";
+            }
+
+            TurnAction action = gi.Combat.Session.Enemies[0].GetSlotAction(index);
+            if (action != null && !string.IsNullOrEmpty(action.DisplayName))
+            {
+                return action.DisplayName;
+            }
+
+            if (action != null && action.Effects != null && action.Effects.Length > 0)
+            {
+                return CardText.DescribeEffects(action.Effects);
+            }
+
+            return "空";
+        }
+
+        private static void SetButtonLabel(Button button, string label)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (text != null)
+            {
+                text.text = label;
+            }
+        }
+
+        private void UpdateRoundProgress()
+        {
+            if (roundProgressFill == null || roundProgressText == null)
+            {
+                return;
+            }
+
+            GameInstance gi = flow != null ? flow.Game : null;
+            if (gi == null || gi.Combat == null || gi.Combat.IsFinished)
+            {
+                roundProgressText.text = "准备";
+                SetRoundProgress(0f);
+                return;
+            }
+
+            int round = Mathf.Max(1, gi.Combat.IsRoundActive
+                ? gi.Combat.CurrentRound
+                : gi.Combat.NextRound);
+            CombatRewardTier tier = CombatRewardTable.GetTier(round);
+            roundProgressText.text = "第 " + round + " 回合 / " + CombatRewardTable.MaxProgressRounds
+                + "   ·   当前奖励：" + tier.Label
+                + "  食物 +" + tier.FoodGained
+                + "  腐蚀 +" + tier.CorruptionDelta;
+            SetRoundProgress(CombatRewardTable.Progress01(round));
+        }
+
+        private void SetRoundProgress(float value)
+        {
+            RectTransform rt = roundProgressFill.rectTransform;
+            Vector2 anchorMax = rt.anchorMax;
+            anchorMax.x = Mathf.Clamp01(value);
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
         }
 
         private void ConfigureRaycastTargets()
@@ -134,6 +523,36 @@ namespace SixDaysRemaining.UI
             if (slotCountText != null)
             {
                 slotCountText.raycastTarget = false;
+            }
+
+            if (roundProgressFill != null)
+            {
+                roundProgressFill.raycastTarget = false;
+            }
+
+            if (roundProgressText != null)
+            {
+                roundProgressText.raycastTarget = false;
+            }
+
+            if (playerHpFill != null)
+            {
+                playerHpFill.raycastTarget = false;
+            }
+
+            if (playerHpText != null)
+            {
+                playerHpText.raycastTarget = false;
+            }
+
+            if (enemyHpFill != null)
+            {
+                enemyHpFill.raycastTarget = false;
+            }
+
+            if (enemyHpText != null)
+            {
+                enemyHpText.raycastTarget = false;
             }
 
             if (cardLayer != null)
@@ -215,8 +634,33 @@ namespace SixDaysRemaining.UI
                 + "  格挡 " + CardText.FormatNumber(player.Attributes.Block);
             enemyPreview.Refresh(gi.Combat.IsPlayerTurn);
 
+            RefreshHpBars();
+            RefreshEnemyActions();
+            UpdateRoundProgress();
             RebuildCards(player);
             UpdateButtons();
+        }
+
+        private void RefreshStatusOnly()
+        {
+            GameInstance gi = flow.Game;
+            if (gi == null || gi.Combat == null || gi.Combat.Session == null)
+            {
+                return;
+            }
+
+            PlayerCombatComponent player = gi.Combat.Session.Player;
+            EnemyCombatComponent enemy = gi.Combat.Session.Enemies.Count > 0
+                ? gi.Combat.Session.Enemies[0]
+                : null;
+            enemyPreview.Bind(enemy);
+            playerStatusText.text = "我方  HP " + CardText.FormatNumber(player.Attributes.HP)
+                + "/" + CardText.FormatNumber(player.Attributes.MaxHP)
+                + "  格挡 " + CardText.FormatNumber(player.Attributes.Block);
+            enemyPreview.Refresh(false);
+            RefreshHpBars();
+            RefreshEnemyActions();
+            UpdateRoundProgress();
         }
 
         private void RebuildCards(PlayerCombatComponent player)
@@ -502,9 +946,10 @@ namespace SixDaysRemaining.UI
             int count = gi != null && gi.Combat != null && gi.Combat.Session != null
                 ? gi.Combat.Session.Player.Deck.Selection.Count
                 : 0;
-            commitButton.interactable = playerTurn && count == PlayerCombatComponent.CommitCount;
-            clearButton.interactable = playerTurn && count > 0;
-            fleeButton.interactable = playerTurn;
+            if (commitButton != null)
+            {
+                commitButton.interactable = playerTurn && count == PlayerCombatComponent.CommitCount;
+            }
         }
 
         private void OnCommit()
@@ -521,29 +966,125 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            StartCoroutine(CommitRoutine());
+            StartCoroutine(StartRoundRoutine());
         }
 
-        private IEnumerator CommitRoutine()
+        private IEnumerator StartRoundRoutine()
         {
             SetInputEnabled(false);
-            ShowBanner("结算中…");
-            yield return new WaitForSecondsRealtime(0.45f);
-
             GameInstance gi = flow.Game;
-            EnemyCombatComponent enemy = gi.Combat.Session.Enemies[0];
-            gi.PlayerCombat.CommitPlay(enemy);
-            gi.Combat.NotifyPlayerCommitted();
+            if (!gi.Combat.BeginRound())
+            {
+                SetInputEnabled(true);
+                ShowBanner("需要选满 5 张牌");
+                yield break;
+            }
+
+            ShowBanner("第 " + gi.Combat.CurrentRound + " 回合开始");
+            RefreshStatusOnly();
+            yield return new WaitForSecondsRealtime(0.7f);
+
+            for (int i = 0; i < PlayerCombatComponent.CommitCount; i++)
+            {
+                if (gi.Combat.IsFinished)
+                {
+                    break;
+                }
+
+                SetSlotActive(i, true);
+                SetEnemyActionActive(i, true);
+                ShowBanner("卡槽 " + (i + 1) + "：" + DescribeRoundCard(i)
+                    + "  →  敌方 " + DescribeEnemyAction(i));
+                RefreshStatusOnly();
+                yield return new WaitForSecondsRealtime(0.45f);
+
+                gi.Combat.ResolvePlayerSlot(i);
+                RefreshStatusOnly();
+                if (gi.Combat.IsFinished)
+                {
+                    SetSlotActive(i, false);
+                    SetEnemyActionActive(i, false);
+                    break;
+                }
+
+                yield return new WaitForSecondsRealtime(0.35f);
+
+                if (gi.Combat.ResolveEnemySlot(i))
+                {
+                    ShowBanner("敌方第 " + (i + 1) + " 次行动：" + DescribeEnemyAction(i));
+                }
+
+                RefreshStatusOnly();
+                if (gi.Combat.IsFinished)
+                {
+                    SetSlotActive(i, false);
+                    SetEnemyActionActive(i, false);
+                    break;
+                }
+
+                yield return new WaitForSecondsRealtime(0.45f);
+                SetSlotActive(i, false);
+                SetEnemyActionActive(i, false);
+                yield return new WaitForSecondsRealtime(0.1f);
+            }
+
             if (gi.Combat.IsFinished)
             {
+                SetSlotActive(-1, false);
+                SetEnemyActionActive(-1, false);
+                SetInputEnabled(false);
                 flow.OnCombatFinished(gi.Combat.Result);
                 yield break;
             }
 
-            yield return new WaitForSecondsRealtime(0.6f);
+            SetSlotActive(-1, false);
+            SetEnemyActionActive(-1, false);
+            gi.Combat.EndRound();
+            Refresh();
+            yield return StartCoroutine(RoundTransitionRoutine());
             Refresh();
             ShowBanner("你的回合");
             SetInputEnabled(true);
+        }
+
+        private void SetSlotActive(int index, bool on)
+        {
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null)
+                {
+                    slots[i].SetActive(i == index && on);
+                }
+            }
+        }
+
+        private string DescribeRoundCard(int index)
+        {
+            GameInstance gi = flow.Game;
+            if (gi == null || gi.Combat == null || index < 0 || index >= gi.Combat.RoundCards.Count)
+            {
+                return "出牌";
+            }
+
+            CardDef def = gi.Combat.RoundCards[index].Def;
+            return def != null && !string.IsNullOrEmpty(def.DisplayName) ? def.DisplayName : "出牌";
+        }
+
+        private IEnumerator RoundTransitionRoutine()
+        {
+            ShowBanner("下一回合");
+            if (transitionGroup == null)
+            {
+                yield return new WaitForSecondsRealtime(1.6f);
+                yield break;
+            }
+
+            transitionGroup.gameObject.SetActive(true);
+            transitionGroup.alpha = 0f;
+            yield return UiAnim.Fade(transitionGroup, 1f, 0.3f);
+            yield return new WaitForSecondsRealtime(0.9f);
+            yield return UiAnim.Fade(transitionGroup, 0f, 0.4f);
+            transitionGroup.gameObject.SetActive(false);
         }
 
         private void OnClear()

@@ -46,6 +46,22 @@ namespace SixDaysRemaining.Combat
             deck.ClearSelection();
         }
 
+        /// <summary>
+        /// Resolve a single slot card through the session target resolver,
+        /// then move it to the bottom of the draw pile.
+        /// </summary>
+        public void PlayResolved(CardInstance card, CombatSession session)
+        {
+            if (card == null || card.Def == null)
+            {
+                return;
+            }
+
+            CombatEffectExecutor.Execute(card.Def.Effects, this, session);
+            deck.RemoveFromHand(card);
+            deck.AddToBottom(card);
+        }
+
         public bool CommitPlay(CombatComponent enemyTarget)
         {
             if (deck.Selection.Count != CommitCount)

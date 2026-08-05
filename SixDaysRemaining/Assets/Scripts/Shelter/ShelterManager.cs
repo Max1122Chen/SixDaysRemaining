@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SixDaysRemaining.Gameplay;
 
@@ -14,6 +15,7 @@ namespace SixDaysRemaining.Shelter
         public const int DefaultDailyHungerDecay = 1;
 
         private readonly List<Survivor> survivors = new List<Survivor>();
+        private readonly List<string> personnelChanges = new List<string>();
         private readonly GameState state;
 
         public int HungryThreshold { get; set; } = DefaultHungryThreshold;
@@ -23,6 +25,11 @@ namespace SixDaysRemaining.Shelter
         public IReadOnlyList<Survivor> Survivors
         {
             get { return survivors; }
+        }
+
+        public IReadOnlyList<string> RecentPersonnelChanges
+        {
+            get { return personnelChanges; }
         }
 
         public int Population
@@ -53,6 +60,7 @@ namespace SixDaysRemaining.Shelter
         public void InitializeDefaultRoster(int startingFoodStock = DefaultStartingFoodStock)
         {
             survivors.Clear();
+            personnelChanges.Clear();
             RegisterSurvivor(new Survivor { name = "Alice", hunger = 3, status = SurvivorStatus.Healthy });
             RegisterSurvivor(new Survivor { name = "Bob", hunger = 3, status = SurvivorStatus.Healthy });
             state.foodStock = startingFoodStock;
@@ -69,6 +77,43 @@ namespace SixDaysRemaining.Shelter
             survivors.Add(survivor);
             UpdateSurvivorStatus(survivor);
             SyncPopulation();
+        }
+
+        public void TakeIn(string name)
+        {
+            if (string.IsNullOrEmpty(name) || FindByName(name) != null)
+            {
+                return;
+            }
+
+            RegisterSurvivor(new Survivor
+            {
+                name = name,
+                hunger = 2,
+                status = SurvivorStatus.Hungry
+            });
+            personnelChanges.Add("你收留了 " + name);
+        }
+
+        public bool Expel(string nameHint)
+        {
+            Survivor target = FindByName(nameHint) ?? FindFirstAlive();
+            if (target == null)
+            {
+                return false;
+            }
+
+            target.status = SurvivorStatus.Left;
+            SyncPopulation();
+            personnelChanges.Add("驱赶了 " + target.name);
+            return true;
+        }
+
+        public List<string> ConsumePersonnelChanges()
+        {
+            List<string> copy = new List<string>(personnelChanges);
+            personnelChanges.Clear();
+            return copy;
         }
 
         /// <summary>
@@ -130,6 +175,7 @@ namespace SixDaysRemaining.Shelter
                 if (wasDying && survivor.hunger == 0)
                 {
                     survivor.status = SurvivorStatus.Dead;
+                    personnelChanges.Add(survivor.name + " 因饥饿离世");
                 }
                 else
                 {
@@ -169,6 +215,37 @@ namespace SixDaysRemaining.Shelter
         private static bool IsAlive(Survivor survivor)
         {
             return survivor.status != SurvivorStatus.Dead && survivor.status != SurvivorStatus.Left;
+        }
+
+        private Survivor FindByName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                if (string.Equals(survivors[i].name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return survivors[i];
+                }
+            }
+
+            return null;
+        }
+
+        private Survivor FindFirstAlive()
+        {
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                if (IsAlive(survivors[i]))
+                {
+                    return survivors[i];
+                }
+            }
+
+            return null;
         }
     }
 }

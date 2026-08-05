@@ -7,6 +7,8 @@ namespace SixDaysRemaining.Combat
     /// </summary>
     public class EnemyCombatComponent : CombatComponent
     {
+        public const int ActionsPerRound = 5;
+
         private EnemyPatternDef pattern;
         private int patternIndex;
 
@@ -29,6 +31,38 @@ namespace SixDaysRemaining.Combat
         {
             pattern = patternDef;
             patternIndex = 0;
+        }
+
+        public TurnAction GetSlotAction(int slot)
+        {
+            if (pattern == null || pattern.Turns == null || pattern.Turns.Length == 0)
+            {
+                return null;
+            }
+
+            int index = (patternIndex + slot) % pattern.Turns.Length;
+            return pattern.Turns[index];
+        }
+
+        public TurnAction[] GetRoundActions()
+        {
+            TurnAction[] actions = new TurnAction[ActionsPerRound];
+            for (int i = 0; i < ActionsPerRound; i++)
+            {
+                actions[i] = GetSlotAction(i);
+            }
+
+            return actions;
+        }
+
+        public void AdvanceRoundPattern()
+        {
+            if (pattern == null || pattern.Turns == null || pattern.Turns.Length == 0)
+            {
+                return;
+            }
+
+            patternIndex = (patternIndex + ActionsPerRound) % pattern.Turns.Length;
         }
 
         public void ExecuteTurn(CombatSession session)
