@@ -1226,6 +1226,21 @@ namespace SixDaysRemaining.UI
         {
             if (slots != null && index >= 0 && index < slots.Length && slots[index] != null && slots[index].Rect != null)
             {
+                if (cardLayer != null)
+                {
+                    Canvas canvas = cardLayer.GetComponentInParent<Canvas>();
+                    Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                        ? canvas.worldCamera
+                        : null;
+                    Vector3 worldPos = slots[index].Rect.position;
+                    Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, worldPos);
+                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                            cardLayer, screenPos, cam, out Vector2 localPos))
+                    {
+                        return localPos;
+                    }
+                }
+
                 return slots[index].Rect.anchoredPosition;
             }
 
