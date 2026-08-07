@@ -17,6 +17,7 @@ namespace SixDaysRemaining.Tests.EditMode
             host = new CombatTestHost();
             manager = new CombatManager();
             player = host.AddPlayer();
+            CombatContent.Ensure();
         }
 
         [TearDown]
@@ -37,15 +38,13 @@ namespace SixDaysRemaining.Tests.EditMode
             {
                 PlayerMaxHp = 100f,
                 EnemyMaxHp = 100f,
-                EnemyPattern = EnemyPatternCatalog.FiveSlotLoop,
+                EncounterId = EncounterIds.Mob01,
                 DeckSeed = 1,
                 UseRoundRewards = true
             }, player, enemyPrefab: null, combatRoot: null);
 
             RebuildDeckAllStrike(player);
-            SelectFive(player);
-
-            Assert.IsTrue(manager.BeginRound());
+            Assert.IsTrue(manager.BeginRound(FillSlots(player, 5)));
             Assert.AreEqual(1, manager.CurrentRound);
             Assert.IsTrue(manager.IsRoundActive);
             Assert.IsFalse(manager.IsPlayerTurn);
@@ -71,57 +70,49 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void BeginRound_RequiresFiveSelectedCards()
+        public void BeginRound_AllowsEmptySlots()
         {
             manager.StartBattleOnly(new CombatStartConfig
             {
+                DeckSeed = 1,
+                EncounterId = EncounterIds.Mob01
+            }, player, enemyPrefab: null, combatRoot: null);
+
+            CardInstance[] empty = new CardInstance[5];
+            Assert.IsTrue(manager.BeginRound(empty));
+            Assert.AreEqual(1, manager.PassivePenaltyStacks);
+        }
+
+        [Test]
+        public void DayEncounter_UsesDesignerHp()
+        {
+            manager.StartBattleOnly(new CombatStartConfig
+            {
+                Day = 1,
                 DeckSeed = 1
             }, player, enemyPrefab: null, combatRoot: null);
 
-            Assert.IsFalse(manager.BeginRound());
-            SelectFive(player);
-            Assert.IsTrue(manager.BeginRound());
+            Assert.AreEqual(35f, manager.Session.Enemies[0].Attributes.MaxHP);
+            Assert.AreEqual(EncounterIds.Mob01, manager.ActiveEncounter.Id);
         }
 
         [Test]
-        public void Win_WithRoundRewards_UsesTier()
-        {
-            manager.StartBattleOnly(new CombatStartConfig
-            {
-                PlayerMaxHp = 100f,
-                EnemyMaxHp = 1f,
-                EnemyPattern = EnemyPatternCatalog.FiveSlotLoop,
-                DeckSeed = 1,
-                UseRoundRewards = true
-            }, player, enemyPrefab: null, combatRoot: null);
-
-            RebuildDeckAllStrike(player);
-            SelectFive(player);
-            Assert.IsTrue(manager.BeginRound());
-
-            Assert.IsNotNull(manager.ResolvePlayerSlot(0));
-
-            Assert.IsTrue(manager.IsFinished);
-            Assert.AreEqual(CombatOutcome.Win, manager.Result.Outcome);
-            Assert.AreEqual(4, manager.Result.FoodGained);
-            Assert.AreEqual(1, manager.Result.CorruptionDelta);
-            Assert.AreEqual("速战", manager.Result.RewardTier);
-        }
-
-        [Test]
-        public void FiveSlotLoop_HasOneActionPerSlot()
+        public void Mob01_HasFiveIntentSlots()
         {
             EnemyCombatComponent enemy = host.AddEnemy();
-            enemy.BindPattern(EnemyPatternCatalog.FiveSlotLoop);
-            Assert.AreEqual(EnemyCombatComponent.ActionsPerRound, enemy.GetRoundActions().Length);
+            enemy.BindEncounter(CombatContent.Encounters.Get(EncounterIds.Mob01), CombatContent.Cards);
+            Assert.AreEqual(EnemyCombatComponent.ActionsPerRound, enemy.GetRoundCards().Length);
         }
 
-        private static void SelectFive(PlayerCombatComponent p)
+        private static CardInstance[] FillSlots(PlayerCombatComponent p, int count)
         {
-            for (int i = 0; i < PlayerCombatComponent.CommitCount; i++)
+            CardInstance[] slots = new CardInstance[5];
+            for (int i = 0; i < count; i++)
             {
-                Assert.IsTrue(p.SelectFromHand(i));
+                slots[i] = p.Deck.Hand[i];
             }
+
+            return slots;
         }
 
         private static void RebuildDeckAllStrike(PlayerCombatComponent p)

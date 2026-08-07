@@ -14,8 +14,12 @@
 | `COMB-F03` | PlayerCombat + 选 5 Commit | COMB | Done | `designs/COMB-F03-player-cards.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F04` | EnemyCombat + 行为表 + 轻量 Session | COMB | Done | `designs/COMB-F04-enemy-pattern.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F05` | CombatManager + 编排 + 结算 | COMB | Done | `designs/COMB-F05-combat-manager.md` | — | `feat/combat` | Max | 同分支 |
-| `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Review | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | Demo 已交；正式 UI 见 `UI_HANDOFF.md` |
-| `EVT-F01` | 突发事件系统 | EVT | Deferred | — | — | `feat/events` | Max | 设计明朗后再写 design |
+| `COMB-F06` | 统一卡牌模型 + 设计师内容（内存种子） | COMB | In Progress | `designs/COMB-F06-designer-content.md` | — | `feat/combat` | Max | 意图=卡牌；Library；UI 已接线 |
+| `COMB-F07` | 黑化卡牌 | COMB | Deferred | — | — | — | Max | 腐蚀&gt;40；F06 预留 CanBlacken |
+| `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Deferred | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat-data-driven` | Max | 依赖 F06 接口；本轮不实现 |
+| `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Review | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | Demo/UI 已合 main；文档待跟 UI |
+| `SHLT-F02` | 幸存者特质 / NPC 模板挂钩 | SHLT | Discuss | — | — | — | Max | 人物模板2.0；护士/小贼等；未开 design |
+| `EVT-F01` | 突发事件系统 | EVT | Deferred | — | — | `feat/events` | Max | 四套事件池；设计明朗后再写 design |
 
 ## 域代码
 

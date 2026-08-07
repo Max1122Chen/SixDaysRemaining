@@ -1,4 +1,3 @@
-using System.Reflection;
 using NUnit.Framework;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
@@ -13,6 +12,7 @@ namespace SixDaysRemaining.Tests.EditMode
         public void SetUp()
         {
             host = new CombatTestHost();
+            CombatContent.Ensure();
         }
 
         [TearDown]
@@ -22,46 +22,80 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void Pattern_LoopsAndAppliesAttackThenBlock()
+        public void Encounter_PlanCycles_AndResolvesIntentCards()
         {
             PlayerCombatComponent player = host.AddPlayer();
-            player.InitCombatant(40f);
+            player.InitCombatant(100f);
             EnemyCombatComponent enemy = host.AddEnemy();
-            enemy.InitCombatant(30f);
-            enemy.BindPattern(EnemyPatternCatalog.BasicAttackDefendLoop);
+            EnemyEncounterDef encounter = CombatContent.Encounters.Get(EncounterIds.Mob01);
+            enemy.InitCombatant(encounter.MaxHp);
+            enemy.BindEncounter(encounter, CombatContent.Cards);
+
+            Assert.AreEqual(0, enemy.PlanIndex);
+            CardInstance first = enemy.GetSlotCard(0);
+            Assert.IsNotNull(first);
+            Assert.AreEqual(CardIds.Attack(4), first.Def.Id);
 
             CombatSession session = new CombatSession(player, new[] { enemy });
+            CombatResolveContext context = new CombatResolveContext
+            {
+                Session = session,
+                PlayerSlots = new CardInstance[5],
+                EnemySlots = enemy.GetRoundCards(),
+                DamageBonus = enemy.DamageBonus,
+                Rng = new System.Random(1)
+            };
 
             float playerHp = player.Attributes.HP;
-            enemy.ExecuteTurn(session);
-            Assert.AreEqual(playerHp - 8f, player.Attributes.HP);
-            Assert.AreEqual(1, enemy.PatternIndex);
+            CombatEffectExecutor.Execute(enemy.GetSlotCard(0), enemy, context);
+            Assert.AreEqual(playerHp - 4f, player.Attributes.HP);
 
-            enemy.ExecuteTurn(session);
-            Assert.AreEqual(5f, enemy.Attributes.Block);
-            Assert.AreEqual(2, enemy.PatternIndex);
+            enemy.AdvanceRoundPlan();
+            Assert.AreEqual(1, enemy.PlanIndex);
+            Assert.AreEqual(CardIds.Attack(5), enemy.GetSlotCard(0).Def.Id);
 
-            enemy.ExecuteTurn(session);
-            Assert.AreEqual(0, enemy.PatternIndex);
-
-            enemy.ExecuteTurn(session);
-            Assert.AreEqual(playerHp - 16f, player.Attributes.HP);
+            enemy.AdvanceRoundPlan();
+            enemy.AdvanceRoundPlan();
+            enemy.AdvanceRoundPlan();
+            Assert.AreEqual(0, enemy.PlanIndex);
         }
 
         [Test]
-        public void EnemyPatternDef_HasNoIdentityFields()
+        public void AttackCharge_IsTelegraphWithNoCombatEffects()
         {
-            FieldInfo[] fields = typeof(EnemyPatternDef).GetFields(
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            for (int i = 0; i < fields.Length; i++)
+            CardDef charge = CombatContent.Cards.Get(CardIds.AttackCharge);
+            Assert.AreEqual("攻击蓄力", charge.DisplayName);
+            Assert.IsTrue((charge.Tags & CardTag.Charge) != 0);
+            Assert.IsTrue(charge.Effects == null || charge.Effects.Length == 0);
+            Assert.IsTrue(charge.Description.Contains("强力攻击") || charge.Description.Contains("强攻"));
+
+            PlayerCombatComponent player = host.AddPlayer();
+            player.InitCombatant(50f);
+            EnemyCombatComponent enemy = host.AddEnemy();
+            enemy.InitCombatant(50f);
+            enemy.BindEncounter(CombatContent.Encounters.Get(EncounterIds.Mob03), CombatContent.Cards);
+            // Mob03 plan 4 slot 2 (index 1) is AttackCharge
+            while (enemy.PlanIndex != 3)
             {
-                string name = fields[i].Name.ToLowerInvariant();
-                Assert.IsFalse(name.Contains("displayname"));
-                Assert.IsFalse(name.Contains("intent"));
-                Assert.IsFalse(name.Contains("maxhp"));
+                enemy.AdvanceRoundPlan();
             }
 
-            Assert.NotNull(typeof(EnemyPatternDef).GetField("Turns"));
+            Assert.AreEqual(CardIds.AttackCharge, enemy.GetSlotCard(1).Def.Id);
+            float playerHp = player.Attributes.HP;
+            float enemyHp = enemy.Attributes.HP;
+            float enemyBlock = enemy.Attributes.Block;
+            CombatSession session = new CombatSession(player, new[] { enemy });
+            CombatResolveContext context = new CombatResolveContext
+            {
+                Session = session,
+                EnemySlots = enemy.GetRoundCards(),
+                PlayerSlots = new CardInstance[5],
+                Rng = new System.Random(1)
+            };
+            CombatEffectExecutor.Execute(enemy.GetSlotCard(1), enemy, context);
+            Assert.AreEqual(playerHp, player.Attributes.HP);
+            Assert.AreEqual(enemyHp, enemy.Attributes.HP);
+            Assert.AreEqual(enemyBlock, enemy.Attributes.Block);
         }
 
         [Test]

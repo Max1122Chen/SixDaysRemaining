@@ -139,11 +139,10 @@ namespace SixDaysRemaining.UI
 
             gi.Gameplay.AdvancePhase();
             CombatStartConfig config = new CombatStartConfig();
-            // 同局不同天洗牌不同；标准化数据模板接入后替换这里的临时配置。
             config.DeckSeed = unchecked(gi.Gameplay.State.rngSeed + gi.Gameplay.State.day * 997);
-            config.EnemyMaxHp = 30f;
-            config.EnemyPattern = EnemyPatternCatalog.FiveSlotLoop;
+            config.Day = gi.Gameplay.State.day;
             config.UseRoundRewards = true;
+            config.FlatCorruptionOnFinish = 3;
             gi.Combat.StartCombat(config, gi.PlayerCombat, gi.EnemyPrefab, gi.CombatRoot);
             ShowCombat();
         }

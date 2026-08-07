@@ -411,7 +411,7 @@ namespace SixDaysRemaining.UI
                 && gi.Combat.Session.Enemies.Count > 0
                 ? gi.Combat.Session.Enemies[0]
                 : null;
-            TurnAction[] actions = enemy != null ? enemy.GetRoundActions() : null;
+            CardInstance[] intents = enemy != null ? enemy.GetRoundCards() : null;
             for (int i = 0; i < enemyActionSlots.Length; i++)
             {
                 if (enemyActionSlots[i] == null)
@@ -419,8 +419,10 @@ namespace SixDaysRemaining.UI
                     continue;
                 }
 
-                enemyActionSlots[i].SetAction(
-                    actions != null && i < actions.Length ? actions[i] : null);
+                CardDef def = intents != null && i < intents.Length && intents[i] != null
+                    ? intents[i].Def
+                    : null;
+                enemyActionSlots[i].SetCard(def);
             }
         }
 
@@ -449,18 +451,18 @@ namespace SixDaysRemaining.UI
                 return "空";
             }
 
-            TurnAction action = gi.Combat.Session.Enemies[0].GetSlotAction(index);
-            if (action != null && !string.IsNullOrEmpty(action.DisplayName))
+            CardInstance intent = gi.Combat.Session.Enemies[0].GetSlotCard(index);
+            if (intent == null || intent.Def == null)
             {
-                return action.DisplayName;
+                return "空";
             }
 
-            if (action != null && action.Effects != null && action.Effects.Length > 0)
+            if ((intent.Def.Tags & CardTag.Charge) != 0)
             {
-                return CardText.DescribeEffects(action.Effects);
+                return "攻击蓄力（强攻将至）";
             }
 
-            return "空";
+            return CardText.DescribeCard(intent.Def);
         }
 
         private static void SetButtonLabel(Button button, string label)
@@ -499,7 +501,7 @@ namespace SixDaysRemaining.UI
             roundProgressText.text = "第 " + round + " 回合 / " + CombatRewardTable.MaxProgressRounds
                 + "   ·   当前奖励：" + tier.Label
                 + "  食物 +" + tier.FoodGained
-                + "  腐蚀 +" + tier.CorruptionDelta;
+                + "  腐蚀 +3（固定）";
             SetRoundProgress(CombatRewardTable.Progress01(round));
         }
 
@@ -935,7 +937,7 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            int count = gi.Combat.Session.Player.Deck.Selection.Count;
+            int count = CountPlacedSlots();
             slotCountText.text = count + "/" + PlayerCombatComponent.CommitCount;
         }
 
@@ -943,12 +945,10 @@ namespace SixDaysRemaining.UI
         {
             GameInstance gi = flow.Game;
             bool playerTurn = gi != null && gi.Combat != null && gi.Combat.IsPlayerTurn && !gi.Combat.IsFinished;
-            int count = gi != null && gi.Combat != null && gi.Combat.Session != null
-                ? gi.Combat.Session.Player.Deck.Selection.Count
-                : 0;
             if (commitButton != null)
             {
-                commitButton.interactable = playerTurn && count == PlayerCombatComponent.CommitCount;
+                // 允许空槽；随时可确认开战（含 0 张，将触发消极惩罚）。
+                commitButton.interactable = playerTurn;
             }
         }
 
@@ -960,12 +960,6 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            if (gi.Combat.Session.Player.Deck.Selection.Count != PlayerCombatComponent.CommitCount)
-            {
-                ShowBanner("需要选满 5 张牌");
-                return;
-            }
-
             StartCoroutine(StartRoundRoutine());
         }
 
@@ -973,10 +967,11 @@ namespace SixDaysRemaining.UI
         {
             SetInputEnabled(false);
             GameInstance gi = flow.Game;
-            if (!gi.Combat.BeginRound())
+            CardInstance[] slots = BuildSlotSnapshot();
+            if (!gi.Combat.BeginRound(slots))
             {
                 SetInputEnabled(true);
-                ShowBanner("需要选满 5 张牌");
+                ShowBanner("无法开始回合");
                 yield break;
             }
 
@@ -1061,13 +1056,43 @@ namespace SixDaysRemaining.UI
         private string DescribeRoundCard(int index)
         {
             GameInstance gi = flow.Game;
-            if (gi == null || gi.Combat == null || index < 0 || index >= gi.Combat.RoundCards.Count)
+            if (gi == null || gi.Combat == null || index < 0 || index >= CombatManager.SlotCount)
             {
-                return "出牌";
+                return "空";
             }
 
-            CardDef def = gi.Combat.RoundCards[index].Def;
-            return def != null && !string.IsNullOrEmpty(def.DisplayName) ? def.DisplayName : "出牌";
+            CardInstance card = gi.Combat.RoundCards[index];
+            return card != null ? CardText.DescribeCard(card.Def) : "空";
+        }
+
+        private CardInstance[] BuildSlotSnapshot()
+        {
+            CardInstance[] slots = new CardInstance[CombatManager.SlotCount];
+            for (int i = 0; i < slots.Length; i++)
+            {
+                slots[i] = slotCards[i] != null ? slotCards[i].Card : null;
+            }
+
+            return slots;
+        }
+
+        private int CountPlacedSlots()
+        {
+            int count = 0;
+            if (slotCards == null)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                if (slotCards[i] != null)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private IEnumerator RoundTransitionRoutine()

@@ -60,31 +60,26 @@ namespace SixDaysRemaining.UI
 
         private static string DescribeRound(EnemyCombatComponent e)
         {
-            TurnAction[] actions = e.GetRoundActions();
-            if (actions == null || actions.Length == 0)
+            SixDaysRemaining.Combat.Cards.CardInstance[] cards = e.GetRoundCards();
+            if (cards == null || cards.Length == 0)
             {
                 return "准备中";
             }
 
-            string[] parts = new string[actions.Length];
-            for (int i = 0; i < actions.Length; i++)
+            string[] parts = new string[cards.Length];
+            for (int i = 0; i < cards.Length; i++)
             {
-                TurnAction action = actions[i];
-                if (action == null)
+                if (cards[i] == null || cards[i].Def == null)
                 {
                     parts[i] = "空";
                 }
-                else if (!string.IsNullOrEmpty(action.DisplayName))
+                else if ((cards[i].Def.Tags & SixDaysRemaining.Combat.Cards.CardTag.Charge) != 0)
                 {
-                    parts[i] = action.DisplayName;
-                }
-                else if (action.Effects != null && action.Effects.Length > 0)
-                {
-                    parts[i] = CardText.DescribeEffects(action.Effects);
+                    parts[i] = cards[i].Def.DisplayName + "（强攻将至）";
                 }
                 else
                 {
-                    parts[i] = "蓄力";
+                    parts[i] = CardText.DescribeCard(cards[i].Def);
                 }
             }
 

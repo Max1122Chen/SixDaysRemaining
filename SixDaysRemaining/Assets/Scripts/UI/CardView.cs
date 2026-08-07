@@ -81,9 +81,11 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            string title = string.IsNullOrEmpty(card.Def.DisplayName) ? card.Def.Id : card.Def.DisplayName;
+            string title = string.IsNullOrEmpty(card.Def.DisplayName)
+                ? card.Def.Id.ToString()
+                : card.Def.DisplayName;
             titleText.text = title;
-            descText.text = CardText.DescribeEffects(card.Def.Effects);
+            descText.text = CardText.DescribeDetail(card.Def);
             costText.text = "0";
             baseColor = TintFor(card.Def);
             Background.color = baseColor;
@@ -194,6 +196,11 @@ namespace SixDaysRemaining.UI
 
         private static Color TintFor(CardDef def)
         {
+            if (def != null && (def.Tags & CardTag.Charge) != 0)
+            {
+                return new Color(0.55f, 0.48f, 0.25f, 1f);
+            }
+
             if (def == null || def.Effects == null || def.Effects.Length == 0)
             {
                 return new Color(0.30f, 0.34f, 0.42f, 1f);
@@ -203,12 +210,14 @@ namespace SixDaysRemaining.UI
             bool block = false;
             for (int i = 0; i < def.Effects.Length; i++)
             {
-                if (def.Effects[i].Op == EffectOp.DealDamage)
+                if (def.Effects[i].Op == EffectOp.DealDamage
+                    || def.Effects[i].Op == EffectOp.DealDamagePlusAttackCount)
                 {
                     damage = true;
                 }
 
-                if (def.Effects[i].Op == EffectOp.GainBlock)
+                if (def.Effects[i].Op == EffectOp.GainBlock
+                    || def.Effects[i].Op == EffectOp.GainBlockRandom)
                 {
                     block = true;
                 }

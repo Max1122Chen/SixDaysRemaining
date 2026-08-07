@@ -69,7 +69,7 @@
 
 ### 2.5 怪物行动预告
 `EnemyPreviewView.Refresh` 读取 `EnemyCombatComponent.Pattern` 与
-`PatternIndex`，把下一回合的 `EffectSpec` 转成“攻击 X / 格挡 X / 抽 N 张”文案。
+`PlanIndex` / `GetRoundCards()`，把意图 `CardDef` 转成名称或效果文案。
 
 ### 2.6 结算滚动框架
 `SettlementView.ShowResult` 逐条 `AddRow`，每条从透明淡入，

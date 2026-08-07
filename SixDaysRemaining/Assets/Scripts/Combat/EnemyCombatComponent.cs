@@ -3,79 +3,120 @@ using SixDaysRemaining.Combat.Cards;
 namespace SixDaysRemaining.Combat
 {
     /// <summary>
-    /// 敌方战斗组件：按行为表 loop 执行原语。
+    /// 敌方战斗组件：遭遇方案 → 每回合 5 张意图卡（与玩家同质）。
     /// </summary>
     public class EnemyCombatComponent : CombatComponent
     {
         public const int ActionsPerRound = 5;
 
-        private EnemyPatternDef pattern;
-        private int patternIndex;
+        private EnemyEncounterDef encounter;
+        private ICardLibrary cardLibrary;
+        private int planIndex;
+        private CardInstance[] roundIntents = new CardInstance[ActionsPerRound];
 
         public bool IsAlive
         {
             get { return Attributes.HP > 0f; }
         }
 
-        public int PatternIndex
+        public EnemyEncounterDef Encounter
         {
-            get { return patternIndex; }
+            get { return encounter; }
         }
 
-        public EnemyPatternDef Pattern
+        public int PlanIndex
         {
-            get { return pattern; }
+            get { return planIndex; }
         }
 
-        public void BindPattern(EnemyPatternDef patternDef)
+        public float DamageBonus
         {
-            pattern = patternDef;
-            patternIndex = 0;
+            get { return encounter != null ? encounter.DamageBonus : 0f; }
         }
 
-        public TurnAction GetSlotAction(int slot)
+        public void BindEncounter(EnemyEncounterDef encounterDef, ICardLibrary library)
         {
-            if (pattern == null || pattern.Turns == null || pattern.Turns.Length == 0)
+            encounter = encounterDef;
+            cardLibrary = library ?? CombatContent.Cards;
+            planIndex = 0;
+            RefreshRoundIntents();
+        }
+
+        public CardInstance GetSlotCard(int slot)
+        {
+            if (slot < 0 || slot >= ActionsPerRound)
             {
                 return null;
             }
 
-            int index = (patternIndex + slot) % pattern.Turns.Length;
-            return pattern.Turns[index];
+            return roundIntents[slot];
         }
 
-        public TurnAction[] GetRoundActions()
+        public CardInstance[] GetRoundCards()
         {
-            TurnAction[] actions = new TurnAction[ActionsPerRound];
+            CardInstance[] copy = new CardInstance[ActionsPerRound];
             for (int i = 0; i < ActionsPerRound; i++)
             {
-                actions[i] = GetSlotAction(i);
+                copy[i] = roundIntents[i];
             }
 
-            return actions;
+            return copy;
         }
 
-        public void AdvanceRoundPattern()
+        public void AdvanceRoundPlan()
         {
-            if (pattern == null || pattern.Turns == null || pattern.Turns.Length == 0)
+            if (encounter == null || encounter.RoundPlans == null || encounter.RoundPlans.Length == 0)
             {
                 return;
             }
 
-            patternIndex = (patternIndex + ActionsPerRound) % pattern.Turns.Length;
+            planIndex = (planIndex + 1) % encounter.RoundPlans.Length;
+            RefreshRoundIntents();
         }
 
-        public void ExecuteTurn(CombatSession session)
+        private void RefreshRoundIntents()
         {
-            if (pattern == null || pattern.Turns == null || pattern.Turns.Length == 0)
+            for (int i = 0; i < ActionsPerRound; i++)
+            {
+                roundIntents[i] = null;
+            }
+
+            if (encounter == null || encounter.RoundPlans == null || encounter.RoundPlans.Length == 0)
             {
                 return;
             }
 
-            TurnAction turn = pattern.Turns[patternIndex];
-            EffectSpec[] effects = turn != null ? turn.Effects : null;
-            CombatEffectExecutor.Execute(effects, this, session);
-            patternIndex = (patternIndex + 1) % pattern.Turns.Length;
+            int[] plan = encounter.RoundPlans[planIndex % encounter.RoundPlans.Length];
+            if (plan == null)
+            {
+                return;
+            }
+
+            InMemoryCardLibrary memory = cardLibrary as InMemoryCardLibrary;
+            for (int i = 0; i < ActionsPerRound && i < plan.Length; i++)
+            {
+                int id = plan[i];
+                if (id == CardIds.EmptySlot)
+                {
+                    roundIntents[i] = null;
+                    continue;
+                }
+
+                if (memory != null)
+                {
+                    roundIntents[i] = memory.CreateInstance(id);
+                }
+                else
+                {
+                    CardDef def;
+                    if (cardLibrary != null && cardLibrary.TryGet(id, out def))
+                    {
+                        CardInstance instance = new CardInstance();
+                        instance.Def = def;
+                        roundIntents[i] = instance;
+                    }
+                }
+            }
         }
     }
 }

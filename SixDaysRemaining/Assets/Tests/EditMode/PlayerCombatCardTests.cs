@@ -15,6 +15,7 @@ namespace SixDaysRemaining.Tests.EditMode
         public void SetUp()
         {
             host = new CombatTestHost();
+            CombatContent.Ensure();
             player = host.AddPlayer();
             player.InitCombatant(30f);
             enemy = host.AddCombatant("EnemyTarget");
@@ -34,21 +35,15 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(PlayerCombatComponent.HandLimit, 8);
             Assert.AreEqual(PlayerCombatComponent.CommitCount, 5);
             Assert.AreEqual(8, player.Deck.Hand.Count);
-            Assert.AreEqual(2, player.Deck.DrawPile.Count);
+            Assert.AreEqual(8, player.Deck.DrawPile.Count);
         }
 
         [Test]
-        public void CommitPlay_RequiresExactlyFive()
+        public void CommitPlay_AllowsOneToFive()
         {
             Assert.IsFalse(player.CommitPlay(enemy));
 
             Assert.IsTrue(player.SelectFromHand(0));
-            Assert.IsTrue(player.SelectFromHand(1));
-            Assert.IsTrue(player.SelectFromHand(2));
-            Assert.IsTrue(player.SelectFromHand(3));
-            Assert.IsFalse(player.CommitPlay(enemy));
-
-            Assert.IsTrue(player.SelectFromHand(4));
             Assert.IsTrue(player.CommitPlay(enemy));
         }
 
@@ -72,7 +67,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(0, player.Deck.Selection.Count);
             Assert.AreEqual(3, player.Deck.Hand.Count);
-            Assert.AreEqual(7, player.Deck.DrawPile.Count);
+            Assert.AreEqual(13, player.Deck.DrawPile.Count);
 
             for (int i = 0; i < 5; i++)
             {
@@ -105,18 +100,18 @@ namespace SixDaysRemaining.Tests.EditMode
                 CardCatalog.Defend,
                 CardCatalog.Strike,
                 CardCatalog.Defend,
-                CardCatalog.Bash,
-                CardCatalog.Bash
+                CardCatalog.Strike,
+                CardCatalog.Defend
             };
             player.SetupDeck(defs, seed: 0);
 
-            int strikeIndex = IndexOfIdInHand("strike");
-            int defendIndex = IndexOfIdInHand("defend");
+            int strikeIndex = IndexOfIdInHand(CardIds.JianYi);
+            int defendIndex = IndexOfIdInHand(CardIds.DiDang);
             Assert.GreaterOrEqual(strikeIndex, 0);
             Assert.GreaterOrEqual(defendIndex, 0);
 
             Assert.IsTrue(player.SelectFromHand(strikeIndex));
-            defendIndex = IndexOfUnselectedIdInHand("defend");
+            defendIndex = IndexOfUnselectedIdInHand(CardIds.DiDang);
             Assert.IsTrue(player.SelectFromHand(defendIndex));
 
             while (player.Deck.Selection.Count < 5)
@@ -169,30 +164,57 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void Bash_DealsDamageAndGainsBlock()
+        public void XuLi_ScalesWithAttackCardsInSlots()
         {
-            host.Dispose();
-            host = new CombatTestHost();
-            player = host.AddPlayer();
-            player.InitCombatant(30f);
-            enemy = host.AddCombatant("EnemyTarget");
-            enemy.InitCombatant(50f);
-
-            List<CardDef> defs = new List<CardDef>();
-            for (int i = 0; i < 10; i++)
+            CombatManager manager = new CombatManager();
+            try
             {
-                defs.Add(CardCatalog.Bash);
-            }
+                manager.StartBattleOnly(new CombatStartConfig
+                {
+                    PlayerMaxHp = 100f,
+                    EnemyMaxHp = 100f,
+                    EncounterId = EncounterIds.Mob01,
+                    DeckSeed = 1
+                }, player, null, null);
 
-            player.SetupDeck(defs, seed: 42);
-            for (int i = 0; i < 5; i++)
+                List<CardDef> defs = new List<CardDef>();
+                for (int i = 0; i < 5; i++)
+                {
+                    defs.Add(CombatContent.Cards.Get(CardIds.XuLiYiJi));
+                }
+
+                for (int i = 0; i < 5; i++)
+                {
+                    defs.Add(CombatContent.Cards.Get(CardIds.JianYi));
+                }
+
+                player.SetupDeck(defs, seed: 0);
+                List<CardInstance> xuliSlots = new List<CardInstance>();
+                for (int i = 0; i < player.Deck.Hand.Count && xuliSlots.Count < 5; i++)
+                {
+                    if (player.Deck.Hand[i].Def.Id == CardIds.XuLiYiJi)
+                    {
+                        xuliSlots.Add(player.Deck.Hand[i]);
+                    }
+                }
+
+                Assert.AreEqual(5, xuliSlots.Count);
+                CardInstance[] slots = new CardInstance[5];
+                for (int i = 0; i < 5; i++)
+                {
+                    slots[i] = xuliSlots[i];
+                }
+
+                Assert.IsTrue(manager.BeginRound(slots));
+                float enemyHp = manager.Session.Enemies[0].Attributes.HP;
+                // 5 attack cards in slots → 5 + 5 = 10 damage
+                manager.ResolvePlayerSlot(0);
+                Assert.AreEqual(enemyHp - 10f, manager.Session.Enemies[0].Attributes.HP);
+            }
+            finally
             {
-                Assert.IsTrue(player.SelectFromHand(i));
+                manager.CleanupSpawnedEnemy();
             }
-
-            Assert.IsTrue(player.CommitPlay(enemy));
-            Assert.AreEqual(50f - 4f * 5f, enemy.Attributes.HP);
-            Assert.AreEqual(2f * 5f, player.Attributes.Block);
         }
 
         private bool ContainsHand(CardInstance card)
@@ -208,7 +230,7 @@ namespace SixDaysRemaining.Tests.EditMode
             return false;
         }
 
-        private int IndexOfIdInHand(string id)
+        private int IndexOfIdInHand(int id)
         {
             for (int i = 0; i < player.Deck.Hand.Count; i++)
             {
@@ -221,7 +243,7 @@ namespace SixDaysRemaining.Tests.EditMode
             return -1;
         }
 
-        private int IndexOfUnselectedIdInHand(string id)
+        private int IndexOfUnselectedIdInHand(int id)
         {
             for (int i = 0; i < player.Deck.Hand.Count; i++)
             {

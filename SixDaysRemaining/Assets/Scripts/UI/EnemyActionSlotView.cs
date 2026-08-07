@@ -68,14 +68,26 @@ namespace SixDaysRemaining.UI
 
         public void SetAction(TurnAction action)
         {
+            SetCard(action != null
+                ? new SixDaysRemaining.Combat.Cards.CardDef
+                {
+                    DisplayName = action.DisplayName,
+                    Effects = action.Effects,
+                    Tags = TagsFromKind(action.Kind)
+                }
+                : null);
+        }
+
+        public void SetCard(SixDaysRemaining.Combat.Cards.CardDef def)
+        {
             if (label != null)
             {
-                label.text = ActionLabel(action);
+                label.text = CardText.DescribeCard(def);
             }
 
             if (frame != null)
             {
-                actionColor = ActionColor(action);
+                actionColor = ActionColor(EnemyIntentVisual.KindFromCard(def));
                 frame.color = active ? ActiveColor : actionColor;
             }
         }
@@ -94,34 +106,26 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        private static string ActionLabel(TurnAction action)
+        private static SixDaysRemaining.Combat.Cards.CardTag TagsFromKind(EnemyActionKind kind)
         {
-            if (action == null)
+            switch (kind)
             {
-                return "空";
+                case EnemyActionKind.Attack:
+                    return SixDaysRemaining.Combat.Cards.CardTag.Attack;
+                case EnemyActionKind.Defend:
+                    return SixDaysRemaining.Combat.Cards.CardTag.Defend;
+                case EnemyActionKind.Sleep:
+                    return SixDaysRemaining.Combat.Cards.CardTag.Sleep;
+                case EnemyActionKind.Charge:
+                    return SixDaysRemaining.Combat.Cards.CardTag.Charge;
+                default:
+                    return SixDaysRemaining.Combat.Cards.CardTag.None;
             }
-
-            if (!string.IsNullOrEmpty(action.DisplayName))
-            {
-                return action.DisplayName;
-            }
-
-            if (action.Effects != null && action.Effects.Length > 0)
-            {
-                return CardText.DescribeEffects(action.Effects);
-            }
-
-            return "空";
         }
 
-        private static Color ActionColor(TurnAction action)
+        private static Color ActionColor(EnemyActionKind kind)
         {
-            if (action == null)
-            {
-                return NormalColor;
-            }
-
-            switch (action.Kind)
+            switch (kind)
             {
                 case EnemyActionKind.Attack:
                     return new Color(0.58f, 0.28f, 0.26f, 0.9f);
@@ -130,6 +134,7 @@ namespace SixDaysRemaining.UI
                 case EnemyActionKind.Sleep:
                     return new Color(0.42f, 0.35f, 0.55f, 0.9f);
                 case EnemyActionKind.Confused:
+                case EnemyActionKind.Charge:
                     return new Color(0.55f, 0.48f, 0.25f, 0.9f);
                 default:
                     return NormalColor;

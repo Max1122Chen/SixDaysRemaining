@@ -182,3 +182,15 @@
 - 下一步行动：
   - 本机 Play 确认 TMP 文字正常显示
 
+## 2026-08-07（COMB-F06 实现中：统一卡牌 / 意图）
+
+- 范围：`feat/combat`（已 FF 到含队友 UI 的 main）；玩家牌与敌人意图同质为 `CardDef`
+- 已完成：
+  - `ICardLibrary` / `IEncounterLibrary` + `CombatContent` 内存种子（JSON → F08）
+  - 日遭遇表、空槽、固定腐蚀 +3、消极惩罚、攻击蓄力占位
+  - 接线 `CombatView` / `EnemyActionSlotView` / `AppFlowController`（保留拖拽五槽 UI）
+  - 更新 Edit Mode 测试
+- 下一步行动：
+  - Unity Edit Mode 全绿 + Play 冒烟 Day1
+  - 通过后 prepare commit
+

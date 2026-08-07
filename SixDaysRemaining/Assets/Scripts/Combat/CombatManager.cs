@@ -23,29 +23,39 @@ namespace SixDaysRemaining.Combat
     public class CombatStartConfig
     {
         public float PlayerMaxHp = 30f;
-        public float EnemyMaxHp = 10f;
-        public EnemyPatternDef EnemyPattern = EnemyPatternCatalog.BasicAttackDefendLoop;
+        public float EnemyMaxHp = -1f;
+        public int EncounterId = -1;
+        public int Day = 1;
+        public ICardLibrary CardLibrary;
+        public IEncounterLibrary EncounterLibrary;
         public IReadOnlyList<CardDef> StarterCards;
         public int DeckSeed = 1;
         public int WinFoodGained = 3;
-        public int CorruptionDelta = 3;
+        public int FlatCorruptionOnFinish = 3;
         public bool UseRoundRewards;
+        public System.Random ResolveRng;
     }
 
     /// <summary>
-    /// 战斗编排：回合、清挡、Flee、结算。不提供选牌/出牌 API。
-    /// 敌人由本类 Instantiate；玩家由外部传入场景组件。
+    /// 战斗编排：回合、清挡、Flee、结算。不提供选牌 API。
     /// </summary>
     public class CombatManager
     {
+        public const int SlotCount = 5;
+
         private CombatSession session;
         private CombatStartConfig config;
+        private ICardLibrary cardLibrary;
+        private EnemyEncounterDef activeEncounter;
         private bool finished;
         private bool playerTurn;
         private bool battleOnly;
         private int turnsElapsed;
         private bool roundActive;
-        private readonly List<CardInstance> roundCards = new List<CardInstance>();
+        private readonly CardInstance[] roundPlayerSlots = new CardInstance[SlotCount];
+        private CombatResolveContext resolveContext;
+        private int cardCorruptionDelta;
+        private int passivePenaltyStacks;
         private CombatResult result;
         private GameObject spawnedEnemyGo;
 
@@ -86,12 +96,27 @@ namespace SixDaysRemaining.Combat
 
         public IReadOnlyList<CardInstance> RoundCards
         {
-            get { return roundCards; }
+            get { return roundPlayerSlots; }
+        }
+
+        public int CardCorruptionDelta
+        {
+            get { return cardCorruptionDelta; }
+        }
+
+        public int PassivePenaltyStacks
+        {
+            get { return passivePenaltyStacks; }
         }
 
         public CombatResult Result
         {
             get { return result; }
+        }
+
+        public EnemyEncounterDef ActiveEncounter
+        {
+            get { return activeEncounter; }
         }
 
         public void StartCombat(
@@ -113,38 +138,93 @@ namespace SixDaysRemaining.Combat
         }
 
         /// <summary>
-        /// Lock the current five-slot selection as this round's cards.
-        /// Enemy slot actions are read from the pattern on demand.
+        /// Lock up to five slot cards (null = empty). Empty slots are allowed.
         /// </summary>
-        public bool BeginRound()
+        public bool BeginRound(IReadOnlyList<CardInstance> slotCards)
         {
-            if (finished || session == null || !playerTurn)
+            if (finished || session == null || !playerTurn || slotCards == null)
             {
                 return false;
             }
 
-            if (session.Player.Deck.Selection.Count != PlayerCombatComponent.CommitCount)
+            if (slotCards.Count != SlotCount)
             {
                 return false;
             }
 
-            roundCards.Clear();
-            roundCards.AddRange(session.Player.Deck.TakeSelectionSnapshot());
+            int placed = 0;
+            for (int i = 0; i < SlotCount; i++)
+            {
+                roundPlayerSlots[i] = slotCards[i];
+                if (slotCards[i] != null)
+                {
+                    placed++;
+                }
+            }
+
+            if (placed < 3)
+            {
+                passivePenaltyStacks++;
+            }
+
+            session.Player.ClearSelection();
+            for (int i = 0; i < SlotCount; i++)
+            {
+                if (roundPlayerSlots[i] != null)
+                {
+                    // Keep selection list in slot order for any legacy readers.
+                    int handIndex = IndexInHand(session.Player.Deck.Hand, roundPlayerSlots[i]);
+                    if (handIndex >= 0)
+                    {
+                        session.Player.SelectFromHand(handIndex);
+                    }
+                }
+            }
+
+            session.Player.Deck.ClearSelection();
+
             roundActive = true;
             playerTurn = false;
             turnsElapsed++;
+            resolveContext = CreateContext();
             return true;
+        }
+
+        /// <summary>兼容：从当前 Selection 填槽（无空槽语义，不足 5 失败）。</summary>
+        public bool BeginRound()
+        {
+            if (session == null || session.Player.Deck.Selection.Count != SlotCount)
+            {
+                return false;
+            }
+
+            CardInstance[] slots = new CardInstance[SlotCount];
+            IReadOnlyList<CardInstance> selection = session.Player.Deck.Selection;
+            for (int i = 0; i < SlotCount; i++)
+            {
+                slots[i] = selection[i];
+            }
+
+            return BeginRound(slots);
         }
 
         public CardInstance ResolvePlayerSlot(int slotIndex)
         {
-            if (!roundActive || session == null || slotIndex < 0 || slotIndex >= roundCards.Count)
+            if (!roundActive || session == null || slotIndex < 0 || slotIndex >= SlotCount)
             {
                 return null;
             }
 
-            CardInstance card = roundCards[slotIndex];
-            session.Player.PlayResolved(card, session);
+            CardInstance card = roundPlayerSlots[slotIndex];
+            if (card == null)
+            {
+                return null;
+            }
+
+            resolveContext.SlotIndex = slotIndex;
+            resolveContext.CorruptionDeltaThisCombat = 0;
+            session.Player.PlayResolved(card, resolveContext);
+            cardCorruptionDelta += resolveContext.CorruptionDeltaThisCombat;
             TryFinishByHp();
             return card;
         }
@@ -162,20 +242,19 @@ namespace SixDaysRemaining.Combat
                 return false;
             }
 
-            TurnAction action = enemy.GetSlotAction(slotIndex);
-            if (action != null)
+            CardInstance card = enemy.GetSlotCard(slotIndex);
+            if (card != null)
             {
-                CombatEffectExecutor.Execute(action.Effects, enemy, session);
+                resolveContext.SlotIndex = slotIndex;
+                resolveContext.CorruptionDeltaThisCombat = 0;
+                CombatEffectExecutor.Execute(card, enemy, resolveContext);
+                cardCorruptionDelta += resolveContext.CorruptionDeltaThisCombat;
             }
 
             TryFinishByHp();
             return true;
         }
 
-        /// <summary>
-        /// Finish a non-terminal round: clear block, cycle the enemy pattern,
-        /// and refill the hand to eight in draw order.
-        /// </summary>
         public void EndRound()
         {
             if (!roundActive)
@@ -186,15 +265,15 @@ namespace SixDaysRemaining.Combat
             roundActive = false;
             if (finished || session == null)
             {
-                roundCards.Clear();
+                ClearRoundSlots();
                 return;
             }
 
             session.Player.SetBlock(0f);
             EnemyCombatComponent enemy = session.Enemies[0];
             enemy.SetBlock(0f);
-            enemy.AdvanceRoundPattern();
-            roundCards.Clear();
+            enemy.AdvanceRoundPlan();
+            ClearRoundSlots();
             session.Player.OnPlayerTurnStart();
             playerTurn = true;
         }
@@ -212,7 +291,9 @@ namespace SixDaysRemaining.Combat
             }
 
             session.Player.SetBlock(0f);
-            RunEnemyTurn();
+            // 旧单行动路径不再使用；五槽流程请用 BeginRound。
+            playerTurn = true;
+            session.Player.OnPlayerTurnStart();
         }
 
         public bool Flee()
@@ -222,13 +303,10 @@ namespace SixDaysRemaining.Combat
                 return false;
             }
 
-            Finish(CombatOutcome.Flee, foodGained: 0);
+            Finish(CombatOutcome.Flee, foodGained: 0, applyFlatCorruption: false);
             return true;
         }
 
-        /// <summary>
-        /// 清理本场生成的敌人（战斗结束或测试 TearDown）。
-        /// </summary>
         public void CleanupSpawnedEnemy()
         {
             if (spawnedEnemyGo == null)
@@ -261,23 +339,39 @@ namespace SixDaysRemaining.Combat
             }
 
             CleanupSpawnedEnemy();
+            CombatContent.Ensure();
 
             config = startConfig ?? new CombatStartConfig();
+            cardLibrary = config.CardLibrary ?? CombatContent.Cards;
+            IEncounterLibrary encounterLibrary = config.EncounterLibrary ?? CombatContent.Encounters;
+
+            if (config.EncounterId > 0)
+            {
+                activeEncounter = encounterLibrary.Get(config.EncounterId);
+            }
+            else
+            {
+                activeEncounter = encounterLibrary.GetForDay(config.Day);
+            }
+
             battleOnly = isBattleOnly;
             finished = false;
             turnsElapsed = 0;
             roundActive = false;
-            roundCards.Clear();
+            cardCorruptionDelta = 0;
+            passivePenaltyStacks = 0;
+            ClearRoundSlots();
             result = default(CombatResult);
 
+            float enemyHp = config.EnemyMaxHp > 0f ? config.EnemyMaxHp : activeEncounter.MaxHp;
             player.InitCombatant(config.PlayerMaxHp);
 
-            IReadOnlyList<CardDef> starter = config.StarterCards ?? CardCatalog.CreateDefaultStarterDefs();
+            IReadOnlyList<CardDef> starter = config.StarterCards ?? CombatContent.CreateDefaultStarterDefs();
             player.SetupDeck(starter, config.DeckSeed);
 
             EnemyCombatComponent enemy = SpawnEnemy(enemyPrefab, combatRoot);
-            enemy.InitCombatant(config.EnemyMaxHp);
-            enemy.BindPattern(config.EnemyPattern ?? EnemyPatternCatalog.BasicAttackDefendLoop);
+            enemy.InitCombatant(enemyHp);
+            enemy.BindEncounter(activeEncounter, cardLibrary);
 
             List<EnemyCombatComponent> enemies = new List<EnemyCombatComponent>(1);
             enemies.Add(enemy);
@@ -285,6 +379,22 @@ namespace SixDaysRemaining.Combat
 
             playerTurn = true;
             player.OnPlayerTurnStart();
+        }
+
+        private CombatResolveContext CreateContext()
+        {
+            return new CombatResolveContext
+            {
+                Session = session,
+                SlotIndex = 0,
+                PlayerSlots = roundPlayerSlots,
+                EnemySlots = session.Enemies[0].GetRoundCards(),
+                DamageBonus = session.Enemies[0].DamageBonus,
+                Rng = config != null && config.ResolveRng != null
+                    ? config.ResolveRng
+                    : new System.Random(config != null ? config.DeckSeed : 1),
+                CorruptionDeltaThisCombat = 0
+            };
         }
 
         private EnemyCombatComponent SpawnEnemy(EnemyCombatComponent enemyPrefab, Transform combatRoot)
@@ -313,34 +423,6 @@ namespace SixDaysRemaining.Combat
             return spawnedEnemyGo.AddComponent<EnemyCombatComponent>();
         }
 
-        private void RunEnemyTurn()
-        {
-            playerTurn = false;
-            turnsElapsed++;
-
-            EnemyCombatComponent enemy = session.Enemies[0];
-            if (enemy.IsAlive)
-            {
-                enemy.ExecuteTurn(session);
-            }
-
-            if (TryFinishByHp())
-            {
-                return;
-            }
-
-            enemy.SetBlock(0f);
-
-            if (!enemy.IsAlive || session.Player.Attributes.HP <= 0f)
-            {
-                TryFinishByHp();
-                return;
-            }
-
-            playerTurn = true;
-            session.Player.OnPlayerTurnStart();
-        }
-
         private bool TryFinishByHp()
         {
             if (session == null)
@@ -361,44 +443,88 @@ namespace SixDaysRemaining.Combat
 
             if (allEnemiesDead)
             {
-                Finish(CombatOutcome.Win, config.WinFoodGained);
+                Finish(CombatOutcome.Win, config.WinFoodGained, applyFlatCorruption: true);
                 return true;
             }
 
             if (playerDead)
             {
-                Finish(CombatOutcome.Lose, foodGained: 0);
+                Finish(CombatOutcome.Lose, foodGained: 0, applyFlatCorruption: true);
                 return true;
             }
 
             return false;
         }
 
-        private void Finish(CombatOutcome outcome, int foodGained)
+        private void Finish(CombatOutcome outcome, int foodGained, bool applyFlatCorruption)
         {
             finished = true;
             playerTurn = false;
             roundActive = false;
-            roundCards.Clear();
+            ClearRoundSlots();
             result.Outcome = outcome;
             result.TurnsElapsed = turnsElapsed;
             result.RewardTier = "";
+
+            int corruption = cardCorruptionDelta;
+            if (applyFlatCorruption)
+            {
+                int flat = config != null ? config.FlatCorruptionOnFinish : 3;
+                corruption += flat;
+                corruption += passivePenaltyStacks * 2;
+            }
+
+            if (corruption < 0)
+            {
+                corruption = 0;
+            }
 
             if (outcome == CombatOutcome.Win && config != null && config.UseRoundRewards)
             {
                 CombatRewardTier tier = CombatRewardTable.GetTier(turnsElapsed);
                 result.FoodGained = tier.FoodGained;
-                result.CorruptionDelta = tier.CorruptionDelta;
                 result.RewardTier = tier.Label;
+                result.CorruptionDelta = corruption;
+            }
+            else if (outcome == CombatOutcome.Flee)
+            {
+                result.FoodGained = 0;
+                result.CorruptionDelta = corruption;
             }
             else
             {
                 result.FoodGained = foodGained;
-                result.CorruptionDelta = config != null ? config.CorruptionDelta : 3;
+                result.CorruptionDelta = corruption;
             }
 
             CleanupSpawnedEnemy();
             session = null;
+        }
+
+        private void ClearRoundSlots()
+        {
+            for (int i = 0; i < SlotCount; i++)
+            {
+                roundPlayerSlots[i] = null;
+            }
+        }
+
+        private static int IndexInHand(IReadOnlyList<CardInstance> hand, CardInstance card)
+        {
+            if (hand == null || card == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < hand.Count; i++)
+            {
+                if (ReferenceEquals(hand[i], card))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }

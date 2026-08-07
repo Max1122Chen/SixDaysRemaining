@@ -113,5 +113,16 @@ namespace SixDaysRemaining.Combat
             EnsureCombatAttributes();
             combatAttributes.Block = Math.Max(0f, value);
         }
+
+        public void Heal(float amount)
+        {
+            EnsureCombatAttributes();
+            if (amount <= 0f)
+            {
+                return;
+            }
+
+            combatAttributes.HP = Math.Min(combatAttributes.MaxHP, combatAttributes.HP + amount);
+        }
     }
 }

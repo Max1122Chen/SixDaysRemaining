@@ -18,6 +18,7 @@ namespace SixDaysRemaining.Tests.EditMode
             host = new CombatTestHost();
             manager = new CombatManager();
             player = host.AddPlayer();
+            CombatContent.Ensure();
         }
 
         [TearDown]
@@ -37,108 +38,92 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void NotifyPlayerCommitted_ClearsPlayerBlock_ThenEnemyActs()
+        public void RoundSlots_ResolvePlayerThenEnemy()
         {
             Start(new CombatStartConfig
             {
-                PlayerMaxHp = 40f,
-                EnemyMaxHp = 100f,
-                DeckSeed = 1
+                PlayerMaxHp = 100f,
+                EncounterId = EncounterIds.Mob01,
+                DeckSeed = 1,
+                UseRoundRewards = true
             });
 
-            EnemyCombatComponent enemy = manager.Session.Enemies[0];
-            player.GainBlock(5f);
+            RebuildDeckAllStrike(player);
+            CardInstance[] slots = FillFiveStrikes(player);
+            Assert.IsTrue(manager.BeginRound(slots));
 
-            SelectFive(player);
-            Assert.IsTrue(player.CommitPlay(enemy));
-            float playerHpBeforeEnemy = player.Attributes.HP;
+            float enemyHp = manager.Session.Enemies[0].Attributes.HP;
+            manager.ResolvePlayerSlot(0);
+            Assert.Less(manager.Session.Enemies[0].Attributes.HP, enemyHp);
 
-            manager.NotifyPlayerCommitted();
-
-            Assert.AreEqual(0f, player.Attributes.Block);
-            Assert.IsTrue(manager.IsPlayerTurn);
-            Assert.LessOrEqual(player.Attributes.HP, playerHpBeforeEnemy);
+            float playerHp = player.Attributes.HP;
+            manager.ResolveEnemySlot(0);
+            Assert.LessOrEqual(player.Attributes.HP, playerHp);
         }
 
         [Test]
-        public void FightUntilWin_SetsFoodAndCorruption()
+        public void FightUntilWin_UsesFlatCorruptionAndFoodTier()
         {
             Start(new CombatStartConfig
             {
                 PlayerMaxHp = 100f,
                 EnemyMaxHp = 1f,
+                EncounterId = EncounterIds.Mob01,
                 DeckSeed = 1,
-                WinFoodGained = 3,
-                CorruptionDelta = 3,
-                EnemyPattern = EnemyPatternCatalog.BasicAttackDefendLoop
+                UseRoundRewards = true,
+                FlatCorruptionOnFinish = 3
             });
 
             RebuildDeckAllStrike(player);
-            EnemyCombatComponent enemy = manager.Session.Enemies[0];
-            SelectFive(player);
-            Assert.IsTrue(player.CommitPlay(enemy));
-            manager.NotifyPlayerCommitted();
+            Assert.IsTrue(manager.BeginRound(FillFiveStrikes(player)));
+            manager.ResolvePlayerSlot(0);
 
             Assert.IsTrue(manager.IsFinished);
             Assert.AreEqual(CombatOutcome.Win, manager.Result.Outcome);
-            Assert.AreEqual(3, manager.Result.FoodGained);
+            Assert.AreEqual(4, manager.Result.FoodGained);
             Assert.AreEqual(3, manager.Result.CorruptionDelta);
+            Assert.AreEqual("速战", manager.Result.RewardTier);
         }
 
         [Test]
-        public void EnemyKillsPlayer_Lose()
+        public void EmptySlots_UnderThree_AddsPassivePenaltyCorruption()
         {
-            EnemyPatternDef lethal = new EnemyPatternDef
-            {
-                Turns = new[]
-                {
-                    new TurnAction
-                    {
-                        Effects = new[]
-                        {
-                            new EffectSpec
-                            {
-                                Op = EffectOp.DealDamage,
-                                Amount = 50f,
-                                Target = EffectTarget.Enemy
-                            }
-                        }
-                    }
-                }
-            };
-
             Start(new CombatStartConfig
             {
-                PlayerMaxHp = 10f,
-                EnemyMaxHp = 100f,
-                EnemyPattern = lethal,
-                DeckSeed = 1
+                PlayerMaxHp = 100f,
+                EnemyMaxHp = 1f,
+                EncounterId = EncounterIds.Mob01,
+                DeckSeed = 1,
+                UseRoundRewards = true,
+                FlatCorruptionOnFinish = 3
             });
 
-            EnemyCombatComponent enemy = manager.Session.Enemies[0];
-            SelectFive(player);
-            Assert.IsTrue(player.CommitPlay(enemy));
-            manager.NotifyPlayerCommitted();
+            RebuildDeckAllStrike(player);
+            CardInstance[] slots = new CardInstance[5];
+            slots[0] = player.Deck.Hand[0];
+            slots[1] = player.Deck.Hand[1];
+            Assert.IsTrue(manager.BeginRound(slots));
+            Assert.AreEqual(1, manager.PassivePenaltyStacks);
+            manager.ResolvePlayerSlot(0);
 
             Assert.IsTrue(manager.IsFinished);
-            Assert.AreEqual(CombatOutcome.Lose, manager.Result.Outcome);
-            Assert.AreEqual(0, manager.Result.FoodGained);
+            Assert.AreEqual(5, manager.Result.CorruptionDelta);
         }
 
         [Test]
-        public void Flee_EndsWithZeroFood()
+        public void Flee_KeepsOnlyCardCorruption()
         {
             Start(new CombatStartConfig
             {
                 PlayerMaxHp = 30f,
-                EnemyMaxHp = 40f
+                EncounterId = EncounterIds.Mob01
             });
 
             Assert.IsTrue(manager.Flee());
             Assert.IsTrue(manager.IsFinished);
             Assert.AreEqual(CombatOutcome.Flee, manager.Result.Outcome);
             Assert.AreEqual(0, manager.Result.FoodGained);
-            Assert.AreEqual(3, manager.Result.CorruptionDelta);
+            Assert.AreEqual(0, manager.Result.CorruptionDelta);
             Assert.IsFalse(manager.Flee());
         }
 
@@ -156,22 +141,15 @@ namespace SixDaysRemaining.Tests.EditMode
             }
         }
 
-        [Test]
-        public void AfterFinish_NotifyIsNoOp()
+        private static CardInstance[] FillFiveStrikes(PlayerCombatComponent p)
         {
-            Start(new CombatStartConfig());
-            Assert.IsTrue(manager.Flee());
-            CombatResult before = manager.Result;
-            manager.NotifyPlayerCommitted();
-            Assert.AreEqual(before.Outcome, manager.Result.Outcome);
-        }
-
-        private static void SelectFive(PlayerCombatComponent p)
-        {
-            for (int i = 0; i < PlayerCombatComponent.CommitCount; i++)
+            CardInstance[] slots = new CardInstance[5];
+            for (int i = 0; i < 5; i++)
             {
-                Assert.IsTrue(p.SelectFromHand(i));
+                slots[i] = p.Deck.Hand[i];
             }
+
+            return slots;
         }
 
         private static void RebuildDeckAllStrike(PlayerCombatComponent p)

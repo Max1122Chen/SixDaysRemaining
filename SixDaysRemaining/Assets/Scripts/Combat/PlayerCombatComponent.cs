@@ -4,7 +4,7 @@ using SixDaysRemaining.Combat.Cards;
 namespace SixDaysRemaining.Combat
 {
     /// <summary>
-    /// 玩家战斗组件：选 5 + Commit；打牌 API 仅挂在本类。
+    /// 玩家战斗组件：配卡 + 逐槽结算；打牌 API 仅挂在本类。
     /// </summary>
     public class PlayerCombatComponent : CombatComponent
     {
@@ -46,25 +46,36 @@ namespace SixDaysRemaining.Combat
             deck.ClearSelection();
         }
 
-        /// <summary>
-        /// Resolve a single slot card through the session target resolver,
-        /// then move it to the bottom of the draw pile.
-        /// </summary>
-        public void PlayResolved(CardInstance card, CombatSession session)
+        public void PlayResolved(CardInstance card, CombatResolveContext context)
         {
             if (card == null || card.Def == null)
             {
                 return;
             }
 
-            CombatEffectExecutor.Execute(card.Def.Effects, this, session);
+            CombatEffectExecutor.Execute(card, this, context);
             deck.RemoveFromHand(card);
             deck.AddToBottom(card);
         }
 
+        public void PlayResolved(CardInstance card, CombatSession session)
+        {
+            CombatResolveContext context = new CombatResolveContext
+            {
+                Session = session,
+                SlotIndex = 0,
+                PlayerSlots = null,
+                EnemySlots = null,
+                DamageBonus = 0f,
+                Rng = null,
+                CorruptionDeltaThisCombat = 0
+            };
+            PlayResolved(card, context);
+        }
+
         public bool CommitPlay(CombatComponent enemyTarget)
         {
-            if (deck.Selection.Count != CommitCount)
+            if (deck.Selection.Count == 0 || deck.Selection.Count > CommitCount)
             {
                 return false;
             }
