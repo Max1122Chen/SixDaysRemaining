@@ -162,6 +162,8 @@ namespace SixDaysRemaining.UI
             dragging = true;
             grabOffset = (Vector2)Rect.position - eventData.position;
             Rect.SetAsLastSibling();
+            // Avoid blocking slot raycasts under the pointer while dragging.
+            Background.raycastTarget = false;
             shadow.gameObject.SetActive(true);
             StartCoroutine(UiAnim.Scale(Rect, new Vector3(1.08f, 1.08f, 1f), 0.08f));
             if (DragBegan != null)
@@ -194,6 +196,7 @@ namespace SixDaysRemaining.UI
 
             dragging = false;
             shadow.gameObject.SetActive(false);
+            Background.raycastTarget = Interactable;
             StartCoroutine(UiAnim.Scale(Rect, Vector3.one, 0.1f));
             if (DragEnded != null)
             {

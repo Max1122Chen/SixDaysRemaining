@@ -4,7 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `UI-F01` 战斗卡牌交互修复 | Draft | Max / UI | 分支 `feat/ui` |
+| P0 | `UI-F01` 战斗卡牌交互修复 | Review | Max / UI | 已合 main / push |
 | P1 | `COMB-F07` / `COMB-F06` 合入 main | Review | Max | `feat/combat` 本轮提交后 merge |
 | P2 | `SHLT-F02` 幸存者特质 / 人物模板 | Discuss | Max | `人物模板2.0.pdf` |
 | — | `COMB-F08` JSON 数据驱动 | Deferred | Max | F06 接口就绪后 |

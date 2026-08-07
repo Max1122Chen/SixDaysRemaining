@@ -4,10 +4,10 @@
 
 - **ID:** `UI-F01`
 - **类型:** `Feature`
-- **状态:** `Draft`
+- **状态:** `Review`（Play 通过；合入 main）
 - **负责人:** `Max` / UI
 - **最后更新：** `2026-08-07`
-- **分支（建议）：** `feat/ui`
+- **分支：** `feat/ui`
 - **相关：** `COMB-F07` Corrupted 伴生；现有 `CombatView` / `CardSlotView` / `CardView`
 
 ## TL;DR
@@ -100,7 +100,7 @@ COMB-F07 逻辑已落；本 feat **只修战斗 UI 交互**，不改结算规则
 - 悬停与 `SetActive`（回合结算橙光）互相覆盖，离开时只清了 `hoveredSlot` 引用但视觉已被 Active 污染；或
 - 拖拽中牌挡住射线，离开槽后 `RaycastSlot` 仍偶发命中旧槽（需 Play 复核）
 
-**修法：** 槽位显式状态机：`Normal | Hover | Filled | Resolving`，`ApplyVisual()` 单一出口；离开悬停只清 Hover，不破坏 Filled。
+**修法：** 悬停离开必清 Hover；**Filled 不改 tint**（与旧空槽一致）；Resolving 保留橙光。叠层：槽永远在牌下。
 
 ---
 
@@ -110,3 +110,16 @@ COMB-F07 逻辑已落；本 feat **只修战斗 UI 交互**，不改结算规则
 2. 伴生 miss 复位（缺陷 2）  
 3. 布局后强制 sibling（缺陷 3）  
 4. 槽位状态机（缺陷 4）  
+
+## 实现备注（2026-08-07）
+
+已在 `feat/ui` 落地：`SetInputEnabled` 含伴生、miss 复位、`EnsurePairSorting`、`CardSlotView` 状态机、拖拽时关闭牌 raycast。
+
+## Play 验收条目
+
+- [ ] 腐蚀 ≥40：第 1、第 2+ 回合均可拖选 Corrupted 伴生并打出
+- [ ] 伴生拖到空白处松手 → 自动回到原牌正下方（不可停在半空）
+- [ ] 伴生从槽拖回 → 回到原牌下方；手牌区叠层稳定（原牌下、伴生上）
+- [ ] 拖牌悬停槽变色；指针离开槽（未松手）→ 悬停色消失
+- [ ] 槽有牌 = Filled；空槽 = Normal；结算当前槽 = Resolving（橙）
+- [ ] 原牌/伴生仍二选一；打出后原牌回库逻辑不变

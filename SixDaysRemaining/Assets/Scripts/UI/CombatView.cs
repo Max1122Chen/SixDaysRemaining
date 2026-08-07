@@ -716,6 +716,8 @@ namespace SixDaysRemaining.UI
 
             UpdateCompanionVisibility();
             UpdateHandLayout(false);
+            EnsurePairSorting();
+            RefreshSlotFilledStates();
             UpdateSlotCount();
         }
 
@@ -768,7 +770,7 @@ namespace SixDaysRemaining.UI
                 hoveredSlot = slot;
                 if (hoveredSlot != null)
                 {
-                    hoveredSlot.SetHighlight(true);
+                    hoveredSlot.SetHover(true);
                 }
             }
         }
@@ -802,6 +804,8 @@ namespace SixDaysRemaining.UI
                 SnapOrAnimateToHand(card);
             }
 
+            EnsurePairSorting();
+            RefreshSlotFilledStates();
             UpdateButtons();
         }
 
@@ -847,6 +851,10 @@ namespace SixDaysRemaining.UI
                 RemovePairFromSlots(card);
                 RemoveFromHandLists(card);
                 PlaceCardInSlot(card, targetIndex, animate: true);
+                if (card.Rect != null)
+                {
+                    card.Rect.SetAsLastSibling();
+                }
             }
             else
             {
@@ -877,6 +885,8 @@ namespace SixDaysRemaining.UI
             SyncSelection();
             UpdateCompanionVisibility();
             UpdateHandLayout(true);
+            EnsurePairSorting();
+            RefreshSlotFilledStates();
             UpdateSlotCount();
         }
 
@@ -926,11 +936,19 @@ namespace SixDaysRemaining.UI
             SyncSelection();
             UpdateCompanionVisibility();
             UpdateHandLayout(true);
+            EnsurePairSorting();
+            RefreshSlotFilledStates();
             UpdateSlotCount();
         }
 
         private void SnapOrAnimateToHand(CardView card)
         {
+            if (card != null && card.Card != null && card.Card.IsCorruptedCompanion)
+            {
+                SnapCompanionUnderSource(card, animated: true);
+                return;
+            }
+
             int index = handCards.IndexOf(card);
             if (index < 0)
             {
@@ -938,6 +956,54 @@ namespace SixDaysRemaining.UI
             }
 
             card.AnimateBackToHand(index, handCards.Count, HandPos(index, handCards.Count));
+            EnsurePairSorting();
+        }
+
+        private void SnapCompanionUnderSource(CardView companionView, bool animated)
+        {
+            if (companionView == null || companionView.Card == null)
+            {
+                return;
+            }
+
+            companionView.InSlot = false;
+            if (!companionCards.Contains(companionView))
+            {
+                companionCards.Add(companionView);
+            }
+
+            CardView sourceView = FindCard(companionView.Card.GetSource());
+            Vector2 pos;
+            if (sourceView != null && sourceView.Rect != null && !sourceView.InSlot)
+            {
+                pos = sourceView.Rect.anchoredPosition + new Vector2(0f, CompanionYOffset);
+            }
+            else
+            {
+                int handIndex = 0;
+                int count = Mathf.Max(1, handCards.Count);
+                GameInstance gi = flow != null ? flow.Game : null;
+                if (gi != null && gi.Combat != null && gi.Combat.Session != null)
+                {
+                    handIndex = IndexOfCard(
+                        gi.Combat.Session.Player.Deck.Hand,
+                        companionView.Card.GetSource());
+                }
+
+                pos = HandPos(Mathf.Max(0, handIndex), count) + new Vector2(0f, CompanionYOffset);
+            }
+
+            if (animated)
+            {
+                companionView.AnimateBackToHand(0, 1, pos);
+            }
+            else
+            {
+                companionView.SnapTo(pos, HandSize);
+            }
+
+            companionView.gameObject.SetActive(true);
+            EnsurePairSorting();
         }
 
         private void Reject(CardView card)
@@ -950,6 +1016,10 @@ namespace SixDaysRemaining.UI
                     card.SnapTo(CurrentSlotPos(index), CurrentSlotSize());
                 }
             }
+            else if (card.Card != null && card.Card.IsCorruptedCompanion)
+            {
+                SnapCompanionUnderSource(card, animated: false);
+            }
             else
             {
                 int index = handCards.IndexOf(card);
@@ -960,6 +1030,8 @@ namespace SixDaysRemaining.UI
             }
 
             StartCoroutine(UiAnim.Shake(card.Rect, 0.25f, 12f));
+            EnsurePairSorting();
+            RefreshSlotFilledStates();
         }
 
         private void SyncSelection()
@@ -1011,6 +1083,8 @@ namespace SixDaysRemaining.UI
                 Vector2 companionPos = pos + new Vector2(0f, CompanionYOffset);
                 ApplyHandPosition(companionView, i, count, companionPos, animated);
             }
+
+            EnsurePairSorting();
         }
 
         private void ApplyHandPosition(CardView card, int index, int count, Vector2 pos, bool animated)
@@ -1180,9 +1254,36 @@ namespace SixDaysRemaining.UI
             {
                 if (slots[i] != null)
                 {
-                    slots[i].SetActive(i == index && on);
+                    slots[i].SetResolving(i == index && on);
                 }
             }
+        }
+
+        private void SetInputEnabled(bool on)
+        {
+            inputEnabled = on;
+            for (int i = 0; i < handCards.Count; i++)
+            {
+                handCards[i].SetInteractable(on);
+            }
+
+            for (int i = 0; i < companionCards.Count; i++)
+            {
+                if (companionCards[i] != null)
+                {
+                    companionCards[i].SetInteractable(on);
+                }
+            }
+
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                if (slotCards[i] != null)
+                {
+                    slotCards[i].SetInteractable(on);
+                }
+            }
+
+            UpdateButtons();
         }
 
         private string DescribeRoundCard(int index)
@@ -1277,25 +1378,6 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        private void SetInputEnabled(bool on)
-        {
-            inputEnabled = on;
-            for (int i = 0; i < handCards.Count; i++)
-            {
-                handCards[i].SetInteractable(on);
-            }
-
-            for (int i = 0; i < slotCards.Length; i++)
-            {
-                if (slotCards[i] != null)
-                {
-                    slotCards[i].SetInteractable(on);
-                }
-            }
-
-            UpdateButtons();
-        }
-
         private Coroutine bannerRoutine;
 
         private void ShowBanner(string text)
@@ -1326,10 +1408,88 @@ namespace SixDaysRemaining.UI
 
         private void ClearSlotHighlight()
         {
-            if (hoveredSlot != null)
+            hoveredSlot = null;
+            if (slots == null)
             {
-                hoveredSlot.SetHighlight(false);
-                hoveredSlot = null;
+                return;
+            }
+
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null)
+                {
+                    slots[i].SetHover(false);
+                }
+            }
+        }
+
+        private void RefreshSlotFilledStates()
+        {
+            if (slots == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == null)
+                {
+                    continue;
+                }
+
+                bool hasCard = i < slotCards.Length && slotCards[i] != null;
+                slots[i].SetFilled(hasCard);
+            }
+        }
+
+        /// <summary>
+        /// Stable z-order: slots under cards; hand source under companion; occupied slot cards on top.
+        /// </summary>
+        private void EnsurePairSorting()
+        {
+            // Unity UI: higher sibling index draws on top. Never bury cards under slot frames.
+            if (slots != null)
+            {
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] != null && slots[i].Rect != null)
+                    {
+                        slots[i].Rect.SetAsFirstSibling();
+                    }
+                }
+            }
+
+            for (int i = 0; i < handCards.Count; i++)
+            {
+                CardView sourceView = handCards[i];
+                if (sourceView == null || sourceView.Rect == null || sourceView.InSlot)
+                {
+                    continue;
+                }
+
+                sourceView.Rect.SetAsLastSibling();
+                CardInstance companion = sourceView.Card != null
+                    ? sourceView.Card.CorruptedCompanion
+                    : null;
+                if (companion == null)
+                {
+                    continue;
+                }
+
+                CardView companionView = FindCard(companion);
+                if (companionView != null && companionView.Rect != null && !companionView.InSlot
+                    && companionView.gameObject.activeSelf)
+                {
+                    companionView.Rect.SetAsLastSibling();
+                }
+            }
+
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                if (slotCards[i] != null && slotCards[i].Rect != null)
+                {
+                    slotCards[i].Rect.SetAsLastSibling();
+                }
             }
         }
 
