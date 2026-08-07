@@ -18,7 +18,10 @@ namespace SixDaysRemaining.UI
     {
         private const int SlotCount = 5;
         private const float CompanionYOffset = -105f;
-        private static readonly Vector2 HandSize = new Vector2(140f, 190f);
+        private const float HandSpacing = 150f;
+        private const float HandBaseY = -380f;
+        private const float HandMaxArcDeg = 12f;
+        private static readonly Vector2 HandSize = new Vector2(180f, 250f);
         private static readonly Vector2 SlotSize = new Vector2(150f, 200f);
         private static readonly Vector2 EnemyActionSlotSize = new Vector2(150f, 44f);
         private static readonly Color HpFullColor = new Color(0.35f, 0.58f, 0.84f, 1f);
@@ -955,7 +958,7 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            card.AnimateBackToHand(index, handCards.Count, HandPos(index, handCards.Count));
+            card.AnimateBackToHand(index, handCards.Count, HandPos(index, handCards.Count), HandAngle(index, handCards.Count));
             EnsurePairSorting();
         }
 
@@ -974,9 +977,11 @@ namespace SixDaysRemaining.UI
 
             CardView sourceView = FindCard(companionView.Card.GetSource());
             Vector2 pos;
+            float angleDeg = 0f;
             if (sourceView != null && sourceView.Rect != null && !sourceView.InSlot)
             {
                 pos = sourceView.Rect.anchoredPosition + new Vector2(0f, CompanionYOffset);
+                angleDeg = sourceView.Rect.localEulerAngles.z;
             }
             else
             {
@@ -990,16 +995,18 @@ namespace SixDaysRemaining.UI
                         companionView.Card.GetSource());
                 }
 
-                pos = HandPos(Mathf.Max(0, handIndex), count) + new Vector2(0f, CompanionYOffset);
+                handIndex = Mathf.Max(0, handIndex);
+                pos = HandPos(handIndex, count) + new Vector2(0f, CompanionYOffset);
+                angleDeg = HandAngle(handIndex, count);
             }
 
             if (animated)
             {
-                companionView.AnimateBackToHand(0, 1, pos);
+                companionView.AnimateBackToHand(0, 1, pos, angleDeg);
             }
             else
             {
-                companionView.SnapTo(pos, HandSize);
+                companionView.SnapTo(pos, HandSize, angleDeg);
             }
 
             companionView.gameObject.SetActive(true);
@@ -1025,7 +1032,7 @@ namespace SixDaysRemaining.UI
                 int index = handCards.IndexOf(card);
                 if (index >= 0)
                 {
-                    card.SnapTo(HandPos(index, handCards.Count), HandSize);
+                    card.SnapTo(HandPos(index, handCards.Count), HandSize, HandAngle(index, handCards.Count));
                 }
             }
 
@@ -1065,7 +1072,8 @@ namespace SixDaysRemaining.UI
             for (int i = 0; i < handCards.Count; i++)
             {
                 Vector2 pos = HandPos(i, count);
-                ApplyHandPosition(handCards[i], i, count, pos, animated);
+                float angleDeg = HandAngle(i, count);
+                ApplyHandPosition(handCards[i], i, count, pos, angleDeg, animated);
                 CardInstance companion = handCards[i].Card != null
                     ? handCards[i].Card.CorruptedCompanion
                     : null;
@@ -1081,21 +1089,21 @@ namespace SixDaysRemaining.UI
                 }
 
                 Vector2 companionPos = pos + new Vector2(0f, CompanionYOffset);
-                ApplyHandPosition(companionView, i, count, companionPos, animated);
+                ApplyHandPosition(companionView, i, count, companionPos, angleDeg, animated);
             }
 
             EnsurePairSorting();
         }
 
-        private void ApplyHandPosition(CardView card, int index, int count, Vector2 pos, bool animated)
+        private void ApplyHandPosition(CardView card, int index, int count, Vector2 pos, float angleDeg, bool animated)
         {
             if (animated)
             {
-                card.AnimateBackToHand(index, count, pos);
+                card.AnimateBackToHand(index, count, pos, angleDeg);
             }
             else
             {
-                card.SnapTo(pos, HandSize);
+                card.SnapTo(pos, HandSize, angleDeg);
             }
         }
 
@@ -1669,9 +1677,37 @@ namespace SixDaysRemaining.UI
 
         private static Vector2 HandPos(int index, int count)
         {
-            float spacing = 150f;
-            float total = (count - 1) * spacing;
-            return new Vector2(-total * 0.5f + index * spacing, -380f);
+            float total = (count - 1) * HandSpacing;
+            float x = -total * 0.5f + index * HandSpacing;
+            if (total <= 0f)
+            {
+                return new Vector2(0f, HandBaseY);
+            }
+
+            float radius = HandArcRadius(total);
+            float angle = Mathf.Asin(Mathf.Clamp(x / radius, -1f, 1f));
+            float y = HandBaseY - radius * (1f - Mathf.Cos(angle));
+            return new Vector2(x, y);
+        }
+
+        private static float HandAngle(int index, int count)
+        {
+            float total = (count - 1) * HandSpacing;
+            if (total <= 0f)
+            {
+                return 0f;
+            }
+
+            float x = -total * 0.5f + index * HandSpacing;
+            float radius = HandArcRadius(total);
+            float angle = Mathf.Asin(Mathf.Clamp(x / radius, -1f, 1f));
+            return -angle * Mathf.Rad2Deg;
+        }
+
+        private static float HandArcRadius(float total)
+        {
+            float halfWidth = Mathf.Max(1f, total * 0.5f);
+            return halfWidth / Mathf.Sin(HandMaxArcDeg * Mathf.Deg2Rad);
         }
 
         private static Vector2 SlotPos(int index)

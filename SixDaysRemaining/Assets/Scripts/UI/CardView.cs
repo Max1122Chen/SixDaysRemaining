@@ -34,6 +34,16 @@ namespace SixDaysRemaining.UI
         private Color baseColor = new Color(0.30f, 0.34f, 0.42f, 1f);
         private Color hoverColor = new Color(0.42f, 0.55f, 0.72f, 1f);
         private bool dragging;
+        private const float HandHoverScale = 1.2f;
+        private const float SlotHoverScale = 1.05f;
+        private static readonly Vector2 HoverRaiseOffset = new Vector2(0f, 52f);
+
+        private Vector2 restingPosition;
+        private bool raised;
+        private Coroutine layoutAnim;
+        private Coroutine rotateAnim;
+        private Coroutine hoverMoveAnim;
+        private Coroutine hoverScaleAnim;
 
         public static CardView Create(Transform parent, CardInstance card, Vector2 handSize, Vector2 slotSize)
         {
@@ -129,21 +139,29 @@ namespace SixDaysRemaining.UI
         public void AnimateToSlot(int slotIndex, Vector2 slotPos)
         {
             InSlot = true;
-            StopAllCoroutines();
-            StartCoroutine(UiAnim.MoveAndResize(Rect, slotPos, slotSize, 0.18f));
+            raised = false;
+            StopHandAnimations();
+            layoutAnim = StartCoroutine(UiAnim.MoveAndResize(Rect, slotPos, slotSize, 0.18f));
+            rotateAnim = StartCoroutine(UiAnim.Rotate(Rect, 0f, 0.18f));
         }
 
-        public void AnimateBackToHand(int handIndex, int handCount, Vector2 handPos)
+        public void AnimateBackToHand(int handIndex, int handCount, Vector2 handPos, float handAngleDeg = 0f)
         {
             InSlot = false;
-            StopAllCoroutines();
-            StartCoroutine(UiAnim.MoveAndResize(Rect, handPos, handSize, 0.18f));
+            restingPosition = handPos;
+            StopHandAnimations();
+            Vector2 target = raised ? handPos + HoverRaiseOffset : handPos;
+            layoutAnim = StartCoroutine(UiAnim.MoveAndResize(Rect, target, handSize, 0.18f));
+            rotateAnim = StartCoroutine(UiAnim.Rotate(Rect, handAngleDeg, 0.18f));
         }
 
-        public void SnapTo(Vector2 pos, Vector2 size)
+        public void SnapTo(Vector2 pos, Vector2 size, float angleDeg = 0f)
         {
-            Rect.anchoredPosition = pos;
+            restingPosition = pos;
+            StopHandAnimations();
+            Rect.anchoredPosition = raised ? pos + HoverRaiseOffset : pos;
             Rect.sizeDelta = size;
+            Rect.localRotation = Quaternion.Euler(0f, 0f, angleDeg);
         }
 
         public void SetInteractable(bool on)
@@ -165,6 +183,8 @@ namespace SixDaysRemaining.UI
             // Avoid blocking slot raycasts under the pointer while dragging.
             Background.raycastTarget = false;
             shadow.gameObject.SetActive(true);
+            StopHandAnimations();
+            Rect.localRotation = Quaternion.identity;
             StartCoroutine(UiAnim.Scale(Rect, new Vector3(1.08f, 1.08f, 1f), 0.08f));
             if (DragBegan != null)
             {
@@ -197,11 +217,15 @@ namespace SixDaysRemaining.UI
             dragging = false;
             shadow.gameObject.SetActive(false);
             Background.raycastTarget = Interactable;
-            StartCoroutine(UiAnim.Scale(Rect, Vector3.one, 0.1f));
             if (DragEnded != null)
             {
                 DragEnded(this, eventData.position);
             }
+
+            Vector3 targetScale = raised
+                ? new Vector3(HandHoverScale, HandHoverScale, 1f)
+                : Vector3.one;
+            StartCoroutine(UiAnim.Scale(Rect, targetScale, 0.1f));
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -209,16 +233,53 @@ namespace SixDaysRemaining.UI
             if (!dragging && Interactable)
             {
                 SetHighlighted(true);
-                StartCoroutine(UiAnim.Scale(Rect, new Vector3(1.05f, 1.05f, 1f), 0.08f));
+                if (InSlot)
+                {
+                    hoverScaleAnim = StartCoroutine(UiAnim.Scale(Rect, new Vector3(SlotHoverScale, SlotHoverScale, 1f), 0.08f));
+                }
+                else
+                {
+                    raised = true;
+                    StopCoroutineIfActive(ref layoutAnim);
+                    hoverScaleAnim = StartCoroutine(UiAnim.Scale(Rect, new Vector3(HandHoverScale, HandHoverScale, 1f), 0.08f));
+                    hoverMoveAnim = StartCoroutine(UiAnim.Move(Rect, restingPosition + HoverRaiseOffset, 0.12f));
+                }
             }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             SetHighlighted(false);
-            if (!dragging)
+            if (dragging)
             {
-                StartCoroutine(UiAnim.Scale(Rect, Vector3.one, 0.08f));
+                return;
+            }
+
+            if (raised)
+            {
+                raised = false;
+                StopCoroutineIfActive(ref layoutAnim);
+                StopCoroutineIfActive(ref hoverMoveAnim);
+                hoverMoveAnim = StartCoroutine(UiAnim.Move(Rect, restingPosition, 0.12f));
+            }
+
+            hoverScaleAnim = StartCoroutine(UiAnim.Scale(Rect, Vector3.one, 0.08f));
+        }
+
+        private void StopHandAnimations()
+        {
+            StopCoroutineIfActive(ref layoutAnim);
+            StopCoroutineIfActive(ref rotateAnim);
+            StopCoroutineIfActive(ref hoverMoveAnim);
+            StopCoroutineIfActive(ref hoverScaleAnim);
+        }
+
+        private void StopCoroutineIfActive(ref Coroutine coroutine)
+        {
+            if (coroutine != null)
+            {
+                StopCoroutine(coroutine);
+                coroutine = null;
             }
         }
 

@@ -58,6 +58,22 @@ namespace SixDaysRemaining.UI
             rt.localScale = to;
         }
 
+        public static IEnumerator Rotate(RectTransform rt, float toAngleDeg, float duration)
+        {
+            Quaternion from = rt.localRotation;
+            Quaternion to = Quaternion.Euler(0f, 0f, toAngleDeg);
+            float t = 0f;
+            while (t < duration)
+            {
+                t += Time.unscaledDeltaTime;
+                float k = duration <= 0f ? 1f : Ease.Evaluate(Mathf.Clamp01(t / duration));
+                rt.localRotation = Quaternion.SlerpUnclamped(from, to, k);
+                yield return null;
+            }
+
+            rt.localRotation = to;
+        }
+
         public static IEnumerator Fade(CanvasGroup group, float to, float duration)
         {
             float from = group.alpha;
