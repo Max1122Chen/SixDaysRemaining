@@ -17,6 +17,7 @@ namespace SixDaysRemaining.UI
     public class CombatView : MonoBehaviour
     {
         private const int SlotCount = 5;
+        private const float CompanionYOffset = -105f;
         private static readonly Vector2 HandSize = new Vector2(140f, 190f);
         private static readonly Vector2 SlotSize = new Vector2(150f, 200f);
         private static readonly Vector2 EnemyActionSlotSize = new Vector2(150f, 44f);
@@ -82,6 +83,7 @@ namespace SixDaysRemaining.UI
         private EnemyActionSlotView[] enemyActionSlots = new EnemyActionSlotView[SlotCount];
 
         private readonly List<CardView> handCards = new List<CardView>();
+        private readonly List<CardView> companionCards = new List<CardView>();
         private readonly CardView[] slotCards = new CardView[SlotCount];
 
         [SerializeField]
@@ -633,7 +635,8 @@ namespace SixDaysRemaining.UI
 
             playerStatusText.text = "我方  HP " + CardText.FormatNumber(player.Attributes.HP)
                 + "/" + CardText.FormatNumber(player.Attributes.MaxHP)
-                + "  格挡 " + CardText.FormatNumber(player.Attributes.Block);
+                + "  格挡 " + CardText.FormatNumber(player.Attributes.Block)
+                + "  腐蚀 " + GetRunCorruption();
             enemyPreview.Refresh(gi.Combat.IsPlayerTurn);
 
             RefreshHpBars();
@@ -658,7 +661,8 @@ namespace SixDaysRemaining.UI
             enemyPreview.Bind(enemy);
             playerStatusText.text = "我方  HP " + CardText.FormatNumber(player.Attributes.HP)
                 + "/" + CardText.FormatNumber(player.Attributes.MaxHP)
-                + "  格挡 " + CardText.FormatNumber(player.Attributes.Block);
+                + "  格挡 " + CardText.FormatNumber(player.Attributes.Block)
+                + "  腐蚀 " + GetRunCorruption();
             enemyPreview.Refresh(false);
             RefreshHpBars();
             RefreshEnemyActions();
@@ -669,21 +673,33 @@ namespace SixDaysRemaining.UI
         {
             DestroyCards();
             handCards.Clear();
+            companionCards.Clear();
             for (int i = 0; i < slotCards.Length; i++)
             {
                 slotCards[i] = null;
             }
+
+            player.RefreshCorruptedCompanions(GetRunCorruption(), CollectPinnedCompanions());
 
             IReadOnlyList<CardInstance> hand = player.Deck.Hand;
             for (int i = 0; i < hand.Count; i++)
             {
                 CardView card = CardView.Create(cardLayer, hand[i], HandSize, CurrentSlotSize());
                 card.Rect.anchoredPosition = HandPos(i, hand.Count);
-                card.DragBegan += OnCardDragBegan;
-                card.DragMoved += OnCardDragMoved;
-                card.DragEnded += OnCardDragEnded;
+                WireCardDrag(card);
                 card.SetInteractable(inputEnabled);
                 handCards.Add(card);
+
+                CardInstance companion = hand[i].CorruptedCompanion;
+                if (companion != null)
+                {
+                    CardView companionView = CardView.Create(cardLayer, companion, HandSize, CurrentSlotSize());
+                    companionView.SetCorruptedVisual(true);
+                    companionView.Rect.anchoredPosition = HandPos(i, hand.Count) + new Vector2(0f, CompanionYOffset);
+                    WireCardDrag(companionView);
+                    companionView.SetInteractable(inputEnabled);
+                    companionCards.Add(companionView);
+                }
             }
 
             IReadOnlyList<CardInstance> selection = player.Deck.Selection;
@@ -695,14 +711,19 @@ namespace SixDaysRemaining.UI
                     continue;
                 }
 
-                handCards.Remove(card);
-                slotCards[i] = card;
-                card.InSlot = true;
-                card.SnapTo(CurrentSlotPos(i), CurrentSlotSize());
+                PlaceCardInSlot(card, i, animate: false);
             }
 
+            UpdateCompanionVisibility();
             UpdateHandLayout(false);
             UpdateSlotCount();
+        }
+
+        private void WireCardDrag(CardView card)
+        {
+            card.DragBegan += OnCardDragBegan;
+            card.DragMoved += OnCardDragMoved;
+            card.DragEnded += OnCardDragEnded;
         }
 
         private void DestroyCards()
@@ -712,6 +733,14 @@ namespace SixDaysRemaining.UI
                 if (handCards[i] != null)
                 {
                     Destroy(handCards[i].gameObject);
+                }
+            }
+
+            for (int i = companionCards.Count - 1; i >= 0; i--)
+            {
+                if (companionCards[i] != null)
+                {
+                    Destroy(companionCards[i].gameObject);
                 }
             }
 
@@ -815,9 +844,9 @@ namespace SixDaysRemaining.UI
                     return;
                 }
 
-                handCards.Remove(card);
-                slotCards[targetIndex] = card;
-                card.AnimateToSlot(targetIndex, CurrentSlotPos(targetIndex));
+                RemovePairFromSlots(card);
+                RemoveFromHandLists(card);
+                PlaceCardInSlot(card, targetIndex, animate: true);
             }
             else
             {
@@ -830,6 +859,12 @@ namespace SixDaysRemaining.UI
                 }
 
                 CardView other = slotCards[to];
+                if (other != null && SharesPair(card, other))
+                {
+                    Reject(card);
+                    return;
+                }
+
                 slotCards[to] = card;
                 slotCards[from] = other;
                 card.AnimateToSlot(to, CurrentSlotPos(to));
@@ -840,8 +875,30 @@ namespace SixDaysRemaining.UI
             }
 
             SyncSelection();
+            UpdateCompanionVisibility();
             UpdateHandLayout(true);
             UpdateSlotCount();
+        }
+
+        private void PlaceCardInSlot(CardView card, int slotIndex, bool animate)
+        {
+            RemoveFromHandLists(card);
+            slotCards[slotIndex] = card;
+            card.InSlot = true;
+            if (animate)
+            {
+                card.AnimateToSlot(slotIndex, CurrentSlotPos(slotIndex));
+            }
+            else
+            {
+                card.SnapTo(CurrentSlotPos(slotIndex), CurrentSlotSize());
+            }
+        }
+
+        private void RemoveFromHandLists(CardView card)
+        {
+            handCards.Remove(card);
+            companionCards.Remove(card);
         }
 
         private void CancelFromSlot(CardView card)
@@ -853,8 +910,21 @@ namespace SixDaysRemaining.UI
             }
 
             slotCards[index] = null;
-            handCards.Add(card);
+            card.InSlot = false;
+            if (card.Card != null && card.Card.IsCorruptedCompanion)
+            {
+                if (!companionCards.Contains(card))
+                {
+                    companionCards.Add(card);
+                }
+            }
+            else if (!handCards.Contains(card))
+            {
+                handCards.Add(card);
+            }
+
             SyncSelection();
+            UpdateCompanionVisibility();
             UpdateHandLayout(true);
             UpdateSlotCount();
         }
@@ -899,7 +969,12 @@ namespace SixDaysRemaining.UI
             player.ClearSelection();
             for (int i = 0; i < slotCards.Length; i++)
             {
-                if (slotCards[i] == null)
+                if (slotCards[i] == null || slotCards[i].Card == null)
+                {
+                    continue;
+                }
+
+                if (slotCards[i].Card.IsCorruptedCompanion)
                 {
                     continue;
                 }
@@ -918,14 +993,53 @@ namespace SixDaysRemaining.UI
             for (int i = 0; i < handCards.Count; i++)
             {
                 Vector2 pos = HandPos(i, count);
-                if (animated)
+                ApplyHandPosition(handCards[i], i, count, pos, animated);
+                CardInstance companion = handCards[i].Card != null
+                    ? handCards[i].Card.CorruptedCompanion
+                    : null;
+                if (companion == null)
                 {
-                    handCards[i].AnimateBackToHand(i, count, pos);
+                    continue;
                 }
-                else
+
+                CardView companionView = FindCard(companion);
+                if (companionView == null || companionView.InSlot)
                 {
-                    handCards[i].SnapTo(pos, HandSize);
+                    continue;
                 }
+
+                Vector2 companionPos = pos + new Vector2(0f, CompanionYOffset);
+                ApplyHandPosition(companionView, i, count, companionPos, animated);
+            }
+        }
+
+        private void ApplyHandPosition(CardView card, int index, int count, Vector2 pos, bool animated)
+        {
+            if (animated)
+            {
+                card.AnimateBackToHand(index, count, pos);
+            }
+            else
+            {
+                card.SnapTo(pos, HandSize);
+            }
+        }
+
+        private void UpdateCompanionVisibility()
+        {
+            for (int i = 0; i < companionCards.Count; i++)
+            {
+                CardView companionView = companionCards[i];
+                if (companionView == null || companionView.Card == null)
+                {
+                    continue;
+                }
+
+                CardInstance source = companionView.Card.GetSource();
+                bool sourceInSlot = IsCardInSlots(source);
+                bool companionInSlot = companionView.InSlot;
+                bool visible = !sourceInSlot && !companionInSlot;
+                companionView.gameObject.SetActive(visible);
             }
         }
 
@@ -999,7 +1113,17 @@ namespace SixDaysRemaining.UI
                 {
                     SetSlotActive(i, false);
                     SetEnemyActionActive(i, false);
-                    break;
+                    SetInputEnabled(false);
+                    if (gi.Combat.Result.RunEndedByCorruption)
+                    {
+                        flow.OnRunEndedByCorruption();
+                    }
+                    else
+                    {
+                        flow.OnCombatFinished(gi.Combat.Result);
+                    }
+
+                    yield break;
                 }
 
                 yield return new WaitForSecondsRealtime(0.35f);
@@ -1028,7 +1152,15 @@ namespace SixDaysRemaining.UI
                 SetSlotActive(-1, false);
                 SetEnemyActionActive(-1, false);
                 SetInputEnabled(false);
-                flow.OnCombatFinished(gi.Combat.Result);
+                if (gi.Combat.Result.RunEndedByCorruption)
+                {
+                    flow.OnRunEndedByCorruption();
+                }
+                else
+                {
+                    flow.OnCombatFinished(gi.Combat.Result);
+                }
+
                 yield break;
             }
 
@@ -1062,7 +1194,13 @@ namespace SixDaysRemaining.UI
             }
 
             CardInstance card = gi.Combat.RoundCards[index];
-            return card != null ? CardText.DescribeCard(card.Def) : "空";
+            if (card == null)
+            {
+                return "空";
+            }
+
+            string label = CardText.DescribeCard(card.Def);
+            return card.IsCorruptedCompanion ? "Corrupted · " + label : label;
         }
 
         private CardInstance[] BuildSlotSnapshot()
@@ -1231,7 +1369,94 @@ namespace SixDaysRemaining.UI
                 }
             }
 
+            for (int i = 0; i < companionCards.Count; i++)
+            {
+                if (companionCards[i].Card == card)
+                {
+                    return companionCards[i];
+                }
+            }
+
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                if (slotCards[i] != null && slotCards[i].Card == card)
+                {
+                    return slotCards[i];
+                }
+            }
+
             return null;
+        }
+
+        private int GetRunCorruption()
+        {
+            GameInstance gi = flow != null ? flow.Game : null;
+            if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)
+            {
+                return gi.Gameplay.State.corruption;
+            }
+
+            return 0;
+        }
+
+        private HashSet<CardInstance> CollectPinnedCompanions()
+        {
+            HashSet<CardInstance> pinned = new HashSet<CardInstance>();
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                CardView view = slotCards[i];
+                if (view != null && view.Card != null && view.Card.IsCorruptedCompanion)
+                {
+                    pinned.Add(view.Card);
+                }
+            }
+
+            return pinned;
+        }
+
+        private bool SharesPair(CardView a, CardView b)
+        {
+            if (a?.Card == null || b?.Card == null)
+            {
+                return false;
+            }
+
+            return ReferenceEquals(a.Card.GetSource(), b.Card.GetSource());
+        }
+
+        private void RemovePairFromSlots(CardView placing)
+        {
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                CardView slotView = slotCards[i];
+                if (slotView == null || slotView == placing || slotView.Card == null)
+                {
+                    continue;
+                }
+
+                if (SharesPair(placing, slotView))
+                {
+                    CancelFromSlot(slotView);
+                }
+            }
+        }
+
+        private bool IsCardInSlots(CardInstance card)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < slotCards.Length; i++)
+            {
+                if (slotCards[i]?.Card == card)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static int IndexOfCard(IReadOnlyList<CardInstance> hand, CardInstance card)

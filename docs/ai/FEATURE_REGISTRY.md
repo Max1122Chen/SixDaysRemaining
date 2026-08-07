@@ -14,9 +14,10 @@
 | `COMB-F03` | PlayerCombat + 选 5 Commit | COMB | Done | `designs/COMB-F03-player-cards.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F04` | EnemyCombat + 行为表 + 轻量 Session | COMB | Done | `designs/COMB-F04-enemy-pattern.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F05` | CombatManager + 编排 + 结算 | COMB | Done | `designs/COMB-F05-combat-manager.md` | — | `feat/combat` | Max | 同分支 |
-| `COMB-F06` | 统一卡牌模型 + 设计师内容（内存种子） | COMB | In Progress | `designs/COMB-F06-designer-content.md` | — | `feat/combat` | Max | 意图=卡牌；Library；UI 已接线 |
-| `COMB-F07` | 黑化卡牌 | COMB | Deferred | — | — | — | Max | 腐蚀&gt;40；F06 预留 CanBlacken |
+| `COMB-F06` | 统一卡牌模型 + 设计师内容（内存种子） | COMB | Review | `designs/COMB-F06-designer-content.md` | — | `feat/combat` | Max | 已提交；Corrupted 见 F07 |
+| `COMB-F07` | Corrupted 伴生牌 | COMB | Review | `designs/COMB-F07-corrupted-cards.md` | — | `feat/combat` | Max | 逻辑已落；UI 缺陷见 UI-F01 |
 | `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Deferred | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat-data-driven` | Max | 依赖 F06 接口；本轮不实现 |
+| `UI-F01` | 战斗卡牌交互修复（伴生/复位/叠层/槽高亮） | UI | Draft | `designs/UI-F01-combat-card-interaction.md` | — | `feat/ui` | Max / UI | 自 main 拉出 |
 | `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Review | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | Demo/UI 已合 main；文档待跟 UI |
 | `SHLT-F02` | 幸存者特质 / NPC 模板挂钩 | SHLT | Discuss | — | — | — | Max | 人物模板2.0；护士/小贼等；未开 design |
 | `EVT-F01` | 突发事件系统 | EVT | Deferred | — | — | `feat/events` | Max | 四套事件池；设计明朗后再写 design |
@@ -26,6 +27,7 @@
 - `CORE` - 核心循环、GameState、阶段编排
 - `SHLT` - 庇护所、NPC、饱食度
 - `COMB` - 卡牌战斗
+- `UI` - 界面交互与呈现
 - `EVT` - 突发事件（延后）
 
 ## 状态说明

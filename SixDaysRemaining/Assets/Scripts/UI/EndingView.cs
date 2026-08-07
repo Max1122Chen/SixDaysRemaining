@@ -1,3 +1,5 @@
+using SixDaysRemaining.Bootstrap;
+using SixDaysRemaining.Combat.Cards;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +17,8 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private Button menuButton;
 
+        private AppFlowController flow;
+
         public static EndingView Build(Transform parent, AppFlowController flow)
         {
             GameObject panel = UiFactory.CreatePanel(parent, "EndingScreen", new Color(0.03f, 0.03f, 0.05f, 1f));
@@ -26,9 +30,10 @@ namespace SixDaysRemaining.UI
             return view;
         }
 
-        public void Wire(AppFlowController flow)
+        public void Wire(AppFlowController appFlow)
         {
-            if (menuButton != null)
+            flow = appFlow;
+            if (menuButton != null && flow != null)
             {
                 menuButton.onClick.RemoveAllListeners();
                 menuButton.onClick.AddListener(flow.OnBackToMenu);
@@ -37,6 +42,14 @@ namespace SixDaysRemaining.UI
 
         public void Refresh()
         {
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null
+                && gi.Gameplay.State.corruption >= CorruptedRules.FuseThreshold)
+            {
+                endingText.text = "腐蚀吞噬了一切。\n你已无法继续……（结局 G 占位）";
+                return;
+            }
+
             endingText.text = "六日已过，避难所的故事暂时告一段落。\n结局内容待策划标准化后接入。";
         }
     }

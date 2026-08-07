@@ -91,6 +91,31 @@ namespace SixDaysRemaining.UI
             Background.color = baseColor;
         }
 
+        public void SetCorruptedVisual(bool on)
+        {
+            if (Card == null || Card.Def == null)
+            {
+                return;
+            }
+
+            if (on)
+            {
+                baseColor = new Color(0.38f, 0.14f, 0.20f, 1f);
+                hoverColor = new Color(0.52f, 0.22f, 0.30f, 1f);
+                string title = string.IsNullOrEmpty(Card.Def.DisplayName)
+                    ? Card.Def.Id.ToString()
+                    : Card.Def.DisplayName;
+                titleText.text = "Corrupted · " + title;
+            }
+            else
+            {
+                hoverColor = new Color(0.42f, 0.55f, 0.72f, 1f);
+                SetCard(Card);
+            }
+
+            Background.color = baseColor;
+        }
+
         public void SetHighlighted(bool on)
         {
             if (dragging)

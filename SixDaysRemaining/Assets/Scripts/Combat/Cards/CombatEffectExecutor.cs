@@ -79,12 +79,21 @@ namespace SixDaysRemaining.Combat.Cards
             switch (spec.Op)
             {
                 case EffectOp.DealDamage:
-                    DealDamage(source, opponent, spec.Amount + GetDamageBonus(source, context), spec.Target);
+                    DealDamage(
+                        source,
+                        opponent,
+                        ScaleDamageAmount(spec.Amount, context) + GetDamageBonus(source, context),
+                        spec.Target);
                     break;
                 case EffectOp.DealDamagePlusAttackCount:
                 {
                     float bonus = CountAttackCards(context != null ? context.PlayerSlots : null);
-                    DealDamage(source, opponent, spec.Amount + bonus + GetDamageBonus(source, context), spec.Target);
+                    float baseAmount = ScaleDamageAmount(spec.Amount, context);
+                    DealDamage(
+                        source,
+                        opponent,
+                        baseAmount + bonus + GetDamageBonus(source, context),
+                        spec.Target);
                     break;
                 }
                 case EffectOp.GainBlock:
@@ -110,18 +119,10 @@ namespace SixDaysRemaining.Combat.Cards
 
                     break;
                 case EffectOp.AddCorruption:
-                    if (context != null)
-                    {
-                        context.CorruptionDeltaThisCombat += (int)spec.Amount;
-                    }
-
+                    ApplyCorruptionDelta(context, (int)spec.Amount);
                     break;
                 case EffectOp.RemoveCorruption:
-                    if (context != null)
-                    {
-                        context.CorruptionDeltaThisCombat -= (int)spec.Amount;
-                    }
-
+                    ApplyCorruptionDelta(context, -(int)spec.Amount);
                     break;
                 case EffectOp.Draw:
                 {
@@ -165,6 +166,33 @@ namespace SixDaysRemaining.Combat.Cards
 
                     break;
                 }
+            }
+        }
+
+        private static float ScaleDamageAmount(float baseAmount, CombatResolveContext context)
+        {
+            if (context == null || !context.ResolveAsCorrupted)
+            {
+                return baseAmount;
+            }
+
+            return baseAmount * CorruptedRules.DamageMultiplier(context.CurrentRunCorruption);
+        }
+
+        private static void ApplyCorruptionDelta(CombatResolveContext context, int delta)
+        {
+            if (context == null || delta == 0)
+            {
+                return;
+            }
+
+            if (context.ApplyRunCorruption != null)
+            {
+                context.ApplyRunCorruption(delta);
+            }
+            else
+            {
+                context.CorruptionDeltaThisCombat += delta;
             }
         }
 

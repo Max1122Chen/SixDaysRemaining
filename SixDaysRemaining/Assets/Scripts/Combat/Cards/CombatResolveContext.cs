@@ -14,5 +14,8 @@ namespace SixDaysRemaining.Combat.Cards
         public float DamageBonus;
         public System.Random Rng;
         public int CorruptionDeltaThisCombat;
+        public bool ResolveAsCorrupted;
+        public int CurrentRunCorruption;
+        public System.Func<int, bool> ApplyRunCorruption;
     }
 }

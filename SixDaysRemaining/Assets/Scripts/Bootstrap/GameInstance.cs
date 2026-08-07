@@ -30,6 +30,12 @@ namespace SixDaysRemaining.Bootstrap
         [SerializeField]
         private Transform combatRoot;
 
+        [Header("Debug")]
+        [Tooltip("新开局写入的起始腐蚀。0=正式值。≥40 测 Corrupted 伴生；≥100 会直接进结局。")]
+        [Range(0, 100)]
+        [SerializeField]
+        private int debugStartCorruption;
+
         public GameplaySubsystem Gameplay { get; private set; }
 
         public ShelterManager Shelter { get; private set; }
@@ -99,8 +105,23 @@ namespace SixDaysRemaining.Bootstrap
         {
             Mode = AppMode.InGame;
             Gameplay.StartNewRun(seed);
+            ApplyDebugStartCorruption();
             Shelter = new ShelterManager(Gameplay.State);
             Shelter.InitializeDefaultRoster(StartingFoodStock);
+        }
+
+        private void ApplyDebugStartCorruption()
+        {
+            if (debugStartCorruption <= 0 || Gameplay == null || Gameplay.State == null)
+            {
+                return;
+            }
+
+            Gameplay.State.corruption = debugStartCorruption;
+            if (debugStartCorruption >= SixDaysRemaining.Combat.Cards.CorruptedRules.FuseThreshold)
+            {
+                Gameplay.State.currentPhase = GameplayPhase.Ending;
+            }
         }
 
         public void ReturnToMainMenu()

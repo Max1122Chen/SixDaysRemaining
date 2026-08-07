@@ -11,14 +11,14 @@
 - **相关：**
   - 产品：`docs/designs/六日英雄—技术演示文档2.0.pdf`、`docs/designs/六日英雄，卡牌.xlsx`
   - 前序：`COMB-F01`～`F05`、`CORE-F03`、`COMB-feat-chain.md`
-  - 后续：`COMB-F08` JSON 数据驱动、`COMB-F07` 黑化、`SHLT-F02` 特质
+  - 后续：`COMB-F08` JSON 数据驱动、`COMB-F07` Corrupted、`SHLT-F02` 特质
 
 ## TL;DR
 
 落地设计师基础牌与六日小怪内容；**玩家出牌与敌人意图同质——都是 `CardDef`/`CardInstance`**，共用 `CombatEffectExecutor`（重构现有 `TurnAction` 内容路径）。  
 扩展效果（组合/腐蚀/随机格挡/治疗等），修订空槽与消极腐蚀规则。  
 **本轮仍用内存静态种子填表**，但必须留下 **`ICardLibrary` / 遭遇查询接口**（或等价），**禁止**把 `CardCatalog` 写成日后唯一入口；**JSON 读写留给 `COMB-F08`，本 feat 不实现。**  
-攻击蓄力：结算无行动，意图预兆「强攻将至」。黑化/特质/问号怪 Out。
+攻击蓄力：结算无行动，意图预兆「强攻将至」。Corrupted / 特质 / ？怪 Out。
 
 ---
 
@@ -58,7 +58,7 @@
 
 ### A. PDF 2.0 战斗增量（摘要，决议已收口）
 
-空槽合法；放牌 &lt;3 → 本场结束腐蚀 +2（可累加）；补牌至手牌 8；非 Flee 固定腐蚀 +3；Flee 保留已产生局内腐蚀；Confirm 后不可回退；黑化 → F07。
+空槽合法；放牌 &lt;3 → 本场结束腐蚀 +2（可累加）；补牌至手牌 8；非 Flee 固定腐蚀 +3；Flee 保留已产生局内腐蚀；Confirm 后不可回退；Corrupted → F07。
 
 ### B. 卡牌.xlsx + 同质意图
 

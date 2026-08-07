@@ -18,6 +18,7 @@ namespace SixDaysRemaining.Combat
         public int CorruptionDelta;
         public int TurnsElapsed;
         public string RewardTier;
+        public bool RunEndedByCorruption;
     }
 
     public class CombatStartConfig
@@ -34,6 +35,9 @@ namespace SixDaysRemaining.Combat
         public int FlatCorruptionOnFinish = 3;
         public bool UseRoundRewards;
         public System.Random ResolveRng;
+        public ICorruptionRunState RunCorruption;
+        /// <summary>无 RunCorruption 的 Edit Mode 战斗用初始腐蚀。</summary>
+        public int InitialRunCorruption;
     }
 
     /// <summary>
@@ -56,6 +60,8 @@ namespace SixDaysRemaining.Combat
         private CombatResolveContext resolveContext;
         private int cardCorruptionDelta;
         private int passivePenaltyStacks;
+        private ICorruptionRunState runCorruption;
+        private int fallbackRunCorruption;
         private CombatResult result;
         private GameObject spawnedEnemyGo;
 
@@ -173,7 +179,7 @@ namespace SixDaysRemaining.Combat
                 if (roundPlayerSlots[i] != null)
                 {
                     // Keep selection list in slot order for any legacy readers.
-                    int handIndex = IndexInHand(session.Player.Deck.Hand, roundPlayerSlots[i]);
+                    int handIndex = IndexInHand(session.Player.Deck.Hand, roundPlayerSlots[i].GetSource());
                     if (handIndex >= 0)
                     {
                         session.Player.SelectFromHand(handIndex);
@@ -223,8 +229,20 @@ namespace SixDaysRemaining.Combat
 
             resolveContext.SlotIndex = slotIndex;
             resolveContext.CorruptionDeltaThisCombat = 0;
+            resolveContext.ResolveAsCorrupted = card.IsCorruptedCompanion;
+            resolveContext.CurrentRunCorruption = GetRunCorruption();
+            resolveContext.ApplyRunCorruption = ApplyCorruptionDuringCombat;
             session.Player.PlayResolved(card, resolveContext);
-            cardCorruptionDelta += resolveContext.CorruptionDeltaThisCombat;
+            if (resolveContext.ApplyRunCorruption == null)
+            {
+                cardCorruptionDelta += resolveContext.CorruptionDeltaThisCombat;
+            }
+
+            if (finished)
+            {
+                return card;
+            }
+
             TryFinishByHp();
             return card;
         }
@@ -247,8 +265,19 @@ namespace SixDaysRemaining.Combat
             {
                 resolveContext.SlotIndex = slotIndex;
                 resolveContext.CorruptionDeltaThisCombat = 0;
+                resolveContext.ResolveAsCorrupted = false;
+                resolveContext.CurrentRunCorruption = GetRunCorruption();
+                resolveContext.ApplyRunCorruption = ApplyCorruptionDuringCombat;
                 CombatEffectExecutor.Execute(card, enemy, resolveContext);
-                cardCorruptionDelta += resolveContext.CorruptionDeltaThisCombat;
+                if (resolveContext.ApplyRunCorruption == null)
+                {
+                    cardCorruptionDelta += resolveContext.CorruptionDeltaThisCombat;
+                }
+
+                if (finished)
+                {
+                    return true;
+                }
             }
 
             TryFinishByHp();
@@ -360,6 +389,10 @@ namespace SixDaysRemaining.Combat
             roundActive = false;
             cardCorruptionDelta = 0;
             passivePenaltyStacks = 0;
+            runCorruption = config.RunCorruption;
+            fallbackRunCorruption = runCorruption != null
+                ? runCorruption.Corruption
+                : config.InitialRunCorruption;
             ClearRoundSlots();
             result = default(CombatResult);
 
@@ -393,8 +426,68 @@ namespace SixDaysRemaining.Combat
                 Rng = config != null && config.ResolveRng != null
                     ? config.ResolveRng
                     : new System.Random(config != null ? config.DeckSeed : 1),
-                CorruptionDeltaThisCombat = 0
+                CorruptionDeltaThisCombat = 0,
+                CurrentRunCorruption = GetRunCorruption(),
+                ApplyRunCorruption = ApplyCorruptionDuringCombat
             };
+        }
+
+        private int GetRunCorruption()
+        {
+            return runCorruption != null ? runCorruption.Corruption : fallbackRunCorruption;
+        }
+
+        private bool ApplyCorruptionDuringCombat(int delta)
+        {
+            if (delta == 0)
+            {
+                return finished && result.RunEndedByCorruption;
+            }
+
+            if (runCorruption != null)
+            {
+                if (runCorruption.ApplyCorruption(delta))
+                {
+                    if (!finished)
+                    {
+                        FinishCorruptionFuse();
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            cardCorruptionDelta += delta;
+            fallbackRunCorruption = System.Math.Max(0, fallbackRunCorruption + delta);
+            if (fallbackRunCorruption >= CorruptedRules.FuseThreshold)
+            {
+                if (!finished)
+                {
+                    FinishCorruptionFuse();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void FinishCorruptionFuse()
+        {
+            finished = true;
+            playerTurn = false;
+            roundActive = false;
+            ClearRoundSlots();
+            result.Outcome = CombatOutcome.Lose;
+            result.RunEndedByCorruption = true;
+            result.TurnsElapsed = turnsElapsed;
+            result.FoodGained = 0;
+            result.CorruptionDelta = 0;
+            result.RewardTier = "";
+            CleanupSpawnedEnemy();
+            session = null;
         }
 
         private EnemyCombatComponent SpawnEnemy(EnemyCombatComponent enemyPrefab, Transform combatRoot)
@@ -458,6 +551,31 @@ namespace SixDaysRemaining.Combat
 
         private void Finish(CombatOutcome outcome, int foodGained, bool applyFlatCorruption)
         {
+            int corruption = cardCorruptionDelta;
+            if (applyFlatCorruption)
+            {
+                int flat = config != null ? config.FlatCorruptionOnFinish : 3;
+                int finishDelta = flat + passivePenaltyStacks * 2;
+                if (runCorruption != null)
+                {
+                    if (runCorruption.ApplyCorruption(finishDelta))
+                    {
+                        FinishCorruptionFuse();
+                        return;
+                    }
+
+                    corruption = 0;
+                }
+                else
+                {
+                    corruption += finishDelta;
+                }
+            }
+            else if (runCorruption != null)
+            {
+                corruption = 0;
+            }
+
             finished = true;
             playerTurn = false;
             roundActive = false;
@@ -465,14 +583,6 @@ namespace SixDaysRemaining.Combat
             result.Outcome = outcome;
             result.TurnsElapsed = turnsElapsed;
             result.RewardTier = "";
-
-            int corruption = cardCorruptionDelta;
-            if (applyFlatCorruption)
-            {
-                int flat = config != null ? config.FlatCorruptionOnFinish : 3;
-                corruption += flat;
-                corruption += passivePenaltyStacks * 2;
-            }
 
             if (corruption < 0)
             {

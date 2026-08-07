@@ -1,7 +1,9 @@
 {
   "name": "SixDaysRemaining.Gameplay",
   "rootNamespace": "SixDaysRemaining.Gameplay",
-  "references": [],
+  "references": [
+    "SixDaysRemaining.Combat"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

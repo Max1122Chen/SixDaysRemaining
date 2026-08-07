@@ -11,9 +11,9 @@ COMB-F02  CombatAttributeSet + CombatComponent   ← 代码已落（Review）
 COMB-F03  PlayerCombat + 选 5 Commit               ← 代码已落（Review）
 COMB-F04  EnemyCombat + 行为表 + 轻量 Session    ← 代码已落（Review）
 COMB-F05  CombatManager + 编排 + 结算            ← 代码已落（Review）
-COMB-F06  统一卡牌（玩家=意图）+ 内容内存种子 + Library 接口  ← **Planned**
+COMB-F06  统一卡牌（玩家=意图）+ 内容内存种子 + Library 接口  ← **Review**
+COMB-F07  Corrupted 伴生牌（≥40 / 动态倍率 / +8 / 100 熔断）  ← **In Progress**
 COMB-F08  JSON 加载 Card/Encounter（替换 InMemory）           ← Deferred
-COMB-F07  黑化 / SHLT-F02 特质 / EVT …
 ```
 
 ## 已定关键跨 feat 约定
@@ -28,6 +28,8 @@ COMB-F07  黑化 / SHLT-F02 特质 / EVT …
 | 业务经 **`ICardLibrary` / `IEncounterLibrary`**；禁死绑唯一 Catalog | **F06 预留 → F08 换 JSON** |
 | 卡牌 `int Id`（1000+ 玩家 / 2000+ 意图）；**禁止**牌种 enum | F06 |
 | 攻击蓄力：无行动 + 意图预兆（非数值 buff） | F06 |
+| Corrupted：伴生实例、无独立 Def；见 F07 | F07 |
+| `corruption >= 100` → 任意来源立即整局结局（`ApplyCorruption` 网关） | F07 |
 | Manager：编排 / Flee / Result；不转发选牌 | F05 |
 
 ## 状态
@@ -35,11 +37,11 @@ COMB-F07  黑化 / SHLT-F02 特质 / EVT …
 | ID | 状态 | 设计文档 |
 |----|------|----------|
 | F01–F05 | Review（代码已落） | 各 COMB-F0x |
-| F06 | **Planned** | `COMB-F06-designer-content.md` |
-| F07 | Deferred | — |
-| F08 | **Deferred**（已登记） | `COMB-F08-data-driven-content.md` |
+| F06 | **Review** | `COMB-F06-designer-content.md` |
+| F07 | **In Progress** | `COMB-F07-corrupted-cards.md` |
+| F08 | **Deferred** | `COMB-F08-data-driven-content.md` |
 
 ## 下一步
 
-1. 实现 F06（同质建模 + 内存 Library + 内容）  
+1. 审批 `COMB-F07` → Planned → 开 `feat/combat-corrupted`  
 2. F08：JSON 替换 InMemory（F06 Done 后）  

@@ -53,6 +53,22 @@ namespace SixDaysRemaining.Combat.Cards
     public class CardInstance
     {
         public CardDef Def;
+
+        /// <summary>若本实例为 Corrupted 伴生，指向原牌。</summary>
+        public CardInstance SourceCard;
+
+        /// <summary>若本实例为原牌，可选 Corrupted 伴生（不在 draw/hand 内）。</summary>
+        public CardInstance CorruptedCompanion;
+
+        public bool IsCorruptedCompanion
+        {
+            get { return SourceCard != null; }
+        }
+
+        public CardInstance GetSource()
+        {
+            return SourceCard != null ? SourceCard : this;
+        }
     }
 
     /// <summary>卡牌 Id 常量（非 enum）；号段见 COMB-F06。</summary>

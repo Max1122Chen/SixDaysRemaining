@@ -31,6 +31,11 @@ namespace SixDaysRemaining.Combat
             deck.DrawUntilHandLimit(HandLimit);
         }
 
+        public void RefreshCorruptedCompanions(int corruption, System.Collections.Generic.IReadOnlyCollection<CardInstance> pinnedCompanions = null)
+        {
+            CorruptedCompanionService.RefreshHandCompanions(deck, corruption, pinnedCompanions);
+        }
+
         public bool SelectFromHand(int handIndex)
         {
             return deck.TrySelectFromHand(handIndex, CommitCount);
@@ -53,9 +58,28 @@ namespace SixDaysRemaining.Combat
                 return;
             }
 
-            CombatEffectExecutor.Execute(card, this, context);
-            deck.RemoveFromHand(card);
-            deck.AddToBottom(card);
+            CardInstance source = card.GetSource();
+            bool corrupted = card.IsCorruptedCompanion;
+            context.ResolveAsCorrupted = corrupted;
+
+            CombatEffectExecutor.Execute(source, this, context);
+
+            if (corrupted)
+            {
+                if (context.ApplyRunCorruption != null)
+                {
+                    context.ApplyRunCorruption(CorruptedRules.PlayCorruptionCost);
+                }
+                else
+                {
+                    context.CorruptionDeltaThisCombat += CorruptedRules.PlayCorruptionCost;
+                }
+
+                CorruptedCompanionService.DetachCompanion(source);
+            }
+
+            deck.RemoveFromHand(source);
+            deck.AddToBottom(source);
         }
 
         public void PlayResolved(CardInstance card, CombatSession session)

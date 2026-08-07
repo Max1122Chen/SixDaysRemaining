@@ -1,3 +1,5 @@
+using SixDaysRemaining.Combat.Cards;
+
 namespace SixDaysRemaining.Gameplay
 {
     /// <summary>
@@ -32,6 +34,27 @@ namespace SixDaysRemaining.Gameplay
             State.rngSeed = seed;
             State.population = 0;
             State.currentPhase = GameplayPhase.ExpeditionPrep;
+        }
+
+        /// <summary>
+        /// 写入腐蚀 delta；达到 100 时进入 Ending 并返回 true。
+        /// </summary>
+        public bool ApplyCorruption(int delta)
+        {
+            if (State == null || delta == 0)
+            {
+                return State != null && State.corruption >= CorruptedRules.FuseThreshold;
+            }
+
+            State.corruption = UnityEngine.Mathf.Max(0, State.corruption + delta);
+            if (State.corruption >= CorruptedRules.FuseThreshold)
+            {
+                State.corruption = CorruptedRules.FuseThreshold;
+                State.currentPhase = GameplayPhase.Ending;
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>

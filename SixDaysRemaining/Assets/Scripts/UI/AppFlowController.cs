@@ -143,6 +143,7 @@ namespace SixDaysRemaining.UI
             config.Day = gi.Gameplay.State.day;
             config.UseRoundRewards = true;
             config.FlatCorruptionOnFinish = 3;
+            config.RunCorruption = new GameplayCorruptionBridge(gi.Gameplay);
             gi.Combat.StartCombat(config, gi.PlayerCombat, gi.EnemyPrefab, gi.CombatRoot);
             ShowCombat();
         }
@@ -151,6 +152,12 @@ namespace SixDaysRemaining.UI
         {
             pendingResult = result;
             GameInstance gi = Game;
+            if (result.RunEndedByCorruption)
+            {
+                OnRunEndedByCorruption();
+                return;
+            }
+
             if (gi != null && gi.Gameplay != null && gi.Gameplay.CurrentPhase == GameplayPhase.Combat)
             {
                 gi.Gameplay.AdvancePhase();
@@ -158,6 +165,17 @@ namespace SixDaysRemaining.UI
 
             ShowOverlay(settlementView.gameObject);
             settlementView.ShowResult(result, gi);
+        }
+
+        public void OnRunEndedByCorruption()
+        {
+            GameInstance gi = Game;
+            if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)
+            {
+                gi.Gameplay.State.currentPhase = GameplayPhase.Ending;
+            }
+
+            ShowEnding();
         }
 
         public void OnSettlementContinue()
@@ -169,7 +187,12 @@ namespace SixDaysRemaining.UI
             }
 
             gi.Shelter.DepositFood(pendingResult.FoodGained);
-            gi.Gameplay.State.corruption += pendingResult.CorruptionDelta;
+            if (gi.Gameplay.ApplyCorruption(pendingResult.CorruptionDelta))
+            {
+                CloseOverlay();
+                ShowEnding();
+                return;
+            }
 
             ShowShelter();
 
@@ -188,7 +211,13 @@ namespace SixDaysRemaining.UI
             }
 
             gi.Gameplay.State.foodStock = Mathf.Max(0, gi.Gameplay.State.foodStock + option.FoodDelta);
-            gi.Gameplay.State.corruption = Mathf.Max(0, gi.Gameplay.State.corruption + option.CorruptionDelta);
+            if (gi.Gameplay.ApplyCorruption(option.CorruptionDelta))
+            {
+                view.gameObject.SetActive(false);
+                CloseOverlay();
+                ShowEnding();
+                return;
+            }
             if (!string.IsNullOrEmpty(option.TakeInName))
             {
                 gi.Shelter.TakeIn(option.TakeInName);
