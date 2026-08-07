@@ -27,3 +27,10 @@ alwaysApply: true
 - `docs/ai/BOOTSTRAP_DIGEST.md`
 - `docs/ai/PROJECT_CONTEXT.md`
 - `docs/ai/ACTIVE_WORK.md`
+
+## 5) 分支创建纪律
+
+- **未经你明确要求，不要新建 git 分支**（含 `feat/*`、`fix/*` 等）。
+- **优先在当前已有分支上继续工作**；设计文档里的「建议分支名」只是备选，不构成开分支授权。
+- 分支宜按**大系统 / 大域**划分（如 `feat/combat`、`feat/ui`），**不要**为每个小 Feature ID 再拆细碎分支（避免 `feat/combat-f08-json` 这类碎片）。
+- 仅当你明确说「开新分支 / 拉 `feat/…`」时才创建；创建前用一句话确认基于哪条基线（通常是 `main` 或你指定的分支）。

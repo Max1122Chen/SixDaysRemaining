@@ -12,8 +12,8 @@ COMB-F03  PlayerCombat + 选 5 Commit               ← 代码已落（Review）
 COMB-F04  EnemyCombat + 行为表 + 轻量 Session    ← 代码已落（Review）
 COMB-F05  CombatManager + 编排 + 结算            ← 代码已落（Review）
 COMB-F06  统一卡牌（玩家=意图）+ 内容内存种子 + Library 接口  ← **Review**
-COMB-F07  Corrupted 伴生牌（≥40 / 动态倍率 / +8 / 100 熔断）  ← **In Progress**
-COMB-F08  JSON 加载 Card/Encounter（替换 InMemory）           ← Deferred
+COMB-F07  Corrupted 伴生牌（≥40 / 动态倍率 / +8 / 100 熔断）  ← **Review**
+COMB-F08  JSON 加载 Card/Encounter（硬失败；无 fallback）           ← **Review**
 ```
 
 ## 已定关键跨 feat 约定
@@ -30,6 +30,8 @@ COMB-F08  JSON 加载 Card/Encounter（替换 InMemory）           ← Deferred
 | 攻击蓄力：无行动 + 意图预兆（非数值 buff） | F06 |
 | Corrupted：伴生实例、无独立 Def；见 F07 | F07 |
 | `corruption >= 100` → 任意来源立即整局结局（`ApplyCorruption` 网关） | F07 |
+| 内容真相：JSON @ StreamingAssets；**加载失败 throw，禁止 fallback** | F08 |
+| COMB 相关实现默认在 **`feat/combat`**，不另拆 F08 分支 | F08 |
 | Manager：编排 / Flee / Result；不转发选牌 | F05 |
 
 ## 状态
@@ -38,10 +40,10 @@ COMB-F08  JSON 加载 Card/Encounter（替换 InMemory）           ← Deferred
 |----|------|----------|
 | F01–F05 | Review（代码已落） | 各 COMB-F0x |
 | F06 | **Review** | `COMB-F06-designer-content.md` |
-| F07 | **In Progress** | `COMB-F07-corrupted-cards.md` |
-| F08 | **Deferred** | `COMB-F08-data-driven-content.md` |
+| F07 | **Review** | `COMB-F07-corrupted-cards.md` |
+| F08 | **Review** | `COMB-F08-data-driven-content.md` |
 
 ## 下一步
 
-1. 审批 `COMB-F07` → Planned → 开 `feat/combat-corrupted`  
-2. F08：JSON 替换 InMemory（F06 Done 后）  
+1. `feat/combat` 合 main（F08）  
+2. `SHLT-F02` design / `EVT-F01` / Excel→JSON TECH / TD 清债  

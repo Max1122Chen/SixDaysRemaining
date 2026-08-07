@@ -1,0 +1,70 @@
+{
+  "encounters": [
+    {
+      "id": 1,
+      "displayName": "小怪01",
+      "maxHp": 35,
+      "damageBonus": 0,
+      "roundPlans": [
+        { "slots": [2204, 0, 2090, 2205, 2304] },
+        { "slots": [2205, 2204, 0, 2090, 2304] },
+        { "slots": [2304, 2203, 2205, 2204, 0] },
+        { "slots": [0, 0, 2090, 2204, 2304] }
+      ]
+    },
+    {
+      "id": 2,
+      "displayName": "小怪02",
+      "maxHp": 42,
+      "damageBonus": 0,
+      "roundPlans": [
+        { "slots": [2206, 2203, 0, 2205, 2304] },
+        { "slots": [2304, 2204, 2202, 2302, 0] },
+        { "slots": [0, 2204, 2090, 2208, 0] }
+      ]
+    },
+    {
+      "id": 3,
+      "displayName": "小怪03",
+      "maxHp": 55,
+      "damageBonus": 0,
+      "roundPlans": [
+        { "slots": [2208, 2205, 0, 2302, 2304] },
+        { "slots": [2304, 0, 2090, 2210, 2302] },
+        { "slots": [2207, 2210, 0, 0, 2304] },
+        { "slots": [2302, 2100, 0, 2212, 2302] }
+      ]
+    },
+    {
+      "id": 4,
+      "displayName": "小怪01强化",
+      "maxHp": 50,
+      "damageBonus": 1,
+      "roundPlans": [
+        { "slots": [2204, 0, 2090, 2205, 2304] },
+        { "slots": [2205, 2204, 0, 2090, 2304] },
+        { "slots": [2304, 2203, 2205, 2204, 0] },
+        { "slots": [0, 0, 2090, 2204, 2304] }
+      ]
+    },
+    {
+      "id": 5,
+      "displayName": "小怪02强化",
+      "maxHp": 62,
+      "damageBonus": 1,
+      "roundPlans": [
+        { "slots": [2206, 2203, 0, 2205, 2304] },
+        { "slots": [2304, 2204, 2202, 2302, 0] },
+        { "slots": [0, 2204, 2090, 2208, 0] }
+      ]
+    }
+  ],
+  "dayMap": [
+    { "day": 1, "encounterId": 1 },
+    { "day": 2, "encounterId": 2 },
+    { "day": 3, "encounterId": 4 },
+    { "day": 4, "encounterId": 3 },
+    { "day": 5, "encounterId": 5 },
+    { "day": 6, "encounterId": 3 }
+  ]
+}

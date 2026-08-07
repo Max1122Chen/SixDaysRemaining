@@ -1,0 +1,194 @@
+{
+  "cards": [
+    {
+      "id": 1000,
+      "displayName": "剑意",
+      "description": "",
+      "tags": ["Attack"],
+      "canBlacken": true,
+      "effects": [
+        { "op": "DealDamage", "amount": 5, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 1001,
+      "displayName": "蓄力一击",
+      "description": "",
+      "tags": ["Attack", "Combo"],
+      "canBlacken": true,
+      "effects": [
+        { "op": "DealDamagePlusAttackCount", "amount": 5, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 1002,
+      "displayName": "血祭",
+      "description": "",
+      "tags": ["Attack", "Combo"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 7, "amountSecondary": 0, "target": "Enemy" },
+        { "op": "AddCorruption", "amount": 5, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 1003,
+      "displayName": "抵挡",
+      "description": "",
+      "tags": ["Defend"],
+      "canBlacken": true,
+      "effects": [
+        { "op": "GainBlock", "amount": 4, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 1004,
+      "displayName": "庇佑",
+      "description": "",
+      "tags": ["Defend", "Special"],
+      "canBlacken": true,
+      "effects": [
+        { "op": "GainBlockRandom", "amount": 2, "amountSecondary": 7, "target": "Self" }
+      ]
+    },
+    {
+      "id": 1005,
+      "displayName": "缓释",
+      "description": "",
+      "tags": ["Defend", "Special"],
+      "canBlacken": true,
+      "effects": [
+        { "op": "GainBlock", "amount": 3, "amountSecondary": 0, "target": "Self" },
+        { "op": "RemoveCorruption", "amount": 4, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 2202,
+      "displayName": "攻击 2",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 2, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2203,
+      "displayName": "攻击 3",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 3, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2204,
+      "displayName": "攻击 4",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 4, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2205,
+      "displayName": "攻击 5",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 5, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2206,
+      "displayName": "攻击 6",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 6, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2207,
+      "displayName": "攻击 7",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 7, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2208,
+      "displayName": "攻击 8",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 8, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2210,
+      "displayName": "攻击 10",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 10, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2212,
+      "displayName": "攻击 12",
+      "description": "",
+      "tags": ["Attack", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "DealDamage", "amount": 12, "amountSecondary": 0, "target": "Enemy" }
+      ]
+    },
+    {
+      "id": 2302,
+      "displayName": "防御 2",
+      "description": "",
+      "tags": ["Defend", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "GainBlock", "amount": 2, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 2304,
+      "displayName": "防御 4",
+      "description": "",
+      "tags": ["Defend", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "GainBlock", "amount": 4, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 2090,
+      "displayName": "休眠",
+      "description": "",
+      "tags": ["Sleep", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "Heal", "amount": 10, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 2100,
+      "displayName": "攻击蓄力",
+      "description": "无行动。预示之后将有强力攻击。",
+      "tags": ["Charge", "Intent"],
+      "canBlacken": false,
+      "effects": []
+    }
+  ]
+}

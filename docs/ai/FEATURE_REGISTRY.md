@@ -14,9 +14,9 @@
 | `COMB-F03` | PlayerCombat + 选 5 Commit | COMB | Done | `designs/COMB-F03-player-cards.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F04` | EnemyCombat + 行为表 + 轻量 Session | COMB | Done | `designs/COMB-F04-enemy-pattern.md` | — | `feat/combat` | Max | 同分支 |
 | `COMB-F05` | CombatManager + 编排 + 结算 | COMB | Done | `designs/COMB-F05-combat-manager.md` | — | `feat/combat` | Max | 同分支 |
-| `COMB-F06` | 统一卡牌模型 + 设计师内容（内存种子） | COMB | Review | `designs/COMB-F06-designer-content.md` | — | `feat/combat` | Max | 已提交；Corrupted 见 F07 |
-| `COMB-F07` | Corrupted 伴生牌 | COMB | Review | `designs/COMB-F07-corrupted-cards.md` | — | `feat/combat` | Max | 逻辑已落；UI 缺陷见 UI-F01 |
-| `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Deferred | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat-data-driven` | Max | 依赖 F06 接口；本轮不实现 |
+| `COMB-F06` | 统一卡牌模型 + 设计师内容（内存种子） | COMB | Review | `designs/COMB-F06-designer-content.md` | — | `feat/combat` | Max | 已合 main |
+| `COMB-F07` | Corrupted 伴生牌 | COMB | Review | `designs/COMB-F07-corrupted-cards.md` | — | `feat/combat` | Max | 逻辑已合 main；UI 见 UI-F01 |
+| `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Review | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat` | Max | StreamingAssets；硬失败；已 Play 验数 |
 | `UI-F01` | 战斗卡牌交互修复（伴生/复位/叠层/槽高亮） | UI | Review | `designs/UI-F01-combat-card-interaction.md` | — | `feat/ui` | Max / UI | Play 已通过；待合 main |
 | `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Review | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | Demo/UI 已合 main；文档待跟 UI |
 | `SHLT-F02` | 幸存者身份目录 + 入住/状态/死亡 | SHLT | Done | `designs/SHLT-F02-survivor-identity.md` | — | `feat/shelter` | Max | 已合 `main` |
