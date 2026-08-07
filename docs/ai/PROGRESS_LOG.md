@@ -6,10 +6,9 @@
 
 - 范围：`SHLT-F02` 收口 + `COMB-F08` 合 main
 - 已完成：
-  - `feat/shelter` rebase `origin/main`（伙伴 UI 四提交）；无手改冲突
-  - F02 文档 → Done；准备 merge `main`
-- 进行中：
-  - `feat/combat` rebase 并合入 F08（StreamingAssets 战斗 JSON）
+  - `feat/shelter` rebase 伙伴 UI 并 fast-forward 合入 `main`（`042a356`）
+  - `feat/combat` rebase `main`；解决 `StreamingAssets.meta` / 文档冲突
+  - F02 + F08 文档 → Done
 - 下一步：
   - 重构 / 系统性补强（特质 defId、内容管线统一等）
 
@@ -213,4 +212,15 @@
 - 下一步行动：
   - Unity Edit Mode 全绿 + Play 冒烟 Day1
   - 通过后 prepare commit
+
+## 2026-08-07（晚：文档收口 + 下一域）
+
+- 范围：战斗/可玩/UI 文档状态收口；准备讨论 `SHLT-F02`
+- 已完成：
+  - Registry：`COMB-F01`～`F08`、`UI-F01`、`CORE-F03` → **Done**
+  - 更新 `ACTIVE_WORK`、`COMB-feat-chain`、`PROJECT_CONTEXT`、`BOOTSTRAP_DIGEST`
+  - F08 实现已在 `feat/combat` 提交 `79470a7`（待合 main）
+- 下一步行动：
+  - 讨论并起草 `SHLT-F02` design（人物模板 2.0）
+  - `feat/combat` 合 main / push
 

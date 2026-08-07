@@ -4,7 +4,7 @@
 
 - **ID:** `COMB-F08`
 - **类型:** `Feature`
-- **状态:** `Review`（Play 已验数值变化；待合 main）
+- **状态:** `Done`（Play 已验数值；`feat/combat` 待合 main）
 - **负责人:** `Max`
 - **最后更新：** `2026-08-07`
 - **分支：** `feat/combat`（不新开 `feat/combat-data-driven`）

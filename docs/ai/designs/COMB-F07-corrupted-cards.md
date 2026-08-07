@@ -4,7 +4,7 @@
 
 - **ID:** `COMB-F07`
 - **类型:** `Feature`
-- **状态:** `Review`（逻辑已落 `feat/combat`；UI 缺陷移交 `UI-F01`）
+- **状态:** `Done`（逻辑已合 main；UI 见 UI-F01）
 - **负责人:** `Max`
 - **最后更新：** `2026-08-07`
 - **分支：** `feat/combat`（与 F06 同分支）
