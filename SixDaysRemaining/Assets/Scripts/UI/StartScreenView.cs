@@ -46,6 +46,42 @@ namespace SixDaysRemaining.UI
             WireButton(btnNew, flow.OnNewGame);
             WireButton(btnSettings, flow.ShowSettings);
             WireButton(btnQuit, flow.OnQuit);
+            SetupJuicyButtons();
+        }
+
+        /// <summary>
+        /// 给主菜单按钮挂上统一的果冻交互：闲置浮动、悬停扫光、按下弹性回弹。
+        /// </summary>
+        private void SetupJuicyButtons()
+        {
+            JuicyButton start = JuicyButton.Attach(btnStart);
+            if (start != null)
+            {
+                start.SetIdle(7f, 1.7f, 0f)
+                    .SetGlow(new Color(1f, 0.84f, 0.35f, 1f), 1.2f, 0f)
+                    .SetSquash(0.12f, 0.08f, 0.45f);
+            }
+
+            JuicyButton newGame = JuicyButton.Attach(btnNew);
+            if (newGame != null)
+            {
+                newGame.SetIdle(4f, 1.4f, 1.4f)
+                    .SetGlow(new Color(1f, 0.84f, 0.35f, 1f), 1.2f, 0f);
+            }
+
+            JuicyButton settings = JuicyButton.Attach(btnSettings);
+            if (settings != null)
+            {
+                settings.SetIdle(2.5f, 1.2f, 2.3f)
+                    .SetGlow(new Color(0.45f, 0.78f, 1f, 1f), 0.5f, 10f);
+            }
+
+            JuicyButton quit = JuicyButton.Attach(btnQuit);
+            if (quit != null)
+            {
+                quit.SetIdle(2.5f, 1.2f, 3.2f)
+                    .SetGlow(new Color(1f, 0.84f, 0.35f, 1f), 1.2f, 0f);
+            }
         }
 
         private static void WireButton(Button button, UnityEngine.Events.UnityAction action)
