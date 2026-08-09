@@ -97,6 +97,17 @@ namespace SixDaysRemaining.Combat.Cards
             }
         }
 
+        public bool AddToHand(CardInstance card, int handLimit)
+        {
+            if (card == null || hand.Count >= handLimit)
+            {
+                return false;
+            }
+
+            hand.Add(card);
+            return true;
+        }
+
         public bool TrySelectFromHand(int handIndex, int commitCount)
         {
             if (handIndex < 0 || handIndex >= hand.Count)

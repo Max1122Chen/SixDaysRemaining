@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SixDaysRemaining.Combat.Cards;
+using SixDaysRemaining.Combat.Traits;
 using UnityEngine;
 
 namespace SixDaysRemaining.Combat
@@ -36,6 +37,7 @@ namespace SixDaysRemaining.Combat
         public bool UseRoundRewards;
         public System.Random ResolveRng;
         public ICorruptionRunState RunCorruption;
+        public IReadOnlyList<SurvivorTrait> OwnedTraits;
         /// <summary>无 RunCorruption 的 Edit Mode 战斗用初始腐蚀。</summary>
         public int InitialRunCorruption;
     }
@@ -64,6 +66,7 @@ namespace SixDaysRemaining.Combat
         private int fallbackRunCorruption;
         private CombatResult result;
         private GameObject spawnedEnemyGo;
+        private IReadOnlyList<SurvivorTrait> ownedTraits;
 
         public CombatSession Session
         {
@@ -298,12 +301,14 @@ namespace SixDaysRemaining.Combat
                 return;
             }
 
+            TriggerTraits(TraitTrigger.RoundEnd);
             session.Player.SetBlock(0f);
             EnemyCombatComponent enemy = session.Enemies[0];
             enemy.SetBlock(0f);
             enemy.AdvanceRoundPlan();
             ClearRoundSlots();
             session.Player.OnPlayerTurnStart();
+            TriggerTraits(TraitTrigger.PlayerTurnStart);
             playerTurn = true;
         }
 
@@ -323,6 +328,7 @@ namespace SixDaysRemaining.Combat
             // 旧单行动路径不再使用；五槽流程请用 BeginRound。
             playerTurn = true;
             session.Player.OnPlayerTurnStart();
+            TriggerTraits(TraitTrigger.PlayerTurnStart);
         }
 
         public bool Flee()
@@ -390,6 +396,7 @@ namespace SixDaysRemaining.Combat
             cardCorruptionDelta = 0;
             passivePenaltyStacks = 0;
             runCorruption = config.RunCorruption;
+            ownedTraits = config.OwnedTraits != null ? config.OwnedTraits : TraitCatalog.GetDefaultOwnedTraits();
             fallbackRunCorruption = runCorruption != null
                 ? runCorruption.Corruption
                 : config.InitialRunCorruption;
@@ -412,6 +419,7 @@ namespace SixDaysRemaining.Combat
 
             playerTurn = true;
             player.OnPlayerTurnStart();
+            TriggerTraits(TraitTrigger.PlayerTurnStart);
         }
 
         private CombatResolveContext CreateContext()
@@ -435,6 +443,40 @@ namespace SixDaysRemaining.Combat
         private int GetRunCorruption()
         {
             return runCorruption != null ? runCorruption.Corruption : fallbackRunCorruption;
+        }
+
+        private void TriggerTraits(TraitTrigger trigger)
+        {
+            if (session == null || ownedTraits == null)
+            {
+                return;
+            }
+
+            System.Random rng = config != null && config.ResolveRng != null
+                ? config.ResolveRng
+                : new System.Random(config != null ? config.DeckSeed : 1);
+
+            for (int i = 0; i < ownedTraits.Count; i++)
+            {
+                SurvivorTrait trait = ownedTraits[i];
+                if (trait == null || trait.Trigger != trigger)
+                {
+                    continue;
+                }
+
+                if (trigger == TraitTrigger.PlayerTurnStart
+                    && trait.Id == TraitIds.Thief
+                    && session.Enemies.Count > 0)
+                {
+                    CardInstance stolen = session.Enemies[0].StealRandomAction(rng);
+                    if (stolen != null)
+                    {
+                        session.Player.Deck.AddToHand(stolen, PlayerCombatComponent.HandLimit);
+                    }
+                }
+
+                CombatEffectExecutor.Execute(trait.Effects, session.Player, session);
+            }
         }
 
         private bool ApplyCorruptionDuringCombat(int delta)

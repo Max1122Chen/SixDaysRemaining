@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SixDaysRemaining.Bootstrap;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
+using SixDaysRemaining.Combat.Traits;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -62,6 +63,9 @@ namespace SixDaysRemaining.UI
         private EnemyPreviewView enemyPreview;
 
         [SerializeField]
+        private TraitBarView traitBar;
+
+        [SerializeField]
         private Image roundProgressFill;
 
         [SerializeField]
@@ -102,6 +106,7 @@ namespace SixDaysRemaining.UI
 
             view.enemyPreview = EnemyPreviewView.Build(panel.transform, new Vector2(620f, 360f), new Vector2(420f, 220f));
             view.playerStatusText = UiFactory.CreateText(panel.transform, "Txt_PlayerStatus", "我方", 22, new Vector2(-620f, 360f), new Vector2(420f, 60f), TextAlignmentOptions.Left);
+            view.traitBar = TraitBarView.Build(panel.transform, view.OnTraitClicked);
 
             GameObject layerGo = UiFactory.CreatePanel(panel.transform, "CardLayer", new Color(0f, 0f, 0f, 0f));
             layerGo.GetComponent<Image>().raycastTarget = false;
@@ -165,6 +170,24 @@ namespace SixDaysRemaining.UI
 
             EnsureRoundProgress();
             EnsureCombatStatusUi();
+            if (traitBar == null)
+            {
+                traitBar = GetComponentInChildren<TraitBarView>(true);
+            }
+
+            if (traitBar == null)
+            {
+                traitBar = FindObjectOfType<TraitBarView>(true);
+            }
+
+            if (traitBar == null)
+            {
+                traitBar = TraitBarView.Build(transform, OnTraitClicked);
+            }
+            else
+            {
+                traitBar.Wire(OnTraitClicked);
+            }
             ConfigureRaycastTargets();
         }
 
@@ -641,6 +664,8 @@ namespace SixDaysRemaining.UI
                 + "  格挡 " + CardText.FormatNumber(player.Attributes.Block)
                 + "  腐蚀 " + GetRunCorruption();
             enemyPreview.Refresh(gi.Combat.IsPlayerTurn);
+            RefreshTraitBar(player, gi);
+            flow.RefreshGlobalHud();
 
             RefreshHpBars();
             RefreshEnemyActions();
@@ -667,9 +692,56 @@ namespace SixDaysRemaining.UI
                 + "  格挡 " + CardText.FormatNumber(player.Attributes.Block)
                 + "  腐蚀 " + GetRunCorruption();
             enemyPreview.Refresh(false);
+            RefreshTraitBar(player, gi);
+            flow.RefreshGlobalHud();
             RefreshHpBars();
             RefreshEnemyActions();
             UpdateRoundProgress();
+        }
+
+        private void RefreshTraitBar(PlayerCombatComponent player, GameInstance gi)
+        {
+            if (traitBar == null)
+            {
+                return;
+            }
+
+            bool playerTurn = gi != null && gi.Combat != null && gi.Combat.IsPlayerTurn;
+            traitBar.Refresh(gi != null ? gi.Shelter : null, player, playerTurn);
+        }
+
+        private void OnTraitClicked(SurvivorTrait trait)
+        {
+            if (trait == null)
+            {
+                return;
+            }
+
+            GameInstance gi = flow.Game;
+            if (gi == null || gi.Combat == null || gi.Combat.Session == null)
+            {
+                return;
+            }
+
+            PlayerCombatComponent player = gi.Combat.Session.Player;
+            if (trait.Trigger == TraitTrigger.ManualOnce)
+            {
+                if (player.TryUseTrait(trait, gi.Combat.Session))
+                {
+                    ShowBanner(trait.Title + " 已激活");
+                    RefreshStatusOnly();
+                }
+                else
+                {
+                    ShowBanner("该特质本场战斗已使用");
+                }
+
+                return;
+            }
+
+            ShowBanner(trait.Title + " 为被动特质，回合"
+                + (trait.Trigger == TraitTrigger.PlayerTurnStart ? "开始" : "结束")
+                + "自动触发");
         }
 
         private void RebuildCards(PlayerCombatComponent player)
@@ -1289,6 +1361,11 @@ namespace SixDaysRemaining.UI
                 {
                     slotCards[i].SetInteractable(on);
                 }
+            }
+
+            if (traitBar != null)
+            {
+                traitBar.SetInteractable(on);
             }
 
             UpdateButtons();

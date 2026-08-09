@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SixDaysRemaining.Combat.Cards;
 
 namespace SixDaysRemaining.Combat
@@ -61,6 +62,32 @@ namespace SixDaysRemaining.Combat
             }
 
             return copy;
+        }
+
+        /// <summary>
+        /// 随机偷走一个未空的行动槽（小贼特质），原槽替换为空。
+        /// </summary>
+        public CardInstance StealRandomAction(System.Random rng)
+        {
+            List<int> candidates = new List<int>(ActionsPerRound);
+            for (int i = 0; i < ActionsPerRound; i++)
+            {
+                if (roundIntents[i] != null)
+                {
+                    candidates.Add(i);
+                }
+            }
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            int pick = rng != null ? rng.Next(candidates.Count) : 0;
+            int slot = candidates[pick];
+            CardInstance stolen = roundIntents[slot];
+            roundIntents[slot] = null;
+            return stolen;
         }
 
         public void AdvanceRoundPlan()

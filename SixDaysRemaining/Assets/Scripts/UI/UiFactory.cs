@@ -11,12 +11,26 @@ namespace SixDaysRemaining.UI
     public static class UiFactory
     {
         public static TMP_FontAsset Font;
+        private static Sprite circleSprite;
 
         public static readonly Color Panel = new Color(0.08f, 0.09f, 0.12f, 0.98f);
         public static readonly Color PanelLight = new Color(0.15f, 0.17f, 0.21f, 0.98f);
         public static readonly Color Accent = new Color(0.35f, 0.58f, 0.84f, 1f);
         public static readonly Color Danger = new Color(0.75f, 0.32f, 0.30f, 1f);
         public static readonly Color TextColor = new Color(0.93f, 0.93f, 0.93f, 1f);
+
+        public static Sprite CircleSprite
+        {
+            get
+            {
+                if (circleSprite == null)
+                {
+                    circleSprite = CreateCircleSprite();
+                }
+
+                return circleSprite;
+            }
+        }
 
         public static GameObject CreatePanel(Transform parent, string name, Color color, bool fullStretch = true)
         {
@@ -105,6 +119,13 @@ namespace SixDaysRemaining.UI
             rt.sizeDelta = size;
             Image img = go.AddComponent<Image>();
             img.color = color;
+            return img;
+        }
+
+        public static Image CreateCircleImage(Transform parent, string name, Vector2 pos, Vector2 size, Color color)
+        {
+            Image img = CreateImage(parent, name, pos, size, color);
+            img.sprite = CircleSprite;
             return img;
         }
 
@@ -232,6 +253,30 @@ namespace SixDaysRemaining.UI
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.content = content;
             return scroll;
+        }
+
+        private static Sprite CreateCircleSprite()
+        {
+            const int Size = 128;
+            Texture2D tex = new Texture2D(Size, Size, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+
+            float half = Size * 0.5f;
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    float dx = (x + 0.5f - half) / half;
+                    float dy = (y + 0.5f - half) / half;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    float alpha = Mathf.Clamp01((1.08f - dist) / 0.08f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0f, 0f, Size, Size), new Vector2(0.5f, 0.5f), 100f);
         }
     }
 }

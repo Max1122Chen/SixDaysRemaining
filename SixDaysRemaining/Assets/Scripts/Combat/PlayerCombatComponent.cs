@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SixDaysRemaining.Combat.Cards;
+using SixDaysRemaining.Combat.Traits;
 
 namespace SixDaysRemaining.Combat
 {
@@ -12,6 +13,7 @@ namespace SixDaysRemaining.Combat
         public const int CommitCount = 5;
 
         private readonly DeckRuntime deck = new DeckRuntime();
+        private readonly HashSet<int> usedTraitIds = new HashSet<int>();
 
         public DeckRuntime Deck
         {
@@ -20,9 +22,32 @@ namespace SixDaysRemaining.Combat
 
         public void SetupDeck(IReadOnlyList<CardDef> starterCards, int seed)
         {
+            usedTraitIds.Clear();
             deck.LoadDefs(starterCards);
             deck.Shuffle(seed);
             deck.DrawUntilHandLimit(HandLimit);
+        }
+
+        public bool IsTraitUsed(int traitId)
+        {
+            return usedTraitIds.Contains(traitId);
+        }
+
+        public bool TryUseTrait(SurvivorTrait trait, CombatSession session)
+        {
+            if (trait == null || trait.Trigger != TraitTrigger.ManualOnce || session == null)
+            {
+                return false;
+            }
+
+            if (usedTraitIds.Contains(trait.Id))
+            {
+                return false;
+            }
+
+            CombatEffectExecutor.Execute(trait.Effects, this, session);
+            usedTraitIds.Add(trait.Id);
+            return true;
         }
 
         public void OnPlayerTurnStart()

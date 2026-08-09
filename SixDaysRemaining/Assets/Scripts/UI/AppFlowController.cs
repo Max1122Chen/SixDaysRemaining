@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using SixDaysRemaining.Bootstrap;
 using SixDaysRemaining.Combat;
+using SixDaysRemaining.Combat.Traits;
 using SixDaysRemaining.Gameplay;
 using UnityEngine;
 
@@ -23,7 +25,10 @@ namespace SixDaysRemaining.UI
 
         private GameObject activeScreen;
         private GameObject activeOverlay;
+        private GlobalHudView hudView;
         private CombatResult pendingResult;
+        private readonly List<RandomEventDef> pendingEvents = new List<RandomEventDef>();
+        private int pendingEventIndex;
 
         public void Bind(
             GameInstance instance,
@@ -52,26 +57,45 @@ namespace SixDaysRemaining.UI
             get { return gameInstance != null ? gameInstance : GameInstance.Instance; }
         }
 
+        public void BindHud(GlobalHudView hud)
+        {
+            hudView = hud;
+            if (hudView != null)
+            {
+                hudView.Wire(this);
+            }
+        }
+
         public void ShowStart()
         {
             SwitchScreen(startView.gameObject);
+            HideHud();
         }
 
         public void ShowStoryIntro()
         {
             SwitchScreen(storyView.gameObject);
             storyView.Play();
+            HideHud();
         }
 
         public void ShowShelter()
         {
+            EnsureHud();
             SwitchScreen(shelterView.gameObject);
+            hudView.gameObject.SetActive(true);
+            hudView.SetScreen("庇护所界面");
+            hudView.Refresh();
             shelterView.Refresh();
         }
 
         public void ShowCombat()
         {
+            EnsureHud();
             SwitchScreen(combatView.gameObject);
+            hudView.gameObject.SetActive(true);
+            hudView.SetScreen("战斗界面");
+            hudView.Refresh();
             combatView.OpenCombat();
         }
 
@@ -79,6 +103,7 @@ namespace SixDaysRemaining.UI
         {
             SwitchScreen(endingView.gameObject);
             endingView.Refresh();
+            HideHud();
         }
 
         public void ShowSettings()
@@ -144,6 +169,16 @@ namespace SixDaysRemaining.UI
             config.UseRoundRewards = true;
             config.FlatCorruptionOnFinish = 3;
             config.RunCorruption = new GameplayCorruptionBridge(gi.Gameplay);
+            if (gi.Shelter != null)
+            {
+                List<string> names = new List<string>();
+                for (int i = 0; i < gi.Shelter.Survivors.Count; i++)
+                {
+                    names.Add(gi.Shelter.Survivors[i].name);
+                }
+
+                config.OwnedTraits = TraitCatalog.GetOwnedTraits(names);
+            }
             gi.Combat.StartCombat(config, gi.PlayerCombat, gi.EnemyPrefab, gi.CombatRoot);
             ShowCombat();
         }
@@ -165,6 +200,7 @@ namespace SixDaysRemaining.UI
 
             ShowOverlay(settlementView.gameObject);
             settlementView.ShowResult(result, gi);
+            RefreshHud();
         }
 
         public void OnRunEndedByCorruption()
@@ -196,10 +232,10 @@ namespace SixDaysRemaining.UI
 
             ShowShelter();
 
-            RandomEventDef eventDef = RandomEventCatalog.Pick(gi.Gameplay.State.rngSeed, gi.Gameplay.State.day);
-            RandomEventView view = EnsureRandomEventView();
-            ShowOverlay(view.gameObject);
-            view.ShowEvent(eventDef);
+            pendingEvents.Clear();
+            pendingEvents.AddRange(RandomEventCatalog.PickSequence(gi.Gameplay.State.rngSeed, gi.Gameplay.State.day, 3));
+            pendingEventIndex = 0;
+            ShowNextRandomEvent();
         }
 
         public void OnRandomEventChosen(RandomEventView view, RandomEventOption option)
@@ -228,8 +264,44 @@ namespace SixDaysRemaining.UI
                 gi.Shelter.Expel(option.DriveAwayName);
             }
 
+            view.ShowResult(option, gi);
+            RefreshHud();
+        }
+
+        public void OnEventResultContinue(RandomEventView view)
+        {
+            pendingEventIndex++;
+            ShowNextRandomEvent();
+        }
+
+        private void ShowNextRandomEvent()
+        {
+            if (pendingEventIndex >= pendingEvents.Count || pendingEvents[pendingEventIndex] == null)
+            {
+                ShowDayEndAfterEvents();
+                return;
+            }
+
+            RandomEventView view = EnsureRandomEventView();
+            ShowOverlay(view.gameObject);
+            view.ShowEvent(pendingEvents[pendingEventIndex]);
+        }
+
+        private void ShowDayEndAfterEvents()
+        {
+            GameInstance gi = Game;
+            if (gi == null || gi.Shelter == null)
+            {
+                CloseOverlay();
+                ShowShelter();
+                return;
+            }
+
             gi.Shelter.ProcessEndOfDay();
+            RandomEventView view = EnsureRandomEventView();
+            ShowOverlay(view.gameObject);
             view.ShowDayEnd(gi, gi.Shelter.ConsumePersonnelChanges());
+            RefreshHud();
         }
 
         public void OnDayEndContinue()
@@ -294,6 +366,55 @@ namespace SixDaysRemaining.UI
             return gameInstance != null ? gameInstance.transform : transform;
         }
 
+        private void EnsureHud()
+        {
+            if (hudView == null)
+            {
+                hudView = FindObjectOfType<GlobalHudView>(true);
+                if (hudView != null)
+                {
+                    hudView.Wire(this);
+                }
+            }
+
+            if (hudView == null)
+            {
+                Transform root = GetUiRoot();
+                Canvas canvas = root != null ? root.GetComponentInParent<Canvas>() : null;
+                if (canvas == null)
+                {
+                    canvas = FindObjectOfType<Canvas>();
+                }
+
+                hudView = GlobalHudView.Build(canvas != null ? canvas.transform : root, this);
+                if (hudView != null)
+                {
+                    hudView.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        private void RefreshHud()
+        {
+            if (hudView != null && hudView.gameObject.activeSelf)
+            {
+                hudView.Refresh();
+            }
+        }
+
+        public void RefreshGlobalHud()
+        {
+            RefreshHud();
+        }
+
+        private void HideHud()
+        {
+            if (hudView != null)
+            {
+                hudView.gameObject.SetActive(false);
+            }
+        }
+
         private void SwitchScreen(GameObject go)
         {
             CloseOverlay();
@@ -323,7 +444,13 @@ namespace SixDaysRemaining.UI
                 activeOverlay.SetActive(false);
             }
 
+            if (hudView != null)
+            {
+                hudView.transform.SetAsLastSibling();
+            }
+
             go.SetActive(true);
+            go.transform.SetAsLastSibling();
             activeOverlay = go;
         }
 

@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using SixDaysRemaining.Bootstrap;
 using SixDaysRemaining.Combat;
 using TMPro;
@@ -9,23 +7,17 @@ using UnityEngine.UI;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 战斗结算浮层：结果逐条滚入 + 继续按钮流程。可作为后续“结算滚动动画框架”的起点。
+    /// 战斗结算浮层：纯文本展示结果与全局资产变化，不再使用滚动列表。
     /// </summary>
     public class SettlementView : MonoBehaviour
     {
         private AppFlowController flow;
 
         [SerializeField]
-        private ScrollRect scroll;
-
-        [SerializeField]
-        private RectTransform content;
+        private TextMeshProUGUI resultText;
 
         [SerializeField]
         private Button continueButton;
-
-        private Coroutine rollRoutine;
-        private readonly List<GameObject> rows = new List<GameObject>();
 
         public static SettlementView Build(Transform parent, AppFlowController flow)
         {
@@ -41,9 +33,17 @@ namespace SixDaysRemaining.UI
             rt.sizeDelta = new Vector2(760f, 720f);
 
             UiFactory.CreateText(window.transform, "Txt_Title", "战斗结算", 40, new Vector2(0f, 310f), new Vector2(500f, 56f), TextAlignmentOptions.Center, Color.white);
-            view.scroll = UiFactory.CreateScrollArea(window.transform, "Scroll", new Vector2(0f, 30f), new Vector2(700f, 540f), out view.content);
+            view.resultText = UiFactory.CreateText(
+                window.transform,
+                "Txt_Result",
+                "",
+                22,
+                new Vector2(0f, 40f),
+                new Vector2(680f, 500f),
+                TextAlignmentOptions.Top,
+                Color.white);
+            view.resultText.raycastTarget = false;
             view.continueButton = UiFactory.CreateButton(window.transform, "Btn_Continue", "继续", null, new Vector2(0f, -310f), new Vector2(220f, 56f), null, 22);
-            view.continueButton.interactable = false;
             view.Wire(flow);
             overlay.SetActive(false);
             return view;
@@ -52,6 +52,14 @@ namespace SixDaysRemaining.UI
         public void Wire(AppFlowController flow)
         {
             this.flow = flow;
+            HideLegacyScroll();
+            if (resultText == null)
+            {
+                resultText = UiFactory.CreateText(transform, "Txt_Result", "", 22, new Vector2(0f, 40f), new Vector2(680f, 500f), TextAlignmentOptions.Top, Color.white);
+                resultText.raycastTarget = false;
+                resultText.transform.SetAsLastSibling();
+            }
+
             if (continueButton != null)
             {
                 continueButton.onClick.RemoveAllListeners();
@@ -61,81 +69,71 @@ namespace SixDaysRemaining.UI
 
         public void ShowResult(CombatResult result, GameInstance gi)
         {
-            ClearRows();
-            continueButton.interactable = false;
-            if (rollRoutine != null)
+            if (resultText == null)
             {
-                StopCoroutine(rollRoutine);
+                Wire(flow);
             }
 
-            rollRoutine = StartCoroutine(RollRows(result, gi));
+            if (resultText != null)
+            {
+                resultText.text = BuildResultText(result, gi);
+            }
+
+            if (continueButton != null)
+            {
+                continueButton.interactable = true;
+            }
         }
 
-        private IEnumerator RollRows(CombatResult result, GameInstance gi)
+        private static string BuildResultText(CombatResult result, GameInstance gi)
         {
             string outcome = result.Outcome == CombatOutcome.Win
                 ? "胜利"
                 : result.Outcome == CombatOutcome.Flee
                     ? "撤退"
                     : "失败";
-            yield return AddRow("战斗结果", outcome);
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.Append("战斗结果：").Append(outcome);
             if (!string.IsNullOrEmpty(result.RewardTier))
             {
-                yield return AddRow("奖励评级", result.RewardTier);
+                sb.Append("\n奖励评级：").Append(result.RewardTier);
             }
 
-            yield return AddRow("获得食物", "+" + result.FoodGained);
-            yield return AddRow("腐蚀", "+" + result.CorruptionDelta);
-            yield return AddRow("战斗回合", result.TurnsElapsed.ToString());
+            sb.Append("\n获得食物：+").Append(result.FoodGained);
+            sb.Append("\n腐蚀度变化：+").Append(result.CorruptionDelta);
+            sb.Append("\n战斗回合：").Append(result.TurnsElapsed);
 
-            if (gi != null && gi.Shelter != null)
+            if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)
             {
-                yield return AddRow("庇护所日结", "第 " + gi.Gameplay.State.day + " 天");
-                yield return AddRow("存粮", gi.Gameplay.State.foodStock.ToString());
-                yield return AddRow("人口", gi.Shelter.Population.ToString());
-            }
-
-            continueButton.interactable = true;
-        }
-
-        private IEnumerator AddRow(string label, string value)
-        {
-            yield return new WaitForSecondsRealtime(0.12f);
-
-            GameObject row = new GameObject("Row");
-            row.transform.SetParent(content, false);
-            LayoutElement layout = row.AddComponent<LayoutElement>();
-            layout.preferredHeight = 54f;
-            CanvasGroup group = row.AddComponent<CanvasGroup>();
-            group.alpha = 0f;
-
-            TextMeshProUGUI labelText = UiFactory.CreateText(row.transform, "Txt_Label", label, 20, new Vector2(-180f, 0f), new Vector2(260f, 40f), TextAlignmentOptions.Left);
-            labelText.raycastTarget = false;
-            TextMeshProUGUI valueText = UiFactory.CreateText(row.transform, "Txt_Value", value, 22, new Vector2(180f, 0f), new Vector2(260f, 40f), TextAlignmentOptions.Right);
-            valueText.raycastTarget = false;
-
-            rows.Add(row);
-            yield return UiAnim.Fade(group, 1f, 0.2f);
-            ScrollToBottom();
-        }
-
-        private void ScrollToBottom()
-        {
-            Canvas.ForceUpdateCanvases();
-            scroll.verticalNormalizedPosition = 0f;
-        }
-
-        private void ClearRows()
-        {
-            for (int i = 0; i < rows.Count; i++)
-            {
-                if (rows[i] != null)
+                var state = gi.Gameplay.State;
+                sb.Append("\n\n当前庇护所状态");
+                sb.Append("\n食物：").Append(state.foodStock);
+                sb.Append("\n腐蚀度：").Append(state.corruption).Append("/100");
+                if (gi.Shelter != null)
                 {
-                    Destroy(rows[i]);
+                    sb.Append("\n人口：").Append(gi.Shelter.Population).Append("/5");
                 }
             }
 
-            rows.Clear();
+            return sb.ToString();
+        }
+
+        private void HideLegacyScroll()
+        {
+            ScrollRect[] scrolls = GetComponentsInChildren<ScrollRect>(true);
+            for (int i = 0; i < scrolls.Length; i++)
+            {
+                ScrollRect scroll = scrolls[i];
+                if (scroll != null)
+                {
+                    if (resultText != null && resultText.transform.IsChildOf(scroll.transform))
+                    {
+                        resultText = null;
+                    }
+
+                    scroll.gameObject.SetActive(false);
+                }
+            }
         }
 
         private void OnContinue()

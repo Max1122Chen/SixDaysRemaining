@@ -53,6 +53,9 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private CreditsView creditsView;
 
+        [SerializeField]
+        private GlobalHudView hudView;
+
         private void Awake()
         {
             EnsureEventSystem();
@@ -74,6 +77,7 @@ namespace SixDaysRemaining.UI
             }
 
             flow.Bind(gi, startView, storyView, shelterView, combatView, settlementView, endingView, settingsView, creditsView);
+            flow.BindHud(hudView);
             if (startView != null) startView.Wire(flow);
             if (storyView != null) storyView.Wire(flow);
             if (shelterView != null) shelterView.Wire(flow);

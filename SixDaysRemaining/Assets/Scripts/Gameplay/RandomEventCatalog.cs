@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SixDaysRemaining.Gameplay
 {
@@ -88,6 +89,30 @@ namespace SixDaysRemaining.Gameplay
         {
             Random rng = new Random(unchecked(seed * 7919 + day * 104729));
             return Events[rng.Next(Events.Length)];
+        }
+
+        /// <summary>
+        /// 每天按固定种子洗牌后取一队事件，按顺序逐个展示。
+        /// </summary>
+        public static IReadOnlyList<RandomEventDef> PickSequence(int seed, int day, int count)
+        {
+            if (count <= 0 || Events == null || Events.Length == 0)
+            {
+                return Array.Empty<RandomEventDef>();
+            }
+
+            List<RandomEventDef> pool = new List<RandomEventDef>(Events);
+            Random rng = new Random(unchecked(seed * 7919 + day * 104729));
+            for (int i = pool.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                RandomEventDef tmp = pool[i];
+                pool[i] = pool[j];
+                pool[j] = tmp;
+            }
+
+            int take = Math.Min(count, pool.Count);
+            return pool.GetRange(0, take);
         }
 
         private static RandomEventDef Create(string title, string body, params RandomEventOption[] options)

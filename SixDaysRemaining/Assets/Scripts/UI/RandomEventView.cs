@@ -30,6 +30,9 @@ namespace SixDaysRemaining.UI
         private Button[] optionButtons = new Button[OptionCount];
 
         [SerializeField]
+        private Button resultContinueButton;
+
+        [SerializeField]
         private GameObject dayEndGroup;
 
         [SerializeField]
@@ -76,6 +79,17 @@ namespace SixDaysRemaining.UI
                     18);
             }
 
+            view.resultContinueButton = UiFactory.CreateButton(
+                view.eventGroup.transform,
+                "Btn_ResultContinue",
+                "继续",
+                null,
+                new Vector2(240f, -230f),
+                new Vector2(240f, 56f),
+                null,
+                22);
+            view.resultContinueButton.gameObject.SetActive(false);
+
             view.dayEndGroup = CreateFullChild(window.transform, "DayEndGroup");
             BuildArtPlaceholder(view.dayEndGroup.transform, "DayEndArt", "一日结束", new Vector2(-215f, -10f), new Vector2(390f, 450f));
             view.summaryText = UiFactory.CreateText(view.dayEndGroup.transform, "Txt_Summary", "", 22, new Vector2(240f, 60f), new Vector2(410f, 320f), TextAlignmentOptions.Top);
@@ -99,6 +113,21 @@ namespace SixDaysRemaining.UI
         public void Wire(AppFlowController flow)
         {
             this.flow = flow;
+            if (resultContinueButton == null)
+            {
+                Transform parent = eventGroup != null ? eventGroup.transform : transform;
+                resultContinueButton = UiFactory.CreateButton(
+                    parent,
+                    "Btn_ResultContinue",
+                    "继续",
+                    null,
+                    new Vector2(240f, -230f),
+                    new Vector2(240f, 56f),
+                    null,
+                    22);
+                resultContinueButton.gameObject.SetActive(false);
+            }
+
             for (int i = 0; i < optionButtons.Length; i++)
             {
                 int index = i;
@@ -114,6 +143,12 @@ namespace SixDaysRemaining.UI
                 continueButton.onClick.RemoveAllListeners();
                 continueButton.onClick.AddListener(flow.OnDayEndContinue);
             }
+
+            if (resultContinueButton != null)
+            {
+                resultContinueButton.onClick.RemoveAllListeners();
+                resultContinueButton.onClick.AddListener(OnResultContinue);
+            }
         }
 
         public void ShowEvent(RandomEventDef def)
@@ -121,6 +156,11 @@ namespace SixDaysRemaining.UI
             pendingOptions = def != null ? def.Options : null;
             titleText.text = def != null ? def.Title : "随机事件";
             bodyText.text = def != null ? def.Body : "";
+            SetBodySize(new Vector2(240f, 175f), new Vector2(410f, 150f));
+            if (resultContinueButton != null)
+            {
+                resultContinueButton.gameObject.SetActive(false);
+            }
 
             for (int i = 0; i < optionButtons.Length; i++)
             {
@@ -136,6 +176,31 @@ namespace SixDaysRemaining.UI
                 {
                     label.text = pendingOptions[i].Label;
                 }
+            }
+
+            eventGroup.SetActive(true);
+            dayEndGroup.SetActive(false);
+        }
+
+        public void ShowResult(RandomEventOption option, GameInstance gi)
+        {
+            pendingOptions = null;
+            titleText.text = "事件结果";
+            bodyText.text = BuildResultText(option, gi);
+            SetBodySize(new Vector2(240f, 90f), new Vector2(410f, 360f));
+
+            for (int i = 0; i < optionButtons.Length; i++)
+            {
+                if (optionButtons[i] != null)
+                {
+                    optionButtons[i].gameObject.SetActive(false);
+                }
+            }
+
+            if (resultContinueButton != null)
+            {
+                resultContinueButton.interactable = true;
+                resultContinueButton.gameObject.SetActive(true);
             }
 
             eventGroup.SetActive(true);
@@ -165,6 +230,55 @@ namespace SixDaysRemaining.UI
             }
 
             flow.OnRandomEventChosen(this, pendingOptions[index]);
+        }
+
+        private void OnResultContinue()
+        {
+            if (resultContinueButton != null)
+            {
+                resultContinueButton.interactable = false;
+            }
+
+            if (flow != null)
+            {
+                flow.OnEventResultContinue(this);
+            }
+        }
+
+        private static string BuildResultText(RandomEventOption option, GameInstance gi)
+        {
+            string text = option != null && !string.IsNullOrEmpty(option.ResultText)
+                ? option.ResultText
+                : "事件已处理。";
+
+            if (option != null)
+            {
+                text += "\n\n食物：" + Signed(option.FoodDelta)
+                    + "\n腐蚀度：" + Signed(option.CorruptionDelta);
+            }
+
+            if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)
+            {
+                text += "\n\n当前食物：" + gi.Gameplay.State.foodStock
+                    + "\n当前腐蚀度：" + gi.Gameplay.State.corruption + "/100"
+                    + "\n当前人口：" + (gi.Shelter != null ? gi.Shelter.Population : gi.Gameplay.State.population) + "/5";
+            }
+
+            return text;
+        }
+
+        private static string Signed(int value)
+        {
+            return value > 0 ? "+" + value : value.ToString();
+        }
+
+        private void SetBodySize(Vector2 pos, Vector2 size)
+        {
+            if (bodyText != null)
+            {
+                bodyText.rectTransform.anchoredPosition = pos;
+                bodyText.rectTransform.sizeDelta = size;
+            }
         }
 
         private static GameObject CreateFullChild(Transform parent, string name)
