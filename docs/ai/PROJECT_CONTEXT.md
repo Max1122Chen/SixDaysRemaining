@@ -19,11 +19,12 @@
 - 局内全局状态由 `GameState` 统一管理（天数、食物存量、腐蚀度、随机种子、当前阶段）。
 
 脚本域划分（`SixDaysRemaining/Assets/Scripts/`）：
-- `Bootstrap` - `GameInstance`、场景引用绑定
-- `Gameplay` - `GameplaySubsystem`、`GameState`、日循环阶段机
+- `App` - `GameInstance`、`GameplayCorruptionBridge`、`DebugRunSettings`
+- `Gameplay` - `GameplaySubsystem`、`GameState`、`AppFlowController`（日循环编排）、`RandomEventCatalog`
 - `Shelter` - 庇护所、幸存者身份目录（JSON）、饱食度日结（入住被动/特质延后）
 - `Combat` - 卡牌 Library、JSON 内容、`CombatManager`、Corrupted、伙伴 `SurvivorTrait` UI 钩子
-- `UI` - `AppFlowController`、`GlobalHudView`、特质栏等（伙伴迭代中）
+- `UI` - `PresentationManager`、Views、HUD、`UiSceneBootstrap`
+- `Debug` - 控制台 / 命令 registry
 
 ## 3) 当前阶段
 
@@ -34,9 +35,10 @@
 - UI：伙伴主界面/HUD/特质栏 + UI-F01 战斗交互
 
 下一里程碑：
-- **重构 / 系统性补强**（特质 defId、内容管线统一等）
-- 突发事件（`EVT-F01` 仍延后）
-- 入住被动 / 长线剧情（另 feat）
+- `CORE-F04`：Scene-owned `GameInstance` + Hybrid Debug（In Progress）
+- `COMB-F09`：每步格挡结算 + Corruption Gateway
+- `EVT-F01`：`GameEventSubsystem` + 同质事件模型（承接 `TD-007`）
+- 入住被动 / 长线剧情（待 EVT/SHLT 后续 slice）
 
 ## 4) 协作约定
 

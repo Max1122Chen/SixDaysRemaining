@@ -1,13 +1,10 @@
 {
-  "name": "SixDaysRemaining.UI",
-  "rootNamespace": "SixDaysRemaining.UI",
+  "name": "SixDaysRemaining.App",
+  "rootNamespace": "SixDaysRemaining.App",
   "references": [
-    "SixDaysRemaining.App",
-    "SixDaysRemaining.Debug",
     "SixDaysRemaining.Gameplay",
     "SixDaysRemaining.Shelter",
-    "SixDaysRemaining.Combat",
-    "Unity.TextMeshPro"
+    "SixDaysRemaining.Combat"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

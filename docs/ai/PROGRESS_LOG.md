@@ -2,6 +2,37 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-11（CORE-F05 实现）
+
+- 范围：AppFlow / Presentation 拆分
+- 已完成：
+  - `Gameplay/AppFlowController.cs`：日循环编排 + presentation 委托；**编译在 App 程序集**（打破 App↔Gameplay 循环依赖），命名空间仍为 `SixDaysRemaining.Gameplay`
+  - `UI/PresentationManager.cs`：切屏 / Overlay / HUD / View Wire
+  - `UiSceneBootstrap`：创建 Flow + Presentation，`BindGame` / `Bind` / Debug 回调
+  - 删除 `UI/AppFlowController.cs`；各 View 改 `using SixDaysRemaining.Gameplay`
+  - `Gameplay.asmdef` 增引 `App` + `Shelter`；登记 `TD-007`（事件队列留 Flow 至 EVT-F01）
+- 待验证：MainScene Play 日循环回归
+- 下一步：`CORE-F04` 业务 API + 门禁 + debug 命令收口
+
+## 2026-08-11（CORE-F05 设计登记）
+
+- 范围：`AppFlowController` 职责拆分
+- 已完成：
+  - 登记 `CORE-F05`；起草 `designs/CORE-F05-appflow-presentation.md`
+  - 拍板方向：保留 `AppFlowController` 名并迁出 `UI/`；新增 `PresentationManager`；委托链接
+  - `ACTIVE_WORK`：F05 置 P0；F04 调为 P1（编排边界依赖 F05）
+- 下一步：
+  - 审阅 F05（目录 App vs Gameplay、事件最小清理、与 F04 顺序）后再实现
+
+## 2026-08-11（设计）
+
+- 范围：重构 / 系统性补强 design intake
+- 已完成：
+  - 登记 `CORE-F04`、`COMB-F09`，并将 `EVT-F01` 提升为 `Draft`
+  - 起草 3 份 design：场景化 `GameInstance` + Hybrid Debug、每步 block + corruption gateway、`GameEventSubsystem` + fragment 事件模型
+- 下一步：
+  - 审阅 design 后再实现
+
 ## 2026-08-11
 
 - 范围：`SHLT-F02` 收口 + `COMB-F08` 合 main

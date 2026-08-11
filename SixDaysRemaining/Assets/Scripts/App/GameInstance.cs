@@ -3,7 +3,7 @@ using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
 using UnityEngine;
 
-namespace SixDaysRemaining.Bootstrap
+namespace SixDaysRemaining.App
 {
     /// <summary>
     /// 应用级入口：初始化子系统，维护主菜单/对局模式。
@@ -31,10 +31,8 @@ namespace SixDaysRemaining.Bootstrap
         private Transform combatRoot;
 
         [Header("Debug")]
-        [Tooltip("新开局写入的起始腐蚀。0=正式值。≥40 测 Corrupted 伴生；≥100 会直接进结局。")]
-        [Range(0, 100)]
         [SerializeField]
-        private int debugStartCorruption;
+        private DebugRunSettings debugSettings = new DebugRunSettings();
 
         public GameplaySubsystem Gameplay { get; private set; }
 
@@ -58,6 +56,11 @@ namespace SixDaysRemaining.Bootstrap
         }
 
         public AppMode Mode { get; private set; }
+
+        public DebugRunSettings DebugSettings
+        {
+            get { return debugSettings; }
+        }
 
         public void BindCombatSceneRefs(
             PlayerCombatComponent player,
@@ -108,16 +111,30 @@ namespace SixDaysRemaining.Bootstrap
             ApplyDebugStartCorruption();
             Shelter = new ShelterManager(Gameplay.State);
             Shelter.InitializeDefaultRoster(StartingFoodStock);
+            ApplyDebugShelterOverrides();
         }
 
         private void ApplyDebugStartCorruption()
         {
-            if (debugStartCorruption <= 0 || Gameplay == null || Gameplay.State == null)
+            if (debugSettings == null || debugSettings.startCorruption <= 0 || Gameplay == null || Gameplay.State == null)
             {
                 return;
             }
 
-            Gameplay.SetCorruption(debugStartCorruption);
+            Gameplay.SetCorruption(debugSettings.startCorruption);
+        }
+
+        private void ApplyDebugShelterOverrides()
+        {
+            if (debugSettings == null || Shelter == null)
+            {
+                return;
+            }
+
+            if (debugSettings.hungerDecayOverride > 0)
+            {
+                Shelter.DailyHungerDecay = debugSettings.hungerDecayOverride;
+            }
         }
 
         public void ReturnToMainMenu()

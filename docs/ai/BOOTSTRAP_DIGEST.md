@@ -16,7 +16,7 @@
 
 - `main`：`SHLT-F02`（Shelter JSON 身份）+ `COMB-F08`（Combat JSON）+ 伙伴 UI 四提交。
 - 内容编辑：`StreamingAssets/Shelter/`、`StreamingAssets/Combat/`（改完需重启 Play）。
-- **下一批：重构 / 系统性补强**（特质 defId、内容管线统一等）；`EVT-F01` 仍 Deferred。
+- **下一批：`CORE-F04` / `COMB-F09` / `EVT-F01`** 三份设计已起草，待审阅；之后进入重构 / 系统性补强实现。
 
 ## 不可协商的协作规则
 

@@ -78,6 +78,36 @@ namespace SixDaysRemaining.Gameplay
             return false;
         }
 
+        public void SetDay(int day)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.day = UnityEngine.Mathf.Clamp(day, 1, MaxDay);
+        }
+
+        public void AddFood(int delta)
+        {
+            if (State == null || delta == 0)
+            {
+                return;
+            }
+
+            State.foodStock = UnityEngine.Mathf.Max(0, State.foodStock + delta);
+        }
+
+        public void SetPhase(GameplayPhase phase)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.currentPhase = phase;
+        }
+
         /// <summary>
         /// 推进到下一阶段。已在 Ending 时不再变化。
         /// </summary>

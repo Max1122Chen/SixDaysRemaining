@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using SixDaysRemaining.Bootstrap;
+using SixDaysRemaining.Gameplay;
+using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
 using SixDaysRemaining.Combat.Traits;

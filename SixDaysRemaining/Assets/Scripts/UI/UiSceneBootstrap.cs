@@ -1,6 +1,8 @@
 using System;
-using SixDaysRemaining.Bootstrap;
+using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
+using SixDaysRemaining.Debugging;
+using SixDaysRemaining.Gameplay;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,6 +30,9 @@ namespace SixDaysRemaining.UI
 
         [SerializeField]
         private Transform combatRoot;
+
+        [SerializeField]
+        private DebugCommandConsole debugConsole;
 
         [SerializeField]
         private StartScreenView startView;
@@ -76,16 +81,25 @@ namespace SixDaysRemaining.UI
                 flow = gameObject.AddComponent<AppFlowController>();
             }
 
-            flow.Bind(gi, startView, storyView, shelterView, combatView, settlementView, endingView, settingsView, creditsView);
-            flow.BindHud(hudView);
-            if (startView != null) startView.Wire(flow);
-            if (storyView != null) storyView.Wire(flow);
-            if (shelterView != null) shelterView.Wire(flow);
-            if (combatView != null) combatView.Wire(flow);
-            if (settlementView != null) settlementView.Wire(flow);
-            if (endingView != null) endingView.Wire(flow);
-            if (settingsView != null) settingsView.Wire(flow);
-            if (creditsView != null) creditsView.Wire(flow);
+            PresentationManager presentation = GetComponent<PresentationManager>();
+            if (presentation == null)
+            {
+                presentation = gameObject.AddComponent<PresentationManager>();
+            }
+
+            flow.BindGame(gi);
+            presentation.Bind(
+                flow,
+                startView,
+                storyView,
+                shelterView,
+                combatView,
+                settlementView,
+                endingView,
+                settingsView,
+                creditsView,
+                hudView);
+            BindDebugConsole(gi, flow);
             ApplyFontToSceneUi(UiFactory.Font);
             flow.ShowStart();
         }
@@ -147,6 +161,40 @@ namespace SixDaysRemaining.UI
             EnemyCombatComponent e = enemyPrefab != null ? enemyPrefab : CreateEnemyTemplate();
             Transform root = combatRoot != null ? combatRoot : CreateCombatRoot();
             gi.BindCombatSceneRefs(p, e, root);
+        }
+
+        private void BindDebugConsole(GameInstance gi, AppFlowController flow)
+        {
+            if (gi == null || gi.DebugSettings == null || !gi.DebugSettings.enableConsole)
+            {
+                return;
+            }
+
+            DebugCommandConsole console = debugConsole;
+            if (console == null)
+            {
+                console = FindObjectOfType<DebugCommandConsole>(true);
+            }
+
+            if (console == null)
+            {
+                Debug.LogError("[UiSceneBootstrap] 场景中未找到 DebugCommandConsole。请挂在 Canvas/DebugConsoleRoot 上并在 Inspector 绑定 UI 引用。");
+                return;
+            }
+
+            console.Initialize(new DebugCommandContext
+            {
+                GameInstance = gi,
+                Gameplay = gi.Gameplay,
+                Shelter = gi.Shelter,
+                Combat = gi.Combat,
+                ShowEnding = flow.ShowEnding,
+                RefreshPresentation = () =>
+                {
+                    flow.RefreshGlobalHud();
+                    flow.RefreshDebugPresentation();
+                }
+            });
         }
 
         private static void EnsureEventSystem()

@@ -9,6 +9,7 @@
 | `TD-004` | Open | `COMB` | Corrupted 版 **蓄力一击** 是否仅放大基础 5、组合「槽内攻牌 +1」如何叠加，策划未严格定义。 | F07 先按「基础×倍率 + 原 combo 逻辑」实现。 | Max | 2026-08-07 | 策划确认或 xlsx 补一行 | 更新 `COMB-F07` 并补单测期望值 |
 | `TD-005` | Open | `Bootstrap` | `GameInstance.debugStartCorruption` 为 Play 调试入口，正式发版应默认 0 或移除。 | 误留高值会污染开局手感/直接结局。 | Max | 2026-08-07 | F07 测完或进发版前 | 删字段或加 `#if UNITY_EDITOR` / Development Build 守卫 |
 | `TD-006` | Open | `COMB-F08` | StreamingAssets 在部分移动平台需 `UnityWebRequest`；首版仅 Editor/Standalone `File.ReadAllText`。F08 **硬失败**，移动包未补齐前会直接抛错。 | 进移动目标前必须补读盘。 | Max | 2026-08-07 | 目标平台确定后 | 补异步加载；失败仍 throw（不引入 fallback） |
+| `TD-007` | Open | `CORE-F05` / `EVT-F01` | 随机事件队列与调度仍留在 `Gameplay/AppFlowController`（`pendingEvents` / `ShowNextRandomEvent`）；F05 仅做 Flow/Presentation 拆分，未迁移事件子系统。 | 日循环编排与事件域耦合；debug 命令难单独测事件调度。 | Max | 2026-08-11 | EVT-F01 启动后 | 事件队列迁入 `GameEventSubsystem`（或等价），Flow 只收 `OnEventsComplete` 回调 |
 
 ## 状态
 

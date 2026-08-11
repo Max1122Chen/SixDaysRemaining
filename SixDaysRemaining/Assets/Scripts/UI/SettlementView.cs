@@ -1,4 +1,5 @@
-using SixDaysRemaining.Bootstrap;
+using SixDaysRemaining.Gameplay;
+using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
 using TMPro;
 using UnityEngine;

@@ -1,7 +1,7 @@
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Gameplay;
 
-namespace SixDaysRemaining.Bootstrap
+namespace SixDaysRemaining.App
 {
     /// <summary>
     /// 将 GameplaySubsystem 腐蚀读写桥接到战斗 ICorruptionRunState。

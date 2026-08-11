@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using SixDaysRemaining.Bootstrap;
+using SixDaysRemaining.App;
 using SixDaysRemaining.Gameplay;
 using TMPro;
 using UnityEngine;
@@ -229,7 +229,7 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            flow.OnRandomEventChosen(this, pendingOptions[index]);
+            flow.OnRandomEventChosen(pendingOptions[index]);
         }
 
         private void OnResultContinue()
@@ -241,7 +241,7 @@ namespace SixDaysRemaining.UI
 
             if (flow != null)
             {
-                flow.OnEventResultContinue(this);
+                flow.OnEventResultContinue();
             }
         }
 

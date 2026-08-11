@@ -2,6 +2,8 @@
   "name": "SixDaysRemaining.EditModeTests",
   "rootNamespace": "SixDaysRemaining.Tests.EditMode",
   "references": [
+    "SixDaysRemaining.App",
+    "SixDaysRemaining.Debug",
     "SixDaysRemaining.Gameplay",
     "SixDaysRemaining.Shelter",
     "SixDaysRemaining.Combat"

@@ -1,5 +1,6 @@
 using System.Text;
-using SixDaysRemaining.Bootstrap;
+using SixDaysRemaining.Gameplay;
+using SixDaysRemaining.App;
 using SixDaysRemaining.Shelter;
 using TMPro;
 using UnityEngine;
