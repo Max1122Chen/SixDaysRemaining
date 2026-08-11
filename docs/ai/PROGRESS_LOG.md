@@ -2,6 +2,17 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-11
+
+- 范围：`SHLT-F02` 收口 + `COMB-F08` 合 main
+- 已完成：
+  - `feat/shelter` rebase `origin/main`（伙伴 UI 四提交）；无手改冲突
+  - F02 文档 → Done；准备 merge `main`
+- 进行中：
+  - `feat/combat` rebase 并合入 F08（StreamingAssets 战斗 JSON）
+- 下一步：
+  - 重构 / 系统性补强（特质 defId、内容管线统一等）
+
 ## 2026-08-07
 
 - 范围：`SHLT-F02` 实现（身份数据驱动）
@@ -10,9 +21,6 @@
   - `ShelterContent` / `ShelterContentJsonLoader`（硬失败）；`Survivor.defId` + 耐饿提案 A
   - `TakeIn(defId)`；移除 Alice/Bob；事件收留改为 `politician`
   - Edit Mode：`ShelterSurvivorIdentityTests` + 更新既有 Shelter 测试
-  - design → Review
-- 下一步：
-  - Unity Edit Mode 确认 → prepare commit
 
 ## 2026-07-29
 

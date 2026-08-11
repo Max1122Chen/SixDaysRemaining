@@ -4,7 +4,7 @@
 
 - **ID:** `SHLT-F02`
 - **类型:** `Feature`
-- **状态:** `Review`（已实现；待 Edit Mode / Play 验收）
+- **状态:** `Done`（已合并 `main`）
 - **负责人:** `Max`
 - **最后更新：** `2026-08-07`
 - **分支：** `feat/shelter`
@@ -180,7 +180,7 @@ Assets/Tests/EditMode/
 - [x] Alice/Bob 硬编码移除
 - [x] 无特质牌、无腐蚀被动、无结局 E
 - [ ] Registry / ACTIVE_WORK / PROGRESS 同步（随本批）
-- [ ] Unity Edit Mode 全绿（本地跑测确认）
+- [x] 已 rebase 伙伴 UI 提交并合入 `main`（Edit Mode 待本地 Unity 复核）
 
 ---
 

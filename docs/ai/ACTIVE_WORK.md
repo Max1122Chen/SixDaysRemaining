@@ -4,13 +4,20 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `SHLT-F02` 幸存者身份 + 入住/状态/死亡 | Review | Max | Edit Mode 确认后 prepare commit / merge |
-| P1 | `feat/combat`（含 F08）合 main / push | Review | Max | 仍在 `feat/combat`；与 shelter 注意合入顺序 |
-| — | `EVT-F01` 四套事件池 | Deferred | Max | 入住剧情/被动归属此处或后续 SHLT 行为 feat |
-| — | 特质 / 特质牌挂钩 | Deferred | Max | 定义清晰后再开 feat |
+| P0 | `COMB-F08` 战斗 JSON 合 main | In Progress | Max | rebase `feat/combat` → merge |
+| P1 | 重构 / 系统性补强 | Planned | Max | F02+F08 合入后开 design / slice |
+| — | 特质 `defId` 挂钩（替代名字碎片） | Discuss | Max | 与 UI 伙伴 `SurvivorTrait` 对齐 |
+| — | `EVT-F01` 四套事件池 | Deferred | Max | 入住剧情/被动另 feat |
+
+## 近期已收口
+
+| ID | 状态 | 备注 |
+|----|------|------|
+| `SHLT-F02` | Done | 身份 JSON + 入住/状态/死亡；已合 `main` |
+| `UI-F01` / `CORE-F03` | Done | 伙伴 UI 提交已在 `origin/main` |
 
 ## Feat 开发纪律（摘要）
 
 1. 登记 Feature ID → 写 design → **审阅**
-2. 在约定域分支（本 feat：`feat/shelter`）实现 → Edit Mode 测试绿 → **prepare commit 审阅** → commit
+2. 在约定域分支实现 → Edit Mode 测试绿 → **prepare commit 审阅** → commit
 3. feat 验收通过 → merge `main` → 更新 `PROGRESS_LOG`
