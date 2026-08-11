@@ -64,8 +64,8 @@ namespace SixDaysRemaining.UI
             GameInstance gi = gameInstance != null ? gameInstance : GameInstance.Instance;
             if (gi == null)
             {
-                GameObject go = new GameObject("GameInstance");
-                gi = go.AddComponent<GameInstance>();
+                throw new InvalidOperationException(
+                    "CORE-F04 要求 Scene 中显式预置 GameInstance：请在 UiSceneBootstrap 的 Inspector 拖入 GameInstance，或确保场景已存在 GameInstance。");
             }
 
             BindCombatPlaceholders(gi);
