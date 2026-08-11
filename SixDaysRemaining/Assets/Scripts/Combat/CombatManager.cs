@@ -246,6 +246,7 @@ namespace SixDaysRemaining.Combat
                 return card;
             }
 
+            ClearEnemyBlockAfterPlayerSlot();
             TryFinishByHp();
             return card;
         }
@@ -283,6 +284,7 @@ namespace SixDaysRemaining.Combat
                 }
             }
 
+            ClearPlayerBlockAfterEnemySlot();
             TryFinishByHp();
             return true;
         }
@@ -659,6 +661,28 @@ namespace SixDaysRemaining.Combat
             {
                 roundPlayerSlots[i] = null;
             }
+        }
+
+        private void ClearEnemyBlockAfterPlayerSlot()
+        {
+            if (session == null || session.Enemies == null || session.Enemies.Count == 0)
+            {
+                return;
+            }
+
+            // 玩家这一步已经造成对敌方的伤害后，敌人 block 对后续流程不再生效。
+            session.Enemies[0].SetBlock(0f);
+        }
+
+        private void ClearPlayerBlockAfterEnemySlot()
+        {
+            if (session == null || session.Player == null)
+            {
+                return;
+            }
+
+            // 敌人这一步已经对玩家完成伤害结算后，玩家 block 对后续流程不再生效。
+            session.Player.SetBlock(0f);
         }
 
         private static int IndexInHand(IReadOnlyList<CardInstance> hand, CardInstance card)

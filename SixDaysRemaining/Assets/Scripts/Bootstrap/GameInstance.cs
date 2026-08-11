@@ -117,11 +117,7 @@ namespace SixDaysRemaining.Bootstrap
                 return;
             }
 
-            Gameplay.State.corruption = debugStartCorruption;
-            if (debugStartCorruption >= SixDaysRemaining.Combat.Cards.CorruptedRules.FuseThreshold)
-            {
-                Gameplay.State.currentPhase = GameplayPhase.Ending;
-            }
+            Gameplay.SetCorruption(debugStartCorruption);
         }
 
         public void ReturnToMainMenu()

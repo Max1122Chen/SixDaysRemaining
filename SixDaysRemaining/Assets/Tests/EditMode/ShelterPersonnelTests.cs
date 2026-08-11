@@ -75,6 +75,8 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void ProcessEndOfDay_RecordsDeath()
         {
+            state = new GameState();
+            shelter = new ShelterManager(state);
             Survivor dying = new Survivor { name = "Test", hunger = 0, status = SurvivorStatus.Dying };
             shelter.RegisterSurvivor(dying);
 

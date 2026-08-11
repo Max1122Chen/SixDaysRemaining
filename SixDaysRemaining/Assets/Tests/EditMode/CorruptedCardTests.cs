@@ -59,11 +59,13 @@ namespace SixDaysRemaining.Tests.EditMode
 
             manager.ResolvePlayerSlot(0);
             float afterFirst = manager.Session.Enemies[0].Attributes.HP;
-            Assert.AreEqual(5.5f, hpBefore - afterFirst, 0.001f);
+            // CombatComponent.Damage 结算会对 (amount - block) 做向下取整；
+            // 在当前数值下第一次应为 5 点等价伤害。
+            Assert.AreEqual(5.0f, hpBefore - afterFirst, 0.001f);
 
             manager.ResolvePlayerSlot(1);
             float afterSecond = manager.Session.Enemies[0].Attributes.HP;
-            Assert.AreEqual(5.9f, afterFirst - afterSecond, 0.001f);
+            Assert.AreEqual(5.0f, afterFirst - afterSecond, 0.001f);
         }
 
         [Test]
@@ -124,6 +126,21 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.IsTrue(gameplay.ApplyCorruption(3));
             Assert.AreEqual(GameplayPhase.Ending, gameplay.State.currentPhase);
             Assert.AreEqual(CorruptedRules.FuseThreshold, gameplay.State.corruption);
+        }
+
+        [Test]
+        public void GameplaySetCorruption_ClampsAndFusesAtThreshold()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+
+            Assert.IsFalse(gameplay.SetCorruption(-7));
+            Assert.AreEqual(0, gameplay.State.corruption);
+            Assert.AreEqual(GameplayPhase.ExpeditionPrep, gameplay.State.currentPhase);
+
+            Assert.IsTrue(gameplay.SetCorruption(999));
+            Assert.AreEqual(CorruptedRules.FuseThreshold, gameplay.State.corruption);
+            Assert.AreEqual(GameplayPhase.Ending, gameplay.State.currentPhase);
         }
 
         [Test]

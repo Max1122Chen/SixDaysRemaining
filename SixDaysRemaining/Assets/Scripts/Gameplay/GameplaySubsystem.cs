@@ -58,6 +58,27 @@ namespace SixDaysRemaining.Gameplay
         }
 
         /// <summary>
+        /// 直接设置腐蚀值（会夹到 0..100）；达到 100 时进入 Ending 并返回 true。
+        /// </summary>
+        public bool SetCorruption(int value)
+        {
+            if (State == null)
+            {
+                return false;
+            }
+
+            int clamped = UnityEngine.Mathf.Clamp(value, 0, CorruptedRules.FuseThreshold);
+            State.corruption = clamped;
+            if (clamped >= CorruptedRules.FuseThreshold)
+            {
+                State.currentPhase = GameplayPhase.Ending;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// 推进到下一阶段。已在 Ending 时不再变化。
         /// </summary>
         public void AdvancePhase()

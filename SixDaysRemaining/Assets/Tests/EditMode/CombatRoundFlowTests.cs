@@ -84,6 +84,32 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void ResolveStep_ClearsDefendingSideBlockPerAction()
+        {
+            manager.StartBattleOnly(new CombatStartConfig
+            {
+                PlayerMaxHp = 100f,
+                EnemyMaxHp = 100f,
+                EncounterId = EncounterIds.Mob01,
+                DeckSeed = 1
+            }, player, enemyPrefab: null, combatRoot: null);
+
+            // 规则：玩家行动后清敌方 block；敌人行动后清我方 block。
+            // 这里用 Strike 作为玩家动作，确保敌方 block 会被消耗/结算后被清零；
+            // 用敌方 slot 动作为敌人动作，确保玩家 block 被清零。
+            RebuildDeckAllStrike(player);
+            Assert.IsTrue(manager.BeginRound(FillSlots(player, 1)));
+
+            manager.Session.Enemies[0].SetBlock(100f);
+            Assert.IsNotNull(manager.ResolvePlayerSlot(0));
+            Assert.AreEqual(0f, manager.Session.Enemies[0].Attributes.Block, 0.001f);
+
+            manager.Session.Player.SetBlock(100f);
+            Assert.IsTrue(manager.ResolveEnemySlot(0));
+            Assert.AreEqual(0f, manager.Session.Player.Attributes.Block, 0.001f);
+        }
+
+        [Test]
         public void DayEncounter_UsesDesignerHp()
         {
             manager.StartBattleOnly(new CombatStartConfig
@@ -125,5 +151,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
             p.SetupDeck(defs, seed: 0);
         }
+
+        // (Defend deck helper is no longer needed after changing the step-boundary assertions.)
     }
 }
