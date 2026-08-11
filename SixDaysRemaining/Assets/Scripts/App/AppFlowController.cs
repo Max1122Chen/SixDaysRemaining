@@ -127,6 +127,14 @@ namespace SixDaysRemaining.Gameplay
             }
 
             gi.Gameplay.AdvancePhase();
+
+            DebugRunSettings debug = gi.DebugSettings;
+            if (debug != null && debug.skipCombat)
+            {
+                ResolveSkippedCombat(gi);
+                return;
+            }
+
             CombatStartConfig config = new CombatStartConfig();
             config.DeckSeed = unchecked(gi.Gameplay.State.rngSeed + gi.Gameplay.State.day * 997);
             config.Day = gi.Gameplay.State.day;
@@ -144,8 +152,42 @@ namespace SixDaysRemaining.Gameplay
                 config.OwnedTraits = TraitCatalog.GetOwnedTraits(names);
             }
 
+            gi.Combat.PlayerInvincible = debug != null && debug.playerInvincible;
+            gi.Combat.CombatSweep = debug != null && debug.combatSweep;
             gi.Combat.StartCombat(config, gi.PlayerCombat, gi.EnemyPrefab, gi.CombatRoot);
             ShowCombat();
+        }
+
+        private void ResolveSkippedCombat(GameInstance gi)
+        {
+            CombatResult result = new CombatResult
+            {
+                Outcome = CombatOutcome.Win,
+                FoodGained = 3,
+                CorruptionDelta = 3,
+                TurnsElapsed = 0,
+                RewardTier = "跳战",
+                RunEndedByCorruption = false
+            };
+
+            OnCombatFinished(result);
+        }
+
+        public void BeginDayEnd()
+        {
+            ShowDayEndAfterEvents();
+        }
+
+        public void ForceEndingFlow(EndingReason reason)
+        {
+            GameInstance gi = Game;
+            if (gi?.Gameplay != null)
+            {
+                gi.Gameplay.ForceEnding(reason);
+            }
+
+            CloseOverlay();
+            ShowEnding();
         }
 
         public void OnCombatFinished(CombatResult result)
@@ -172,7 +214,7 @@ namespace SixDaysRemaining.Gameplay
             GameInstance gi = Game;
             if (gi?.Gameplay != null)
             {
-                gi.Gameplay.SetCorruption(CorruptedRules.FuseThreshold);
+                gi.Gameplay.ForceEnding(EndingReason.CorruptionFuse);
             }
 
             ShowEnding();

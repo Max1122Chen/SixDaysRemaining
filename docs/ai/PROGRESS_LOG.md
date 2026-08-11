@@ -2,6 +2,18 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-11（CORE-F04 命令与门禁实现）
+
+- 范围：Hybrid Debug 命令表 + 业务 API + gate
+- 已完成：
+  - Gameplay：`SetFood`、`ForceEnding`、`SetDay→MaxDay`、`RunSnapshot`
+  - Shelter：`TryResolveSurvivor`、`Adjust/SetSurvivorHunger`、`ExpelSurvivor`
+  - Combat：`PlayerInvincible`、`CombatSweep`、`ForceOutcome`、`ApplyEffectInCurrentCombat`
+  - AppFlow：`BeginDayEnd`、`ForceEndingFlow`、skipCombat 分支；DebugRunSettings.combatSweep
+  - Debug：`DebugCommandGates` + 全命令表；移除 `run.phase set`；Tab/help 按 gate 过滤
+  - EditMode：`DebugCommandRegistryTests` 扩展
+- 待验证：MainScene Play + EditMode 全绿
+
 ## 2026-08-11（CORE-F05 实现）
 
 - 范围：AppFlow / Presentation 拆分

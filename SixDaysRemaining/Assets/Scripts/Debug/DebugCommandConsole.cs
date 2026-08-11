@@ -295,7 +295,7 @@ namespace SixDaysRemaining.Debugging
                 return;
             }
 
-            List<string> suggestions = registry.GetSuggestions(inputField.text);
+            List<string> suggestions = registry.GetSuggestions(context, inputField.text);
             if (suggestions.Count == 1)
             {
                 inputField.text = suggestions[0];
@@ -310,7 +310,9 @@ namespace SixDaysRemaining.Debugging
                 return;
             }
 
-            List<string> suggestions = registry.GetSuggestions(inputField != null ? inputField.text : string.Empty);
+            List<string> suggestions = registry.GetSuggestions(
+                context,
+                inputField != null ? inputField.text : string.Empty);
             if (suggestions.Count == 0)
             {
                 suggestionText.text = string.Empty;

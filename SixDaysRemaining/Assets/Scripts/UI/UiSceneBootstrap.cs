@@ -188,6 +188,7 @@ namespace SixDaysRemaining.UI
                 Gameplay = gi.Gameplay,
                 Shelter = gi.Shelter,
                 Combat = gi.Combat,
+                Flow = flow,
                 ShowEnding = flow.ShowEnding,
                 RefreshPresentation = () =>
                 {

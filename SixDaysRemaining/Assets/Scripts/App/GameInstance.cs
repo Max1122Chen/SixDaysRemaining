@@ -55,6 +55,11 @@ namespace SixDaysRemaining.App
             get { return combatRoot; }
         }
 
+        public bool IsRunActive
+        {
+            get { return Mode == AppMode.InGame && Gameplay != null && Gameplay.State != null; }
+        }
+
         public AppMode Mode { get; private set; }
 
         public DebugRunSettings DebugSettings

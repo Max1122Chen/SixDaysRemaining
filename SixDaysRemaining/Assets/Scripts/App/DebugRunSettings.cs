@@ -11,6 +11,7 @@ namespace SixDaysRemaining.App
         public int startCorruption;
         public bool playerInvincible;
         public bool skipCombat;
+        public bool combatSweep;
         public int hungerDecayOverride;
         public bool enableConsole = true;
     }

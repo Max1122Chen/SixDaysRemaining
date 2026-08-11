@@ -8,7 +8,7 @@ namespace SixDaysRemaining.Tests.EditMode
     public class DebugCommandRegistryTests
     {
         [Test]
-        public void Execute_RunCorruptionSet_UsesGameplaySetter()
+        public void Execute_RunCorruptionSet_UpdatesState()
         {
             GameplaySubsystem gameplay = new GameplaySubsystem();
             gameplay.StartNewRun(1);
@@ -24,7 +24,7 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void Execute_RunPhaseSet_ParsesDesignSyntax()
+        public void Execute_RunFoodSet_UpdatesStock()
         {
             GameplaySubsystem gameplay = new GameplaySubsystem();
             gameplay.StartNewRun(1);
@@ -33,10 +33,22 @@ namespace SixDaysRemaining.Tests.EditMode
             string result = registry.Execute(new DebugCommandContext
             {
                 Gameplay = gameplay
-            }, "run.phase set Triumph");
+            }, "run.food set 9");
 
-            Assert.AreEqual(GameplayPhase.TriumphReturn, gameplay.State.currentPhase);
-            Assert.AreEqual("阶段已设为 TriumphReturn", result);
+            Assert.AreEqual(9, gameplay.State.foodStock);
+            Assert.AreEqual("存粮已设为 9", result);
+        }
+
+        [Test]
+        public void Execute_RunDaySet_AtMaxDay_TriggersEndingPhase()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            DebugCommandRegistry registry = new DebugCommandRegistry();
+
+            registry.Execute(new DebugCommandContext { Gameplay = gameplay }, "run.day set 6");
+
+            Assert.AreEqual(GameplayPhase.Ending, gameplay.State.currentPhase);
         }
 
         [Test]
@@ -48,11 +60,102 @@ namespace SixDaysRemaining.Tests.EditMode
 
             string result = registry.Execute(new DebugCommandContext
             {
+                Gameplay = new GameplaySubsystem(),
                 Shelter = shelter
             }, "shelter.hungerDecay set 3");
 
             Assert.AreEqual(3, shelter.DailyHungerDecay);
             Assert.AreEqual("每日饥饿流失已设为 3", result);
+        }
+
+        [Test]
+        public void Execute_ShelterList_FormatsRoster()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            shelter.InitializeDefaultRoster(5);
+            DebugCommandRegistry registry = new DebugCommandRegistry();
+
+            string result = registry.Execute(new DebugCommandContext
+            {
+                Gameplay = gameplay,
+                Shelter = shelter
+            }, "shelter.list");
+
+            StringAssert.Contains("|", result);
+        }
+
+        [Test]
+        public void Execute_ShelterHungerAdd_ResolvesDefId()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            shelter.InitializeDefaultRoster(5);
+            string defId = shelter.Survivors[0].defId;
+            DebugCommandRegistry registry = new DebugCommandRegistry();
+
+            int before = shelter.Survivors[0].hunger;
+            string result = registry.Execute(new DebugCommandContext
+            {
+                Gameplay = gameplay,
+                Shelter = shelter
+            }, "shelter.hunger add " + defId + " 2");
+
+            Assert.AreEqual(before + 2, shelter.Survivors[0].hunger);
+            StringAssert.Contains("已调整", result);
+        }
+
+        [Test]
+        public void Execute_CombatWin_RequiresInCombat()
+        {
+            DebugCommandRegistry registry = new DebugCommandRegistry();
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+
+            string result = registry.Execute(new DebugCommandContext
+            {
+                Gameplay = gameplay
+            }, "combat.win");
+
+            Assert.AreEqual("该命令仅战斗中可用。", result);
+        }
+
+        [Test]
+        public void Execute_DebugHelp_WithGameplayListsRunCommands()
+        {
+            DebugCommandRegistry registry = new DebugCommandRegistry();
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+
+            string result = registry.Execute(new DebugCommandContext
+            {
+                Gameplay = gameplay
+            }, "debug.help");
+
+            StringAssert.Contains("run.corruption set", result);
+        }
+
+        [Test]
+        public void Gate_InShelter_AllowsPrepPhase()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+
+            Assert.IsTrue(DebugCommandGates.IsInShelter(new DebugCommandContext
+            {
+                Gameplay = gameplay
+            }));
+        }
+
+        [Test]
+        public void Gameplay_SetFood_ClampNegativeToZero()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            gameplay.SetFood(-3);
+            Assert.AreEqual(0, gameplay.State.foodStock);
         }
     }
 }

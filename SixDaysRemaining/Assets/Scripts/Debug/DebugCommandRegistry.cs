@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
+using SixDaysRemaining.App;
+using SixDaysRemaining.Combat;
+using SixDaysRemaining.Combat.Cards;
 using SixDaysRemaining.Gameplay;
+using SixDaysRemaining.Shelter;
 
 namespace SixDaysRemaining.Debugging
 {
@@ -8,8 +13,14 @@ namespace SixDaysRemaining.Debugging
     {
         public delegate string DebugCommandHandler(DebugCommandContext context, string[] args);
 
-        private readonly Dictionary<string, DebugCommandHandler> handlers =
-            new Dictionary<string, DebugCommandHandler>(StringComparer.OrdinalIgnoreCase);
+        private sealed class CommandEntry
+        {
+            public string Name;
+            public DebugCommandGate Gate;
+            public DebugCommandHandler Handler;
+        }
+
+        private readonly List<CommandEntry> commands = new List<CommandEntry>();
 
         public DebugCommandRegistry()
         {
@@ -18,7 +29,13 @@ namespace SixDaysRemaining.Debugging
 
         public IEnumerable<string> CommandNames
         {
-            get { return handlers.Keys; }
+            get
+            {
+                for (int i = 0; i < commands.Count; i++)
+                {
+                    yield return commands[i].Name;
+                }
+            }
         }
 
         public string Execute(DebugCommandContext context, string input)
@@ -29,35 +46,41 @@ namespace SixDaysRemaining.Debugging
             }
 
             string normalizedInput = input.Trim();
-            string[] parts = normalizedInput.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 0)
+            CommandEntry entry = FindCommand(normalizedInput);
+            if (entry == null)
             {
-                return string.Empty;
+                string[] parts = normalizedInput.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                return parts.Length > 0 ? "未知命令：" + parts[0] : string.Empty;
             }
 
-            string commandName = FindCommandName(normalizedInput);
-            if (string.IsNullOrEmpty(commandName))
+            if (!DebugCommandGates.Allows(context, entry.Gate))
             {
-                return "未知命令：" + parts[0];
+                return DebugCommandGates.RejectionMessage(entry.Gate);
             }
 
-            DebugCommandHandler handler = handlers[commandName];
-            string[] commandParts = commandName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string[] args = new string[parts.Length - commandParts.Length];
-            Array.Copy(parts, commandParts.Length, args, 0, args.Length);
-            return handler(context, args);
+            string[] commandParts = entry.Name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] allParts = normalizedInput.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] args = new string[allParts.Length - commandParts.Length];
+            Array.Copy(allParts, commandParts.Length, args, 0, args.Length);
+            return entry.Handler(context, args);
         }
 
-        public List<string> GetSuggestions(string prefix)
+        public List<string> GetSuggestions(DebugCommandContext context, string prefix)
         {
             List<string> suggestions = new List<string>();
             string filter = prefix != null ? prefix.Trim() : string.Empty;
-            foreach (KeyValuePair<string, DebugCommandHandler> pair in handlers)
+            for (int i = 0; i < commands.Count; i++)
             {
-                if (string.IsNullOrEmpty(filter)
-                    || pair.Key.StartsWith(filter, StringComparison.OrdinalIgnoreCase))
+                CommandEntry entry = commands[i];
+                if (!DebugCommandGates.AllowsForHelp(context, entry.Gate))
                 {
-                    suggestions.Add(pair.Key);
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(filter)
+                    || entry.Name.StartsWith(filter, StringComparison.OrdinalIgnoreCase))
+                {
+                    suggestions.Add(entry.Name);
                 }
             }
 
@@ -65,28 +88,97 @@ namespace SixDaysRemaining.Debugging
             return suggestions;
         }
 
-        private void Register(string commandName, DebugCommandHandler handler)
+        public List<string> GetSuggestions(string prefix)
         {
-            handlers[commandName] = handler;
+            return GetSuggestions(null, prefix);
+        }
+
+        private void Register(string commandName, DebugCommandGate gate, DebugCommandHandler handler)
+        {
+            commands.Add(new CommandEntry
+            {
+                Name = commandName,
+                Gate = gate,
+                Handler = handler
+            });
         }
 
         private void RegisterDefaults()
         {
-            Register("debug.help", HandleHelp);
-            Register("run.corruption set", HandleSetCorruption);
-            Register("run.day set", HandleSetDay);
-            Register("run.food add", HandleAddFood);
-            Register("run.phase set", HandleSetPhase);
-            Register("shelter.hungerDecay set", HandleSetHungerDecay);
+            Register("debug.help", DebugCommandGate.Always, HandleHelp);
+            Register("debug.status", DebugCommandGate.RunActive, HandleStatus);
+
+            Register("run.corruption set", DebugCommandGate.RunActive, HandleSetCorruption);
+            Register("run.food add", DebugCommandGate.RunActive, HandleAddFood);
+            Register("run.food set", DebugCommandGate.RunActive, HandleSetFood);
+            Register("run.day set", DebugCommandGate.RunActive, HandleSetDay);
+            Register("run.day advance", DebugCommandGate.RunActive, HandleAdvanceDay);
+            Register("run.day end", DebugCommandGate.InShelter, HandleDayEnd);
+            Register("run.ending force", DebugCommandGate.RunActive, HandleForceEnding);
+
+            Register("shelter.list", DebugCommandGate.RunActive, HandleShelterList);
+            Register("shelter.takein", DebugCommandGate.InShelter, HandleShelterTakeIn);
+            Register("shelter.expel", DebugCommandGate.InShelter, HandleShelterExpel);
+            Register("shelter.hunger add", DebugCommandGate.InShelter, HandleShelterHungerAdd);
+            Register("shelter.hunger set", DebugCommandGate.InShelter, HandleShelterHungerSet);
+            Register("shelter.hungerDecay set", DebugCommandGate.RunActive, HandleSetHungerDecay);
+
+            Register("combat.invincible", DebugCommandGate.RunActive, HandleCombatInvincible);
+            Register("combat.skip", DebugCommandGate.RunActive, HandleCombatSkip);
+            Register("combat.sweep", DebugCommandGate.RunActive, HandleCombatSweep);
+            Register("combat.win", DebugCommandGate.InCombat, HandleCombatWin);
+            Register("combat.lose", DebugCommandGate.InCombat, HandleCombatLose);
+            Register("combat.effect apply", DebugCommandGate.InCombat, HandleCombatEffectApply);
         }
 
         private string HandleHelp(DebugCommandContext context, string[] args)
         {
             string prefix = args.Length > 0 ? args[0] : string.Empty;
-            List<string> suggestions = GetSuggestions(prefix);
+            List<string> suggestions = GetSuggestions(context, prefix);
+            if (DebugCommandGates.IsMainMenu(context))
+            {
+                return "命令： debug.help";
+            }
+
             return suggestions.Count > 0
                 ? "命令： " + string.Join(", ", suggestions.ToArray())
                 : "没有匹配命令。";
+        }
+
+        private string HandleStatus(DebugCommandContext context, string[] args)
+        {
+            if (context?.Gameplay == null)
+            {
+                return "局内状态不可用。";
+            }
+
+            RunSnapshot snapshot = context.Gameplay.GetRunSnapshot();
+            StringBuilder builder = new StringBuilder();
+            builder.Append("day=").Append(snapshot.Day)
+                .Append(" phase=").Append(snapshot.Phase)
+                .Append(" food=").Append(snapshot.FoodStock)
+                .Append(" corruption=").Append(snapshot.Corruption)
+                .Append(" pop=").Append(snapshot.Population);
+
+            if (context.Shelter != null && context.Shelter.Survivors.Count > 0)
+            {
+                builder.Append(" | ");
+                for (int i = 0; i < context.Shelter.Survivors.Count; i++)
+                {
+                    Survivor survivor = context.Shelter.Survivors[i];
+                    if (i > 0)
+                    {
+                        builder.Append("; ");
+                    }
+
+                    builder.Append(survivor.defId)
+                        .Append('/').Append(survivor.name)
+                        .Append(" h=").Append(survivor.hunger)
+                        .Append(' ').Append(survivor.status);
+                }
+            }
+
+            return builder.ToString();
         }
 
         private static string HandleSetCorruption(DebugCommandContext context, string[] args)
@@ -98,12 +190,15 @@ namespace SixDaysRemaining.Debugging
             }
 
             bool fused = context.Gameplay.SetCorruption(value);
-            if (fused && context.ShowEnding != null)
+            if (fused)
             {
-                context.ShowEnding();
+                context.Flow?.ForceEndingFlow(EndingReason.CorruptionFuse);
+            }
+            else
+            {
+                Refresh(context);
             }
 
-            Refresh(context);
             return fused
                 ? "腐蚀已设为 " + context.Gameplay.State.corruption + "，并触发终局。"
                 : "腐蚀已设为 " + context.Gameplay.State.corruption;
@@ -117,9 +212,19 @@ namespace SixDaysRemaining.Debugging
                 return "用法：run.day set <n>";
             }
 
-            context.Gameplay.SetDay(value);
-            Refresh(context);
-            return "天数已设为 " + context.Gameplay.State.day;
+            bool ended = context.Gameplay.SetDay(value);
+            if (ended)
+            {
+                context.Flow?.ForceEndingFlow(EndingReason.MaxDayReached);
+            }
+            else
+            {
+                Refresh(context);
+            }
+
+            return ended
+                ? "天数已设为 " + context.Gameplay.State.day + "，并触发终局。"
+                : "天数已设为 " + context.Gameplay.State.day;
         }
 
         private static string HandleAddFood(DebugCommandContext context, string[] args)
@@ -135,22 +240,152 @@ namespace SixDaysRemaining.Debugging
             return "存粮已变更为 " + context.Gameplay.State.foodStock;
         }
 
-        private static string HandleSetPhase(DebugCommandContext context, string[] args)
+        private static string HandleSetFood(DebugCommandContext context, string[] args)
         {
-            GameplayPhase phase;
-            if (!TryReadPhase(args, 0, out phase) || context?.Gameplay == null)
+            int value;
+            if (!TryReadInt(args, 0, out value) || context?.Gameplay == null)
             {
-                return "用法：run.phase set <Prep|Combat|Triumph|Ending>";
+                return "用法：run.food set <n>";
             }
 
-            context.Gameplay.SetPhase(phase);
-            if (context.ShowEnding != null && phase == GameplayPhase.Ending)
+            context.Gameplay.SetFood(value);
+            Refresh(context);
+            return "存粮已设为 " + context.Gameplay.State.foodStock;
+        }
+
+        private static string HandleAdvanceDay(DebugCommandContext context, string[] args)
+        {
+            if (context?.Gameplay == null)
             {
-                context.ShowEnding();
+                return "局内不可用。";
+            }
+
+            context.Gameplay.AdvancePhase();
+            if (context.Gameplay.CurrentPhase == GameplayPhase.Ending)
+            {
+                context.Flow?.ForceEndingFlow(EndingReason.MaxDayReached);
+                return "阶段已推进，进入终局。";
             }
 
             Refresh(context);
-            return "阶段已设为 " + context.Gameplay.State.currentPhase;
+            return "阶段已推进为 " + context.Gameplay.State.currentPhase;
+        }
+
+        private static string HandleDayEnd(DebugCommandContext context, string[] args)
+        {
+            if (context?.Flow == null || context.Shelter == null)
+            {
+                return "日结不可用。";
+            }
+
+            context.Flow.BeginDayEnd();
+            Refresh(context);
+            return "已执行日结。";
+        }
+
+        private static string HandleForceEnding(DebugCommandContext context, string[] args)
+        {
+            if (context?.Flow == null || context.Gameplay == null)
+            {
+                return "无法触发终局。";
+            }
+
+            context.Flow.ForceEndingFlow(EndingReason.Debug);
+            return "已强制进入终局。";
+        }
+
+        private static string HandleShelterList(DebugCommandContext context, string[] args)
+        {
+            if (context?.Shelter == null || context.Shelter.Survivors.Count == 0)
+            {
+                return "无幸存者。";
+            }
+
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < context.Shelter.Survivors.Count; i++)
+            {
+                Survivor survivor = context.Shelter.Survivors[i];
+                if (i > 0)
+                {
+                    builder.AppendLine();
+                }
+
+                builder.Append(survivor.defId)
+                    .Append(" | ").Append(survivor.name)
+                    .Append(" | hunger=").Append(survivor.hunger)
+                    .Append(" | ").Append(survivor.status);
+            }
+
+            return builder.ToString();
+        }
+
+        private static string HandleShelterTakeIn(DebugCommandContext context, string[] args)
+        {
+            if (context?.Shelter == null || args.Length < 1)
+            {
+                return "用法：shelter.takein <defId>";
+            }
+
+            try
+            {
+                context.Shelter.TakeIn(args[0]);
+                Refresh(context);
+                return "已尝试入住 " + args[0];
+            }
+            catch (Exception ex)
+            {
+                return "入住失败：" + ex.Message;
+            }
+        }
+
+        private static string HandleShelterExpel(DebugCommandContext context, string[] args)
+        {
+            if (context?.Shelter == null || args.Length < 1)
+            {
+                return "用法：shelter.expel <defId|name>";
+            }
+
+            if (!context.Shelter.ExpelSurvivor(args[0]))
+            {
+                return "未找到目标：" + args[0];
+            }
+
+            Refresh(context);
+            return "已驱赶 " + args[0];
+        }
+
+        private static string HandleShelterHungerAdd(DebugCommandContext context, string[] args)
+        {
+            int delta;
+            if (context?.Shelter == null || args.Length < 2 || !TryReadInt(args, 1, out delta))
+            {
+                return "用法：shelter.hunger add <target> <delta>";
+            }
+
+            if (!context.Shelter.AdjustSurvivorHunger(args[0], delta))
+            {
+                return "未找到目标：" + args[0];
+            }
+
+            Refresh(context);
+            return "已调整 " + args[0] + " 饱食度 " + delta;
+        }
+
+        private static string HandleShelterHungerSet(DebugCommandContext context, string[] args)
+        {
+            int value;
+            if (context?.Shelter == null || args.Length < 2 || !TryReadInt(args, 1, out value))
+            {
+                return "用法：shelter.hunger set <target> <n>";
+            }
+
+            if (!context.Shelter.SetSurvivorHunger(args[0], value))
+            {
+                return "未找到目标：" + args[0];
+            }
+
+            Refresh(context);
+            return "已将 " + args[0] + " 饱食度设为 " + value;
         }
 
         private static string HandleSetHungerDecay(DebugCommandContext context, string[] args)
@@ -171,6 +406,151 @@ namespace SixDaysRemaining.Debugging
             return "每日饥饿流失已设为 " + value;
         }
 
+        private static string HandleCombatInvincible(DebugCommandContext context, string[] args)
+        {
+            if (context?.GameInstance?.DebugSettings == null || args.Length < 1)
+            {
+                return "用法：combat.invincible on|off";
+            }
+
+            bool enabled = ParseOnOff(args[0]);
+            context.GameInstance.DebugSettings.playerInvincible = enabled;
+            if (context.Combat != null)
+            {
+                context.Combat.PlayerInvincible = enabled;
+            }
+
+            return "玩家无敌：" + (enabled ? "开" : "关");
+        }
+
+        private static string HandleCombatSkip(DebugCommandContext context, string[] args)
+        {
+            if (context?.GameInstance?.DebugSettings == null || args.Length < 1)
+            {
+                return "用法：combat.skip on|off";
+            }
+
+            bool enabled = ParseOnOff(args[0]);
+            context.GameInstance.DebugSettings.skipCombat = enabled;
+            return "跳战：" + (enabled ? "开" : "关");
+        }
+
+        private static string HandleCombatSweep(DebugCommandContext context, string[] args)
+        {
+            if (context?.GameInstance?.DebugSettings == null || args.Length < 1)
+            {
+                return "用法：combat.sweep on|off";
+            }
+
+            bool enabled = ParseOnOff(args[0]);
+            context.GameInstance.DebugSettings.combatSweep = enabled;
+            if (context.Combat != null)
+            {
+                context.Combat.CombatSweep = enabled;
+            }
+
+            return "扫荡：" + (enabled ? "开" : "关");
+        }
+
+        private static string HandleCombatWin(DebugCommandContext context, string[] args)
+        {
+            return ResolveCombat(context, CombatOutcome.Win);
+        }
+
+        private static string HandleCombatLose(DebugCommandContext context, string[] args)
+        {
+            return ResolveCombat(context, CombatOutcome.Lose);
+        }
+
+        private static string HandleCombatEffectApply(DebugCommandContext context, string[] args)
+        {
+            if (context?.Combat == null || args.Length < 2)
+            {
+                return "用法：combat.effect apply <Op> <amount> [Self|Enemy]";
+            }
+
+            EffectOp op;
+            if (!TryParseEffectOp(args[0], out op))
+            {
+                return "未知 Op：" + args[0];
+            }
+
+            float amount;
+            if (!TryReadFloat(args, 1, out amount))
+            {
+                return "用法：combat.effect apply <Op> <amount> [Self|Enemy]";
+            }
+
+            EffectTarget target = EffectTarget.Enemy;
+            if (args.Length >= 3 && !TryParseEffectTarget(args[2], out target))
+            {
+                return "target 须为 Self 或 Enemy。";
+            }
+
+            EffectSpec spec = new EffectSpec
+            {
+                Op = op,
+                Amount = amount,
+                Target = target
+            };
+
+            if (!context.Combat.ApplyEffectInCurrentCombat(spec))
+            {
+                return "效果施加失败（无进行中的战斗？）。";
+            }
+
+            Refresh(context);
+            return "已施加 " + op + " " + amount + " -> " + target;
+        }
+
+        private static string ResolveCombat(DebugCommandContext context, CombatOutcome outcome)
+        {
+            if (context?.Combat == null || context.Flow == null)
+            {
+                return "战斗不可用。";
+            }
+
+            if (!context.Combat.ForceOutcome(outcome))
+            {
+                return "无法结束战斗。";
+            }
+
+            context.Flow.OnCombatFinished(context.Combat.Result);
+            return "战斗已强制结算为 " + outcome;
+        }
+
+        private CommandEntry FindCommand(string input)
+        {
+            CommandEntry bestMatch = null;
+            for (int i = 0; i < commands.Count; i++)
+            {
+                CommandEntry entry = commands[i];
+                if (!input.StartsWith(entry.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (input.Length > entry.Name.Length && input[entry.Name.Length] != ' ')
+                {
+                    continue;
+                }
+
+                if (bestMatch == null || entry.Name.Length > bestMatch.Name.Length)
+                {
+                    bestMatch = entry;
+                }
+            }
+
+            return bestMatch;
+        }
+
+        private static bool ParseOnOff(string value)
+        {
+            return string.Equals(value, "on", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static bool TryReadInt(string[] args, int index, out int value)
         {
             value = 0;
@@ -180,31 +560,23 @@ namespace SixDaysRemaining.Debugging
                 && int.TryParse(args[index], out value);
         }
 
-        private static bool TryReadPhase(string[] args, int index, out GameplayPhase phase)
+        private static bool TryReadFloat(string[] args, int index, out float value)
         {
-            phase = GameplayPhase.ExpeditionPrep;
-            if (args == null || index < 0 || index >= args.Length)
-            {
-                return false;
-            }
+            value = 0f;
+            return args != null
+                && index >= 0
+                && index < args.Length
+                && float.TryParse(args[index], out value);
+        }
 
-            switch (args[index].ToLowerInvariant())
-            {
-                case "prep":
-                    phase = GameplayPhase.ExpeditionPrep;
-                    return true;
-                case "combat":
-                    phase = GameplayPhase.Combat;
-                    return true;
-                case "triumph":
-                    phase = GameplayPhase.TriumphReturn;
-                    return true;
-                case "ending":
-                    phase = GameplayPhase.Ending;
-                    return true;
-                default:
-                    return false;
-            }
+        private static bool TryParseEffectOp(string value, out EffectOp op)
+        {
+            return Enum.TryParse(value, true, out op);
+        }
+
+        private static bool TryParseEffectTarget(string value, out EffectTarget target)
+        {
+            return Enum.TryParse(value, true, out target);
         }
 
         private static void Refresh(DebugCommandContext context)
@@ -213,30 +585,6 @@ namespace SixDaysRemaining.Debugging
             {
                 context.RefreshPresentation();
             }
-        }
-
-        private string FindCommandName(string input)
-        {
-            string bestMatch = null;
-            foreach (KeyValuePair<string, DebugCommandHandler> pair in handlers)
-            {
-                if (!input.StartsWith(pair.Key, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                if (input.Length > pair.Key.Length && input[pair.Key.Length] != ' ')
-                {
-                    continue;
-                }
-
-                if (bestMatch == null || pair.Key.Length > bestMatch.Length)
-                {
-                    bestMatch = pair.Key;
-                }
-            }
-
-            return bestMatch;
         }
     }
 }

@@ -15,6 +15,8 @@ namespace SixDaysRemaining.Combat
         private readonly DeckRuntime deck = new DeckRuntime();
         private readonly HashSet<int> usedTraitIds = new HashSet<int>();
 
+        public bool Invincible { get; set; }
+
         public DeckRuntime Deck
         {
             get { return deck; }
@@ -140,6 +142,18 @@ namespace SixDaysRemaining.Combat
             }
 
             return true;
+        }
+
+        public override void TakeDamage()
+        {
+            if (Invincible)
+            {
+                EnsureCombatAttributes();
+                Attributes.DamageToTake = 0f;
+                return;
+            }
+
+            base.TakeDamage();
         }
     }
 }

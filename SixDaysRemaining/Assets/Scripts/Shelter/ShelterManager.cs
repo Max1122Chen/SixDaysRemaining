@@ -112,7 +112,12 @@ namespace SixDaysRemaining.Shelter
 
         public bool Expel(string nameHint)
         {
-            Survivor target = FindByName(nameHint) ?? FindFirstAlive();
+            if (!string.IsNullOrEmpty(nameHint) && ExpelSurvivor(nameHint))
+            {
+                return true;
+            }
+
+            Survivor target = FindFirstAlive();
             if (target == null)
             {
                 return false;
@@ -121,6 +126,90 @@ namespace SixDaysRemaining.Shelter
             target.status = SurvivorStatus.Left;
             SyncPopulation();
             personnelChanges.Add("驱赶了 " + target.name);
+            return true;
+        }
+
+        public bool ExpelSurvivor(string target)
+        {
+            Survivor survivor;
+            if (!TryResolveSurvivor(target, out survivor) || !IsAlive(survivor))
+            {
+                return false;
+            }
+
+            survivor.status = SurvivorStatus.Left;
+            SyncPopulation();
+            personnelChanges.Add("驱赶了 " + survivor.name);
+            return true;
+        }
+
+        public bool TryResolveSurvivor(string target, out Survivor survivor)
+        {
+            survivor = null;
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                return false;
+            }
+
+            string trimmed = target.Trim();
+            survivor = FindByDefId(trimmed);
+            if (survivor != null)
+            {
+                return true;
+            }
+
+            survivor = FindByName(trimmed);
+            if (survivor != null)
+            {
+                return true;
+            }
+
+            Survivor substringMatch = null;
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                Survivor candidate = survivors[i];
+                if (candidate.name != null
+                    && candidate.name.IndexOf(trimmed, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    if (substringMatch != null)
+                    {
+                        survivor = null;
+                        return false;
+                    }
+
+                    substringMatch = candidate;
+                }
+            }
+
+            survivor = substringMatch;
+            return survivor != null;
+        }
+
+        public bool AdjustSurvivorHunger(string target, int delta)
+        {
+            Survivor survivor;
+            if (!TryResolveSurvivor(target, out survivor) || !IsAlive(survivor))
+            {
+                return false;
+            }
+
+            survivor.hunger = Math.Max(0, survivor.hunger + delta);
+            UpdateSurvivorStatus(survivor);
+            SyncPopulation();
+            return true;
+        }
+
+        public bool SetSurvivorHunger(string target, int value)
+        {
+            Survivor survivor;
+            if (!TryResolveSurvivor(target, out survivor) || !IsAlive(survivor))
+            {
+                return false;
+            }
+
+            survivor.hunger = Math.Max(0, value);
+            UpdateSurvivorStatus(survivor);
+            SyncPopulation();
             return true;
         }
 

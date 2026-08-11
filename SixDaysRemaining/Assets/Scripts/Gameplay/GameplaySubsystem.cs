@@ -78,14 +78,66 @@ namespace SixDaysRemaining.Gameplay
             return false;
         }
 
-        public void SetDay(int day)
+        public bool SetDay(int day)
+        {
+            if (State == null)
+            {
+                return false;
+            }
+
+            State.day = UnityEngine.Mathf.Clamp(day, 1, MaxDay);
+            if (State.day >= MaxDay)
+            {
+                return ForceEnding(EndingReason.MaxDayReached);
+            }
+
+            return false;
+        }
+
+        public void SetFood(int value)
         {
             if (State == null)
             {
                 return;
             }
 
-            State.day = UnityEngine.Mathf.Clamp(day, 1, MaxDay);
+            State.foodStock = UnityEngine.Mathf.Max(0, value);
+        }
+
+        /// <summary>
+        /// 统一终局入口：设 phase=Ending；腐蚀熔断时同步 clamp 腐蚀值。
+        /// </summary>
+        public bool ForceEnding(EndingReason reason)
+        {
+            if (State == null)
+            {
+                return false;
+            }
+
+            State.currentPhase = GameplayPhase.Ending;
+            if (reason == EndingReason.CorruptionFuse)
+            {
+                State.corruption = CorruptedRules.FuseThreshold;
+            }
+
+            return true;
+        }
+
+        public RunSnapshot GetRunSnapshot()
+        {
+            if (State == null)
+            {
+                return default(RunSnapshot);
+            }
+
+            return new RunSnapshot
+            {
+                Day = State.day,
+                Phase = State.currentPhase,
+                FoodStock = State.foodStock,
+                Corruption = State.corruption,
+                Population = State.population
+            };
         }
 
         public void AddFood(int delta)

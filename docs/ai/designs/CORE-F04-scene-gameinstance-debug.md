@@ -517,9 +517,9 @@ View **不**直接改 `GameState`；按钮 → `RunFlow.OnXxx()` → 子系统 A
 
 - [x] `GameInstance` 由 Scene 拥有，运行路径唯一
 - [x] `~` 控制台具备输入、Tab 补全、候选预览、结果回显（基础版）
-- [ ] 主菜单仅 `debug.help`；局内命令带 gate
-- [ ] `debug.status`；`run.corruption/food`；`run.day advance` / `run.day end` / `run.ending force`
-- [ ] `shelter.list/takein/expel/hunger.*`
-- [ ] `combat.invincible/skip/sweep/win/lose/effect apply`
-- [ ] 已更新进度日志与 Feature 注册表
+- [x] 主菜单仅 `debug.help`；局内命令带 gate
+- [x] `debug.status`；`run.corruption/food`；`run.day advance` / `run.day end` / `run.ending force`
+- [x] `shelter.list/takein/expel/hunger.*`
+- [x] `combat.invincible/skip/sweep/win/lose/effect apply`
+- [ ] Play 回归 + EditMode 全绿后收口 commit
 

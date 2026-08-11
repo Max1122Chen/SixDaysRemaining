@@ -76,7 +76,7 @@ namespace SixDaysRemaining.Combat
             combatAttributes.Damage = 0f;
         }
 
-        public void TakeDamage()
+        public virtual void TakeDamage()
         {
             EnsureCombatAttributes();
             float amount = combatAttributes.DamageToTake;

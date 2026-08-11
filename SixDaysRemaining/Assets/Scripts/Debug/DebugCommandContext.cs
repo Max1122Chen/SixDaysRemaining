@@ -12,6 +12,7 @@ namespace SixDaysRemaining.Debugging
         public GameplaySubsystem Gameplay;
         public ShelterManager Shelter;
         public CombatManager Combat;
+        public AppFlowController Flow;
         public Action ShowEnding;
         public Action RefreshPresentation;
     }

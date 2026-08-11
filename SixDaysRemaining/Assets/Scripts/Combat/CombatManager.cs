@@ -67,6 +67,27 @@ namespace SixDaysRemaining.Combat
         private CombatResult result;
         private GameObject spawnedEnemyGo;
         private IReadOnlyList<SurvivorTrait> ownedTraits;
+        private bool playerInvincible;
+        private bool combatSweep;
+
+        public bool PlayerInvincible
+        {
+            get { return playerInvincible; }
+            set
+            {
+                playerInvincible = value;
+                if (session != null && session.Player != null)
+                {
+                    session.Player.Invincible = value;
+                }
+            }
+        }
+
+        public bool CombatSweep
+        {
+            get { return combatSweep; }
+            set { combatSweep = value; }
+        }
 
         public CombatSession Session
         {
@@ -363,6 +384,56 @@ namespace SixDaysRemaining.Combat
             spawnedEnemyGo = null;
         }
 
+        /// <summary>
+        /// Debug / 编排：立即按给定结果结束当前战斗，走完整 Finish 字段填充。
+        /// </summary>
+        public bool ForceOutcome(CombatOutcome outcome)
+        {
+            if (finished || session == null)
+            {
+                return false;
+            }
+
+            switch (outcome)
+            {
+                case CombatOutcome.Win:
+                    Finish(CombatOutcome.Win, config != null ? config.WinFoodGained : 3, applyFlatCorruption: true);
+                    return true;
+                case CombatOutcome.Lose:
+                    Finish(CombatOutcome.Lose, foodGained: 0, applyFlatCorruption: true);
+                    return true;
+                case CombatOutcome.Flee:
+                    Finish(CombatOutcome.Flee, foodGained: 0, applyFlatCorruption: false);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Debug：对当前战斗会话施加单条效果（以玩家为 source）。
+        /// </summary>
+        public bool ApplyEffectInCurrentCombat(EffectSpec spec)
+        {
+            if (finished || session == null)
+            {
+                return false;
+            }
+
+            CombatResolveContext ctx = resolveContext ?? CreateContext();
+            ctx.CorruptionDeltaThisCombat = 0;
+            ctx.CurrentRunCorruption = GetRunCorruption();
+            ctx.ApplyRunCorruption = ApplyCorruptionDuringCombat;
+            CombatEffectExecutor.Execute(new[] { spec }, session.Player, ctx);
+            if (resolveContext == null)
+            {
+                cardCorruptionDelta += ctx.CorruptionDeltaThisCombat;
+            }
+
+            TryFinishByHp();
+            return true;
+        }
+
         private void Begin(
             CombatStartConfig startConfig,
             bool isBattleOnly,
@@ -421,6 +492,7 @@ namespace SixDaysRemaining.Combat
 
             playerTurn = true;
             player.OnPlayerTurnStart();
+            player.Invincible = playerInvincible;
             TriggerTraits(TraitTrigger.PlayerTurnStart);
         }
 
@@ -586,7 +658,10 @@ namespace SixDaysRemaining.Combat
 
             if (playerDead)
             {
-                Finish(CombatOutcome.Lose, foodGained: 0, applyFlatCorruption: true);
+                Finish(
+                    combatSweep ? CombatOutcome.Win : CombatOutcome.Lose,
+                    foodGained: 0,
+                    applyFlatCorruption: true);
                 return true;
             }
 
@@ -595,6 +670,11 @@ namespace SixDaysRemaining.Combat
 
         private void Finish(CombatOutcome outcome, int foodGained, bool applyFlatCorruption)
         {
+            if (combatSweep && outcome != CombatOutcome.Flee)
+            {
+                outcome = CombatOutcome.Win;
+            }
+
             int corruption = cardCorruptionDelta;
             if (applyFlatCorruption)
             {
