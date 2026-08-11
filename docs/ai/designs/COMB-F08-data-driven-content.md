@@ -4,10 +4,10 @@
 
 - **ID:** `COMB-F08`
 - **类型:** `Feature`
-- **状态:** `Done`（Play 已验数值；`feat/combat` 待合 main）
+- **状态:** `Done`（已合 `main`）
 - **负责人:** `Max`
-- **最后更新：** `2026-08-07`
-- **分支：** `feat/combat`（不新开 `feat/combat-data-driven`）
+- **最后更新：** `2026-08-11`
+- **分支：** `feat/combat`（已合 `main`）
 - **相关：**
   - 前序：`COMB-F06`（`ICardLibrary` / `IEncounterLibrary` / `CombatContent`）
   - 并存：`COMB-F07` Corrupted（规则仍在代码；本 feat 不参数化）
