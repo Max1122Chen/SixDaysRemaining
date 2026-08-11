@@ -32,10 +32,10 @@ namespace SixDaysRemaining.Gameplay
                 "一名浑身尘土的流浪者敲响庇护所的门，声称知道附近一处藏粮点。",
                 CreateOption(
                     "收留他",
-                    "你收留了阿杰，他带来了外面世界的消息。",
+                    "你收留了政治家，他带来了外面世界的消息。",
                     -1,
                     1,
-                    takeInName: "阿杰"),
+                    takeInName: "politician"),
                 CreateOption(
                     "给他一顿饭",
                     "他吃下一顿热饭后默默离开。",

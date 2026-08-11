@@ -2,6 +2,18 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-07
+
+- 范围：`SHLT-F02` 实现（身份数据驱动）
+- 已完成：
+  - `StreamingAssets/Shelter/{survivors,starter}.json`：五人目录；开局幼童+运动员
+  - `ShelterContent` / `ShelterContentJsonLoader`（硬失败）；`Survivor.defId` + 耐饿提案 A
+  - `TakeIn(defId)`；移除 Alice/Bob；事件收留改为 `politician`
+  - Edit Mode：`ShelterSurvivorIdentityTests` + 更新既有 Shelter 测试
+  - design → Review
+- 下一步：
+  - Unity Edit Mode 确认 → prepare commit
+
 ## 2026-07-29
 
 - 范围：`TECH-F01/TECH-F01-S01`

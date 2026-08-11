@@ -1,6 +1,6 @@
 ﻿# 启动摘要（Bootstrap Digest）
 
-最后更新：2026-07-30  
+最后更新：2026-08-07  
 目的：在 2 分钟内恢复协作上下文。
 
 ## 新会话的读取顺序
@@ -14,12 +14,11 @@
 7. `TECH_DEBT.md`（Open）
 8. 产品设计源：`docs/designs/六日英雄—技术演示文档.pdf`
 
-## 当前快照（2026-07-30）
+## 当前快照（2026-08-07）
 
-- 可玩 Demo 在分支 `feat/playable-loop`：Play `SampleScene` 即可（`PlayableLoopBootstrap` 自动拉起）。
-- 逻辑：Gameplay 阶段机 + Shelter + Combat（选 5 Commit）已通。
-- UI：极简 Demo；正式表现交给 UI 协作者（见 `UI_HANDOFF.md`）。
-- 下一讨论：幸存者行为 / 交互（SHLT）；突发事件仍延后（EVT）。
+- 分支：`feat/shelter` 上实现 `SHLT-F02`（身份 JSON + 入住/状态/死亡）；待 Edit Mode 确认后 commit。
+- 可玩主线在 `main`；战斗 JSON（COMB-F08）仍可能在 `feat/combat` 待合。
+- 下一：SHLT-F02 合入；特质/入住被动与 `EVT-F01` 仍延后。
 
 ## 不可协商的协作规则
 

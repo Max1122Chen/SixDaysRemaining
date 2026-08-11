@@ -13,12 +13,19 @@ namespace SixDaysRemaining.Shelter
     }
 
     /// <summary>
-    /// 庇护所幸存者数据（首版无 traits）。
+    /// 庇护所幸存者局内实例（身份见 <see cref="SurvivorDef"/>）。
     /// </summary>
     public class Survivor
     {
+        public string defId;
         public string name;
         public int hunger;
         public SurvivorStatus status;
+
+        /// <summary>连续处于饥饿档的日结计数（提案 A）。</summary>
+        public int hungryDayCount;
+
+        /// <summary>从 Def 拷贝；饥饿→濒死所需天数。</summary>
+        public int hungryToDyingDays = 1;
     }
 }

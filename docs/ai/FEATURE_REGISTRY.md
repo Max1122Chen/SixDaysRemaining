@@ -19,7 +19,7 @@
 | `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Deferred | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat-data-driven` | Max | 依赖 F06 接口；本轮不实现 |
 | `UI-F01` | 战斗卡牌交互修复（伴生/复位/叠层/槽高亮） | UI | Review | `designs/UI-F01-combat-card-interaction.md` | — | `feat/ui` | Max / UI | Play 已通过；待合 main |
 | `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Review | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | Demo/UI 已合 main；文档待跟 UI |
-| `SHLT-F02` | 幸存者特质 / NPC 模板挂钩 | SHLT | Discuss | — | — | — | Max | 人物模板2.0；护士/小贼等；未开 design |
+| `SHLT-F02` | 幸存者身份目录 + 入住/状态/死亡 | SHLT | Review | `designs/SHLT-F02-survivor-identity.md` | — | `feat/shelter` | Max | StreamingAssets；硬失败；待 Edit Mode 确认 |
 | `EVT-F01` | 突发事件系统 | EVT | Deferred | — | — | `feat/events` | Max | 四套事件池；设计明朗后再写 design |
 
 ## 域代码

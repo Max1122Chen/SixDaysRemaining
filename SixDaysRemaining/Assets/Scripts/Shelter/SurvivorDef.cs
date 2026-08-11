@@ -1,0 +1,24 @@
+namespace SixDaysRemaining.Shelter
+{
+    /// <summary>
+    /// 幸存者身份定义（只读；来自 StreamingAssets JSON）。
+    /// </summary>
+    public sealed class SurvivorDef
+    {
+        public string Id;
+        public string DisplayName;
+        public int DefaultHunger;
+        public SurvivorStatus? DefaultStatus;
+        public int HungryToDyingDays;
+    }
+
+    /// <summary>稳定身份 id（与 survivors.json 一致）。</summary>
+    public static class SurvivorIds
+    {
+        public const string Child = "child";
+        public const string Athlete = "athlete";
+        public const string Politician = "politician";
+        public const string Nurse = "nurse";
+        public const string Thief = "thief";
+    }
+}

@@ -1,0 +1,39 @@
+{
+  "survivors": [
+    {
+      "id": "child",
+      "displayName": "幼童",
+      "defaultHunger": 0,
+      "defaultStatus": "Dying",
+      "hungryToDyingDays": 1
+    },
+    {
+      "id": "athlete",
+      "displayName": "运动员",
+      "defaultHunger": 3,
+      "defaultStatus": "Healthy",
+      "hungryToDyingDays": 2
+    },
+    {
+      "id": "politician",
+      "displayName": "政治家",
+      "defaultHunger": 1,
+      "defaultStatus": "Hungry",
+      "hungryToDyingDays": 3
+    },
+    {
+      "id": "nurse",
+      "displayName": "护士",
+      "defaultHunger": 2,
+      "defaultStatus": "Hungry",
+      "hungryToDyingDays": 1
+    },
+    {
+      "id": "thief",
+      "displayName": "小贼",
+      "defaultHunger": 2,
+      "defaultStatus": "Hungry",
+      "hungryToDyingDays": 1
+    }
+  ]
+}

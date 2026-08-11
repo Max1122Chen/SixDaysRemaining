@@ -1,6 +1,6 @@
 ﻿# 项目背景（Project Context）
 
-最后更新：2026-07-30（可玩 Demo 交接；UI_HANDOFF）
+最后更新：2026-08-07（SHLT-F02 身份数据驱动）
 
 ## 1) 项目目标
 
@@ -22,7 +22,7 @@
 脚本域划分（`SixDaysRemaining/Assets/Scripts/`）：
 - `Bootstrap` - `GameInstance`、场景引用绑定
 - `Gameplay` - `GameplaySubsystem`、`GameState`、日循环阶段机
-- `Shelter` - 庇护所、幸存者、饱食度日结（道具/特质延后）
+- `Shelter` - 庇护所、幸存者身份目录（JSON）、饱食度日结（道具/特质/入住被动延后）
 - `Combat` - ASC、卡牌、`CombatManager` / Session、Player/Enemy 组件（MB）
 - `UI` - Demo 面板、`AppFlowController`、`PlayableLoopBootstrap`（正式 UI 待接手）
 
@@ -32,10 +32,11 @@
 - **可玩主线 Demo 已落地**（`feat/playable-loop`）：空 `SampleScene` Play 即可跑 Prep→战斗→凯旋→次日。
 - UI 为运行时极简 uGUI + Log；**正式 UI 交接给协作者**，详见 `docs/ai/UI_HANDOFF.md`。
 
-下一里程碑（讨论中）：
-- UI 同学按交接文档替换表现层
-- 幸存者行为 / 庇护所交互（`SHLT-F02` 待设计）
+下一里程碑：
+- `SHLT-F02` 身份目录已实现（Review）；Edit Mode 确认后合入
+- 幸存者入住被动 / 特质牌挂钩（定义清晰后再开）
 - 突发事件（`EVT-F01` 仍延后）
+- UI 同学按交接文档替换表现层
 
 ## 4) 协作约定
 

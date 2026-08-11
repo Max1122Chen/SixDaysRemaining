@@ -55,14 +55,19 @@ namespace SixDaysRemaining.Shelter
         }
 
         /// <summary>
-        /// 注册默认两名幸存者并设置初始食物存量。
+        /// 从 ShelterContent starter 注册开局幸存者并设置初始食物存量。
         /// </summary>
         public void InitializeDefaultRoster(int startingFoodStock = DefaultStartingFoodStock)
         {
             survivors.Clear();
             personnelChanges.Clear();
-            RegisterSurvivor(new Survivor { name = "Alice", hunger = 3, status = SurvivorStatus.Healthy });
-            RegisterSurvivor(new Survivor { name = "Bob", hunger = 3, status = SurvivorStatus.Healthy });
+
+            string[] starterIds = ShelterContent.StarterIds;
+            for (int i = 0; i < starterIds.Length; i++)
+            {
+                RegisterSurvivor(ShelterContent.CreateInstance(starterIds[i]));
+            }
+
             state.foodStock = startingFoodStock;
             SyncPopulation();
         }
@@ -74,25 +79,35 @@ namespace SixDaysRemaining.Shelter
                 return;
             }
 
+            if (survivor.hungryToDyingDays < 1)
+            {
+                survivor.hungryToDyingDays = 1;
+            }
+
             survivors.Add(survivor);
             UpdateSurvivorStatus(survivor);
             SyncPopulation();
         }
 
-        public void TakeIn(string name)
+        /// <summary>
+        /// 按身份 id 入住；未知 id 抛错；已存在同 defId 则忽略。
+        /// </summary>
+        public void TakeIn(string defId)
         {
-            if (string.IsNullOrEmpty(name) || FindByName(name) != null)
+            if (string.IsNullOrEmpty(defId))
             {
                 return;
             }
 
-            RegisterSurvivor(new Survivor
+            if (FindByDefId(defId) != null)
             {
-                name = name,
-                hunger = 2,
-                status = SurvivorStatus.Hungry
-            });
-            personnelChanges.Add("你收留了 " + name);
+                return;
+            }
+
+            SurvivorDef def = ShelterContent.Survivors.Get(defId);
+            Survivor survivor = ShelterContent.CreateInstance(def);
+            RegisterSurvivor(survivor);
+            personnelChanges.Add("你收留了 " + survivor.name);
         }
 
         public bool Expel(string nameHint)
@@ -153,6 +168,7 @@ namespace SixDaysRemaining.Shelter
 
         /// <summary>
         /// 日结：扣饱食度并更新状态；Dying 且仍无饱食度则死亡。
+        /// 耐饿：提案 A（饥饿档累计天数达到身份阈值 → Dying）。
         /// 在 day++ 之前（TriumphReturn 末）调用。
         /// </summary>
         public void ProcessEndOfDay()
@@ -179,13 +195,16 @@ namespace SixDaysRemaining.Shelter
                 }
                 else
                 {
-                    UpdateSurvivorStatus(survivor);
+                    ApplyDailyHungerStatus(survivor);
                 }
             }
 
             SyncPopulation();
         }
 
+        /// <summary>
+        /// 分配/注册时用的即时状态推导（不递增饥饿日计数）。
+        /// </summary>
         public void UpdateSurvivorStatus(Survivor survivor)
         {
             if (survivor == null || survivor.status == SurvivorStatus.Dead || survivor.status == SurvivorStatus.Left)
@@ -196,15 +215,49 @@ namespace SixDaysRemaining.Shelter
             if (survivor.hunger == 0)
             {
                 survivor.status = SurvivorStatus.Dying;
+                return;
             }
-            else if (survivor.hunger <= HungryThreshold)
+
+            if (survivor.hunger <= HungryThreshold)
             {
                 survivor.status = SurvivorStatus.Hungry;
+                return;
             }
-            else
+
+            survivor.hungryDayCount = 0;
+            survivor.status = SurvivorStatus.Healthy;
+        }
+
+        private void ApplyDailyHungerStatus(Survivor survivor)
+        {
+            if (survivor.status == SurvivorStatus.Dead || survivor.status == SurvivorStatus.Left)
             {
-                survivor.status = SurvivorStatus.Healthy;
+                return;
             }
+
+            if (survivor.hunger == 0)
+            {
+                survivor.status = SurvivorStatus.Dying;
+                return;
+            }
+
+            if (survivor.hunger <= HungryThreshold)
+            {
+                survivor.hungryDayCount++;
+                if (survivor.hungryDayCount >= survivor.hungryToDyingDays)
+                {
+                    survivor.status = SurvivorStatus.Dying;
+                }
+                else
+                {
+                    survivor.status = SurvivorStatus.Hungry;
+                }
+
+                return;
+            }
+
+            survivor.hungryDayCount = 0;
+            survivor.status = SurvivorStatus.Healthy;
         }
 
         private void SyncPopulation()
@@ -215,6 +268,24 @@ namespace SixDaysRemaining.Shelter
         private static bool IsAlive(Survivor survivor)
         {
             return survivor.status != SurvivorStatus.Dead && survivor.status != SurvivorStatus.Left;
+        }
+
+        private Survivor FindByDefId(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                if (string.Equals(survivors[i].defId, defId, StringComparison.Ordinal))
+                {
+                    return survivors[i];
+                }
+            }
+
+            return null;
         }
 
         private Survivor FindByName(string name)

@@ -12,8 +12,15 @@ namespace SixDaysRemaining.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
+            ShelterContent.ClearForTests();
             state = new GameState();
             shelter = new ShelterManager(state);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ShelterContent.ClearForTests();
         }
 
         [Test]
@@ -48,6 +55,7 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(3, state.foodStock);
             Assert.AreEqual(3, survivor.hunger);
             Assert.AreEqual(SurvivorStatus.Healthy, survivor.status);
+            Assert.AreEqual(0, survivor.hungryDayCount);
         }
 
         [Test]
@@ -77,13 +85,20 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void ProcessEndOfDay_ReducesHungerAndSetsHungry()
         {
-            Survivor survivor = new Survivor { name = "Test", hunger = 2, status = SurvivorStatus.Healthy };
+            Survivor survivor = new Survivor
+            {
+                name = "Test",
+                hunger = 2,
+                status = SurvivorStatus.Healthy,
+                hungryToDyingDays = 2
+            };
             shelter.RegisterSurvivor(survivor);
 
             shelter.ProcessEndOfDay();
 
             Assert.AreEqual(1, survivor.hunger);
             Assert.AreEqual(SurvivorStatus.Hungry, survivor.status);
+            Assert.AreEqual(1, survivor.hungryDayCount);
         }
 
         [Test]
@@ -114,7 +129,13 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void DyingSurvivor_CanBeSavedByAllocationBeforeNextEndOfDay()
         {
-            Survivor survivor = new Survivor { name = "Test", hunger = 0, status = SurvivorStatus.Dying };
+            Survivor survivor = new Survivor
+            {
+                name = "Test",
+                hunger = 0,
+                status = SurvivorStatus.Dying,
+                hungryToDyingDays = 2
+            };
             shelter.RegisterSurvivor(survivor);
             state.foodStock = 3;
 
@@ -134,6 +155,10 @@ namespace SixDaysRemaining.Tests.EditMode
             shelter.InitializeDefaultRoster();
 
             Assert.AreEqual(2, shelter.Survivors.Count);
+            Assert.AreEqual(SurvivorIds.Child, shelter.Survivors[0].defId);
+            Assert.AreEqual(SurvivorIds.Athlete, shelter.Survivors[1].defId);
+            Assert.AreEqual("幼童", shelter.Survivors[0].name);
+            Assert.AreEqual("运动员", shelter.Survivors[1].name);
             Assert.AreEqual(ShelterManager.DefaultStartingFoodStock, state.foodStock);
             Assert.AreEqual(2, shelter.Population);
             Assert.AreEqual(2, state.population);
@@ -161,8 +186,8 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(GameplayPhase.ExpeditionPrep, gameplay.CurrentPhase);
 
-            Survivor alice = dayShelter.Survivors[0];
-            Assert.IsTrue(dayShelter.AllocateFood(alice, 2));
+            Survivor first = dayShelter.Survivors[0];
+            Assert.IsTrue(dayShelter.AllocateFood(first, 2));
 
             gameplay.AdvancePhase();
             Assert.AreEqual(GameplayPhase.Combat, gameplay.CurrentPhase);

@@ -12,25 +12,33 @@ namespace SixDaysRemaining.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
+            ShelterContent.ClearForTests();
             state = new GameState();
             shelter = new ShelterManager(state);
             shelter.InitializeDefaultRoster(10);
         }
 
-        [Test]
-        public void TakeIn_AddsSurvivorAndRecordsChange()
+        [TearDown]
+        public void TearDown()
         {
-            shelter.TakeIn("阿杰");
-
-            Assert.AreEqual(3, shelter.Population);
-            Assert.AreEqual("你收留了 阿杰", shelter.RecentPersonnelChanges[0]);
+            ShelterContent.ClearForTests();
         }
 
         [Test]
-        public void TakeIn_DuplicateNameIsIgnored()
+        public void TakeIn_AddsSurvivorAndRecordsChange()
         {
-            shelter.TakeIn("阿杰");
-            shelter.TakeIn("阿杰");
+            shelter.TakeIn(SurvivorIds.Politician);
+
+            Assert.AreEqual(3, shelter.Population);
+            Assert.AreEqual("你收留了 政治家", shelter.RecentPersonnelChanges[0]);
+            Assert.AreEqual(SurvivorIds.Politician, shelter.Survivors[2].defId);
+        }
+
+        [Test]
+        public void TakeIn_DuplicateDefIdIsIgnored()
+        {
+            shelter.TakeIn(SurvivorIds.Politician);
+            shelter.TakeIn(SurvivorIds.Politician);
 
             Assert.AreEqual(1, shelter.RecentPersonnelChanges.Count);
             Assert.AreEqual(3, shelter.Population);
@@ -39,10 +47,10 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void Expel_RemovesSurvivorAndRecordsChange()
         {
-            Assert.IsTrue(shelter.Expel("Alice"));
+            Assert.IsTrue(shelter.Expel("幼童"));
 
             Assert.AreEqual(1, shelter.Population);
-            Assert.AreEqual("驱赶了 Alice", shelter.RecentPersonnelChanges[0]);
+            Assert.AreEqual("驱赶了 幼童", shelter.RecentPersonnelChanges[0]);
         }
 
         [Test]
@@ -51,13 +59,13 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.IsTrue(shelter.Expel("一名不安分的幸存者"));
 
             Assert.AreEqual(1, shelter.Population);
-            Assert.AreEqual("驱赶了 Alice", shelter.RecentPersonnelChanges[0]);
+            Assert.AreEqual("驱赶了 幼童", shelter.RecentPersonnelChanges[0]);
         }
 
         [Test]
         public void ConsumePersonnelChanges_ClearsList()
         {
-            shelter.TakeIn("阿杰");
+            shelter.TakeIn(SurvivorIds.Nurse);
             System.Collections.Generic.List<string> changes = shelter.ConsumePersonnelChanges();
 
             Assert.AreEqual(1, changes.Count);
