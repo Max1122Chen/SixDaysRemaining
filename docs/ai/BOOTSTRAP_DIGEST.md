@@ -1,6 +1,6 @@
 ﻿# 启动摘要（Bootstrap Digest）
 
-最后更新：2026-08-11  
+最后更新：2026-08-12  
 目的：在 2 分钟内恢复协作上下文。
 
 ## 新会话的读取顺序
@@ -12,11 +12,11 @@
 5. `TECH_DEBT.md`（Open）
 6. 相关 `designs/`；产品源在 `docs/designs/`
 
-## 当前快照（2026-08-11）
+## 当前快照（2026-08-12）
 
-- `main`：`SHLT-F02`（Shelter JSON 身份）+ `COMB-F08`（Combat JSON）+ 伙伴 UI 四提交。
+- `main`：CORE-F04 / F05 / COMB-F09 已收口（Scene GameInstance、Flow/Presentation、每步 block、Debug Console）。
 - 内容编辑：`StreamingAssets/Shelter/`、`StreamingAssets/Combat/`（改完需重启 Play）。
-- **下一批：`CORE-F04` / `COMB-F09` / `EVT-F01`** 三份设计已起草，待审阅；之后进入重构 / 系统性补强实现。
+- **下一批：`EVT-F01`**（实现中，分支 `feat/events`；Play 回归后合 main；`TD-007` Resolved）。
 
 ## 不可协商的协作规则
 
@@ -34,4 +34,4 @@
 
 ## 域代码
 
-- `CORE` / `SHLT` / `COMB` / `UI` / `EVT`
+- `CORE` / `SHLT` / `COMB` / `UI` / `EVT` / `Debug`

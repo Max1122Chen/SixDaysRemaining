@@ -4,9 +4,9 @@
 
 - **ID:** `CORE-F04`
 - **类型:** `Refactor`
-- **状态:** `Draft`（实现进行中；下列后续需求待审批）
+- **状态:** `Done`（2026-08-12 文档收口；实现已合 `main`）
 - **负责人:** `Max`
-- **最后更新：** `2026-08-11`
+- **最后更新：** `2026-08-12`
 - **分支：** 当前在 `main` 上继续（原建议名 `feat/core-debug` 仅作备选）
 - **相关：** `CORE-F03`、`COMB-F09`、`EVT-F01`、`FEATURE_REGISTRY.md`
 
@@ -521,5 +521,5 @@ View **不**直接改 `GameState`；按钮 → `RunFlow.OnXxx()` → 子系统 A
 - [x] `debug.status`；`run.corruption/food`；`run.day advance` / `run.day end` / `run.ending force`
 - [x] `shelter.list/takein/expel/hunger.*`
 - [x] `combat.invincible/skip/sweep/win/lose/effect apply`
-- [ ] Play 回归 + EditMode 全绿后收口 commit
+- [x] Play 回归抽测通过 + 命令/门禁已合 `main`（`run.day skip` 仍为后续可选）
 

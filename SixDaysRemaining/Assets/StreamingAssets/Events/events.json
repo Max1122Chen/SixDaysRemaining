@@ -1,0 +1,109 @@
+{
+  "events": [
+    {
+      "id": "wanderer_plea",
+      "title": "流浪者求助",
+      "body": "一名浑身尘土的流浪者敲响庇护所的门，声称知道附近一处藏粮点。",
+      "trigger": "AfterTriumph",
+      "priority": 0,
+      "weight": 1,
+      "options": [
+        {
+          "id": "take_in",
+          "label": "收留他",
+          "resultText": "你收留了政治家，他带来了外面世界的消息。",
+          "effects": [
+            { "op": "FoodDelta", "amount": -1 },
+            { "op": "CorruptionDelta", "amount": 1 },
+            { "op": "TakeInSurvivor", "survivorDefId": "politician" }
+          ]
+        },
+        {
+          "id": "feed",
+          "label": "给他一顿饭",
+          "resultText": "他吃下一顿热饭后默默离开。",
+          "effects": [
+            { "op": "FoodDelta", "amount": -1 }
+          ]
+        },
+        {
+          "id": "turn_away",
+          "label": "驱赶他",
+          "resultText": "你关上门，他在夜色中消失。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ruined_market",
+      "title": "废弃超市",
+      "body": "小队在废墟中发现一家半塌的超市，货架上还留着不少余粮。",
+      "trigger": "AfterTriumph",
+      "priority": 0,
+      "weight": 1,
+      "options": [
+        {
+          "id": "search_thorough",
+          "label": "仔细搜索",
+          "resultText": "你找到不少罐头，但也沾染了更多腐蚀。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 4 },
+            { "op": "CorruptionDelta", "amount": 2 }
+          ]
+        },
+        {
+          "id": "grab_and_go",
+          "label": "快速拿一点就走",
+          "resultText": "你只来得及抓走几包饼干。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 1 }
+          ]
+        },
+        {
+          "id": "abandon",
+          "label": "放弃搜索",
+          "resultText": "你没有冒险进入那栋摇摇欲坠的建筑。",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "night_unrest",
+      "title": "夜里的骚动",
+      "body": "深夜，庇护所里传来争吵，一名幸存者主张冒险外出。",
+      "trigger": "AfterTriumph",
+      "priority": 0,
+      "weight": 1,
+      "options": [
+        {
+          "id": "calm",
+          "label": "安抚大家",
+          "resultText": "你把骚动平息下来，气氛重新安定。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -1 }
+          ]
+        },
+        {
+          "id": "support_sortie",
+          "label": "支持外出",
+          "resultText": "他们带回一些食物，代价是更多腐蚀。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 2 },
+            { "op": "CorruptionDelta", "amount": 2 }
+          ]
+        },
+        {
+          "id": "expel_leader",
+          "label": "驱赶带头的人",
+          "resultText": "你让带头的人离开，庇护所安静了。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": 1 },
+            { "op": "ExpelSurvivor", "survivorDefId": "athlete" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -4,21 +4,30 @@ using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
 using SixDaysRemaining.Combat.Traits;
+using SixDaysRemaining.Events;
 using SixDaysRemaining.Shelter;
 using UnityEngine;
 
 namespace SixDaysRemaining.Gameplay
 {
     /// <summary>
-    /// 日循环编排：出征 / 凯旋 / 日结 / 终局。不引用具体 View；经委托驱动 PresentationManager。
-    /// 编译在 App 程序集（避免 App↔Gameplay 循环依赖）；命名空间仍为 Gameplay。
+    /// 日循环编排：出征 / 凯旋 / 事件钩子 / 日结 / 终局。
+    /// 不引用具体 View；事件队列由 GameEventSubsystem 拥有。
     /// </summary>
     public class AppFlowController : MonoBehaviour
     {
+        private enum EventChainPhase
+        {
+            None = 0,
+            AfterTriumph = 1,
+            BeforeDayEnd = 2,
+            BeforeDepart = 3
+        }
+
         private GameInstance gameInstance;
         private CombatResult pendingResult;
-        private readonly List<RandomEventDef> pendingEvents = new List<RandomEventDef>();
-        private int pendingEventIndex;
+        private EventChainPhase eventChainPhase;
+        private bool eventsHooked;
 
         public Action ShowStartScreen;
         public Action ShowStoryIntroScreen;
@@ -30,8 +39,8 @@ namespace SixDaysRemaining.Gameplay
         public Action RefreshHud;
         public Action RefreshDebugPresentation;
         public Action<CombatResult> ShowSettlementOverlay;
-        public Action<RandomEventDef> ShowRandomEventOverlay;
-        public Action<RandomEventOption> ShowRandomEventResultOverlay;
+        public Action<GameEventDef> ShowGameEventOverlay;
+        public Action<GameEventResult> ShowGameEventResultOverlay;
         public Action<IReadOnlyList<string>> ShowDayEndOverlay;
 
         public Action CloseOverlayCallback;
@@ -44,6 +53,12 @@ namespace SixDaysRemaining.Gameplay
         public void BindGame(GameInstance instance)
         {
             gameInstance = instance;
+            HookEvents();
+        }
+
+        private void OnDestroy()
+        {
+            UnhookEvents();
         }
 
         public void ShowStart()
@@ -105,7 +120,7 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnStorySkip()
         {
-            ShowShelter();
+            EnterShelterWithBeforeDepart();
         }
 
         public void OnDepart()
@@ -117,6 +132,11 @@ namespace SixDaysRemaining.Gameplay
             }
 
             if (gi.Gameplay.CurrentPhase != GameplayPhase.ExpeditionPrep)
+            {
+                return;
+            }
+
+            if (gi.Events != null && gi.Events.IsSequenceActive)
             {
                 return;
             }
@@ -175,7 +195,7 @@ namespace SixDaysRemaining.Gameplay
 
         public void BeginDayEnd()
         {
-            ShowDayEndAfterEvents();
+            PresentDayEnd();
         }
 
         public void ForceEndingFlow(EndingReason reason)
@@ -186,6 +206,7 @@ namespace SixDaysRemaining.Gameplay
                 gi.Gameplay.ForceEnding(reason);
             }
 
+            eventChainPhase = EventChainPhase.None;
             CloseOverlay();
             ShowEnding();
         }
@@ -223,7 +244,7 @@ namespace SixDaysRemaining.Gameplay
         public void OnSettlementContinue()
         {
             GameInstance gi = Game;
-            if (gi == null || gi.Shelter == null)
+            if (gi == null || gi.Shelter == null || gi.Events == null)
             {
                 return;
             }
@@ -237,51 +258,35 @@ namespace SixDaysRemaining.Gameplay
             }
 
             ShowShelter();
-
-            pendingEvents.Clear();
-            pendingEvents.AddRange(RandomEventCatalog.PickSequence(gi.Gameplay.State.rngSeed, gi.Gameplay.State.day, 3));
-            pendingEventIndex = 0;
-            ShowNextRandomEvent();
+            HookEvents();
+            eventChainPhase = EventChainPhase.AfterTriumph;
+            gi.Events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
         }
 
-        public void OnRandomEventChosen(RandomEventOption option)
+        public void OnGameEventOptionChosen(int optionIndex)
         {
             GameInstance gi = Game;
-            if (gi == null || gi.Shelter == null || option == null)
+            if (gi?.Events == null)
             {
                 return;
             }
 
-            if (option.FoodDelta != 0)
+            GameEventResult result = gi.Events.ApplyOption(optionIndex);
+            if (result.EndedRun)
             {
-                gi.Gameplay.AddFood(option.FoodDelta);
-            }
-
-            if (gi.Gameplay.ApplyCorruption(option.CorruptionDelta))
-            {
+                eventChainPhase = EventChainPhase.None;
                 CloseOverlay();
                 ShowEnding();
                 return;
             }
 
-            if (!string.IsNullOrEmpty(option.TakeInName))
-            {
-                gi.Shelter.TakeIn(option.TakeInName);
-            }
-
-            if (!string.IsNullOrEmpty(option.DriveAwayName))
-            {
-                gi.Shelter.Expel(option.DriveAwayName);
-            }
-
-            ShowRandomEventResultOverlay?.Invoke(option);
+            ShowGameEventResultOverlay?.Invoke(result);
             RefreshHud?.Invoke();
         }
 
         public void OnEventResultContinue()
         {
-            pendingEventIndex++;
-            ShowNextRandomEvent();
+            Game.Events?.ContinueAfterResult();
         }
 
         public void OnDayEndContinue()
@@ -297,15 +302,15 @@ namespace SixDaysRemaining.Gameplay
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
                 ShowEnding();
+                return;
             }
-            else
-            {
-                ShowShelter();
-            }
+
+            EnterShelterWithBeforeDepart(resetBudget: true);
         }
 
         public void OnBackToMenu()
         {
+            eventChainPhase = EventChainPhase.None;
             Game.ReturnToMainMenu();
             CloseOverlay();
             ShowStart();
@@ -316,18 +321,81 @@ namespace SixDaysRemaining.Gameplay
             Application.Quit();
         }
 
-        private void ShowNextRandomEvent()
+        private void EnterShelterWithBeforeDepart(bool resetBudget = false)
         {
-            if (pendingEventIndex >= pendingEvents.Count || pendingEvents[pendingEventIndex] == null)
+            GameInstance gi = Game;
+            ShowShelter();
+            if (gi?.Events == null)
             {
-                ShowDayEndAfterEvents();
                 return;
             }
 
-            ShowRandomEventOverlay?.Invoke(pendingEvents[pendingEventIndex]);
+            HookEvents();
+            if (resetBudget)
+            {
+                gi.Events.ResetDailyBudget();
+            }
+
+            eventChainPhase = EventChainPhase.BeforeDepart;
+            gi.Events.TryPrepareTrigger(GameEventTrigger.BeforeDepart);
         }
 
-        private void ShowDayEndAfterEvents()
+        private void HookEvents()
+        {
+            GameEventSubsystem events = Game != null ? Game.Events : null;
+            if (events == null || eventsHooked)
+            {
+                return;
+            }
+
+            events.CurrentEventChanged += HandleCurrentEventChanged;
+            events.EventSequenceFinished += HandleEventSequenceFinished;
+            eventsHooked = true;
+        }
+
+        private void UnhookEvents()
+        {
+            GameEventSubsystem events = gameInstance != null ? gameInstance.Events : null;
+            if (events == null || !eventsHooked)
+            {
+                return;
+            }
+
+            events.CurrentEventChanged -= HandleCurrentEventChanged;
+            events.EventSequenceFinished -= HandleEventSequenceFinished;
+            eventsHooked = false;
+        }
+
+        private void HandleCurrentEventChanged(GameEventDef def)
+        {
+            if (def != null)
+            {
+                ShowGameEventOverlay?.Invoke(def);
+            }
+        }
+
+        private void HandleEventSequenceFinished()
+        {
+            switch (eventChainPhase)
+            {
+                case EventChainPhase.AfterTriumph:
+                    eventChainPhase = EventChainPhase.BeforeDayEnd;
+                    Game.Events.TryPrepareTrigger(GameEventTrigger.BeforeDayEnd);
+                    break;
+                case EventChainPhase.BeforeDayEnd:
+                    eventChainPhase = EventChainPhase.None;
+                    PresentDayEnd();
+                    break;
+                case EventChainPhase.BeforeDepart:
+                    eventChainPhase = EventChainPhase.None;
+                    RefreshHud?.Invoke();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void PresentDayEnd()
         {
             GameInstance gi = Game;
             if (gi == null || gi.Shelter == null)

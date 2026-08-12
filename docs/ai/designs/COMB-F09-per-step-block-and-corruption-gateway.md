@@ -4,10 +4,10 @@
 
 - **ID:** `COMB-F09`
 - **类型:** `Refactor`
-- **状态:** `Draft`
+- **状态:** `Done`（实现于 `40bdf58`；2026-08-12 文档收口）
 - **负责人:** `Max`
-- **最后更新：** `2026-08-11`
-- **分支（建议）：** `feat/combat`
+- **最后更新：** `2026-08-12`
+- **分支：** 已合 `main`（原建议名 `feat/combat`）
 - **相关：** `COMB-F02`、`COMB-F07`、`CORE-F04`、`FEATURE_REGISTRY.md`
 
 ## TL;DR
@@ -148,9 +148,15 @@
 
 ## 验收清单
 
-- [ ] Block 语义改为每步内生效
-- [ ] Corruption 所有写入口统一到 gateway
-- [ ] `debugStartCorruption` 不再直接写裸字段
-- [ ] Edit Mode / Play 均验证规则一致
-- [ ] 已更新进度日志
-- [ ] Feature 注册表状态已同步
+- [x] Block 语义改为每步内生效（`ResolvePlayerSlot` / `ResolveEnemySlot` 后清对应侧 block）
+- [x] Corruption 写入口统一到 `ApplyCorruption` / `SetCorruption`（GameInstance debug 起局已改）
+- [x] `debugStartCorruption` / `DebugRunSettings.startCorruption` 不再直接写裸字段
+- [x] Edit Mode：`CombatRoundFlowTests.ResolveStep_ClearsDefendingSideBlockPerAction`；`GameplaySetCorruption_ClampsAndFusesAtThreshold`
+- [x] 已更新进度日志
+- [x] Feature 注册表状态已同步
+
+## 收口备注（2026-08-12）
+
+- `EndRound()` 仍清双方 block：作为回合末兜底，与每步清零不冲突。
+- BattleOnly / 无 `RunCorruption` 时，`CombatManager` 仍可在结算结果里累计局部腐蚀 delta，局内真相源仍是 `GameplaySubsystem`。
+- design 文中 Bootstrap 路径已迁至 `App/`；以代码为准。

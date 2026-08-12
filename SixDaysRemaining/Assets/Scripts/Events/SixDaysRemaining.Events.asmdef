@@ -1,11 +1,9 @@
 {
-  "name": "SixDaysRemaining.App",
-  "rootNamespace": "SixDaysRemaining.App",
+  "name": "SixDaysRemaining.Events",
+  "rootNamespace": "SixDaysRemaining.Events",
   "references": [
     "SixDaysRemaining.Gameplay",
-    "SixDaysRemaining.Shelter",
-    "SixDaysRemaining.Combat",
-    "SixDaysRemaining.Events"
+    "SixDaysRemaining.Shelter"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

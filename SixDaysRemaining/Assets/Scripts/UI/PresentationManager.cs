@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
+using SixDaysRemaining.Events;
 using SixDaysRemaining.Gameplay;
 using UnityEngine;
 
@@ -39,7 +40,7 @@ namespace SixDaysRemaining.UI
         private GlobalHudView hudView;
 
         [SerializeField]
-        private RandomEventView randomEventView;
+        private GameEventView gameEventView;
 
         private AppFlowController flow;
         private GameObject activeScreen;
@@ -90,8 +91,8 @@ namespace SixDaysRemaining.UI
             flow.RefreshHud = RefreshHud;
             flow.RefreshDebugPresentation = RefreshDebugPresentation;
             flow.ShowSettlementOverlay = ShowSettlement;
-            flow.ShowRandomEventOverlay = ShowRandomEvent;
-            flow.ShowRandomEventResultOverlay = ShowRandomEventResult;
+            flow.ShowGameEventOverlay = ShowGameEvent;
+            flow.ShowGameEventResultOverlay = ShowGameEventResult;
             flow.ShowDayEndOverlay = ShowDayEnd;
         }
 
@@ -116,7 +117,7 @@ namespace SixDaysRemaining.UI
             if (settingsView != null) settingsView.Wire(flow);
             if (creditsView != null) creditsView.Wire(flow);
 
-            RandomEventView events = EnsureRandomEventView();
+            GameEventView events = EnsureGameEventView();
             if (events != null)
             {
                 events.Wire(flow);
@@ -223,9 +224,9 @@ namespace SixDaysRemaining.UI
             settlementView.ShowResult(result, flow != null ? flow.Game : null);
         }
 
-        private void ShowRandomEvent(RandomEventDef def)
+        private void ShowGameEvent(GameEventDef def)
         {
-            RandomEventView view = EnsureRandomEventView();
+            GameEventView view = EnsureGameEventView();
             if (view == null)
             {
                 return;
@@ -235,22 +236,22 @@ namespace SixDaysRemaining.UI
             view.ShowEvent(def);
         }
 
-        private void ShowRandomEventResult(RandomEventOption option)
+        private void ShowGameEventResult(GameEventResult result)
         {
-            RandomEventView view = EnsureRandomEventView();
+            GameEventView view = EnsureGameEventView();
             GameInstance gi = flow != null ? flow.Game : null;
             if (view == null || gi == null)
             {
                 return;
             }
 
-            view.ShowResult(option, gi);
+            view.ShowResult(result, gi);
         }
 
         private void ShowDayEnd(IReadOnlyList<string> personnelChanges)
         {
             GameInstance gi = flow != null ? flow.Game : null;
-            RandomEventView view = EnsureRandomEventView();
+            GameEventView view = EnsureGameEventView();
             if (view == null || gi == null)
             {
                 return;
@@ -343,11 +344,11 @@ namespace SixDaysRemaining.UI
             activeOverlay = go;
         }
 
-        private RandomEventView EnsureRandomEventView()
+        private GameEventView EnsureGameEventView()
         {
-            if (randomEventView != null)
+            if (gameEventView != null)
             {
-                return randomEventView;
+                return gameEventView;
             }
 
             Transform root = GetUiRoot();
@@ -356,8 +357,8 @@ namespace SixDaysRemaining.UI
                 return null;
             }
 
-            randomEventView = RandomEventView.Build(root, flow);
-            return randomEventView;
+            gameEventView = GameEventView.Build(root, flow);
+            return gameEventView;
         }
 
         private Transform GetUiRoot()

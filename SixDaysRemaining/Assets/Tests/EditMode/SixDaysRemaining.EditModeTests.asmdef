@@ -6,7 +6,8 @@
     "SixDaysRemaining.Debug",
     "SixDaysRemaining.Gameplay",
     "SixDaysRemaining.Shelter",
-    "SixDaysRemaining.Combat"
+    "SixDaysRemaining.Combat",
+    "SixDaysRemaining.Events"
   ],
   "includePlatforms": [
     "Editor"

@@ -2,6 +2,39 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-12（EVT-F01 实现）
+
+- 范围：独立 Events 域 + Flow 瘦身 + JSON 事件
+- 已完成：
+  - `Assets/Scripts/Events/` + `SixDaysRemaining.Events`（子系统、Provider、JSON loader）
+  - `StreamingAssets/Events/events.json`（三则 AfterTriumph）；退役 `RandomEventCatalog`
+  - AppFlow 三钩子：`AfterTriumph` → `BeforeDayEnd` → 日结；`BeforeDepart` 进庇护所后
+  - `GameEventView` 替换 `RandomEventView`；全日共享 cap=3
+  - EditMode：`GameEventSubsystemTests`；`TD-003` / `TD-007` → Resolved
+- 待验证：MainScene Play 日循环 + 事件链
+
+## 2026-08-12（EVT-F01 设计修订 + 开分支）
+
+
+- 范围：`EVT-F01` 审阅拍板写入 design；开 `feat/events`
+- 已拍板：
+  - 三钩子均接线（AfterTriumph / BeforeDayEnd / PrepStart；后两者可空）
+  - 全日最多 3 事件，跨时机共享额度
+  - 独立 `Assets/Scripts/Events/` + `SixDaysRemaining.Events` asmdef
+  - 首版 fragment：Food/Corruption/TakeIn/Expel/JumpToEnding
+- 下一步：二次审阅 design 文末「请确认」四项后实现
+
+## 2026-08-12（文档收口：F04 / F09 Done）
+
+
+- 范围：可信计划源状态同步
+- 已完成：
+  - `CORE-F04` → Done（Scene GameInstance + Hybrid Debug；抽测通过后已合 main）
+  - `COMB-F09` → Done（核对代码 vs design：每步清 block + Corruption Gateway 已在 `40bdf58`）
+  - `ACTIVE_WORK`：下一 P0 为 `EVT-F01`（承接 `TD-007`）
+  - 更新 FEATURE_REGISTRY / design 验收清单 / PROJECT_CONTEXT / BOOTSTRAP_DIGEST
+- 下一步：审阅 `EVT-F01` design 后实现
+
 ## 2026-08-11（CORE-F04 命令与门禁实现）
 
 - 范围：Hybrid Debug 命令表 + 业务 API + gate

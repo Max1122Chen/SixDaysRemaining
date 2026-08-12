@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SixDaysRemaining.App;
+using SixDaysRemaining.Events;
 using SixDaysRemaining.Gameplay;
 using TMPro;
 using UnityEngine;
@@ -8,10 +9,9 @@ using UnityEngine.UI;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// Center overlay for the post-battle random event, then the day-end summary.
-    /// Left half is reserved for art; right half shows text and choices.
+    /// 通用事件 overlay + 日结摘要。
     /// </summary>
-    public class RandomEventView : MonoBehaviour
+    public class GameEventView : MonoBehaviour
     {
         private const int OptionCount = 3;
 
@@ -41,12 +41,12 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private Button continueButton;
 
-        private RandomEventOption[] pendingOptions;
+        private GameEventOptionDef[] pendingOptions;
 
-        public static RandomEventView Build(Transform parent, AppFlowController flow)
+        public static GameEventView Build(Transform parent, AppFlowController flow)
         {
-            GameObject overlay = UiFactory.CreatePanel(parent, "RandomEventOverlay", new Color(0f, 0f, 0f, 0.72f));
-            RandomEventView view = overlay.AddComponent<RandomEventView>();
+            GameObject overlay = UiFactory.CreatePanel(parent, "GameEventOverlay", new Color(0f, 0f, 0f, 0.72f));
+            GameEventView view = overlay.AddComponent<GameEventView>();
             view.flow = flow;
 
             GameObject window = UiFactory.CreatePanel(overlay.transform, "Window", new Color(0.09f, 0.11f, 0.14f, 1f), false);
@@ -151,10 +151,10 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        public void ShowEvent(RandomEventDef def)
+        public void ShowEvent(GameEventDef def)
         {
             pendingOptions = def != null ? def.Options : null;
-            titleText.text = def != null ? def.Title : "随机事件";
+            titleText.text = def != null ? def.Title : "事件";
             bodyText.text = def != null ? def.Body : "";
             SetBodySize(new Vector2(240f, 175f), new Vector2(410f, 150f));
             if (resultContinueButton != null)
@@ -182,11 +182,11 @@ namespace SixDaysRemaining.UI
             dayEndGroup.SetActive(false);
         }
 
-        public void ShowResult(RandomEventOption option, GameInstance gi)
+        public void ShowResult(GameEventResult result, GameInstance gi)
         {
             pendingOptions = null;
             titleText.text = "事件结果";
-            bodyText.text = BuildResultText(option, gi);
+            bodyText.text = BuildResultText(result, gi);
             SetBodySize(new Vector2(240f, 90f), new Vector2(410f, 360f));
 
             for (int i = 0; i < optionButtons.Length; i++)
@@ -229,7 +229,7 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            flow.OnRandomEventChosen(pendingOptions[index]);
+            flow.OnGameEventOptionChosen(index);
         }
 
         private void OnResultContinue()
@@ -245,17 +245,14 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        private static string BuildResultText(RandomEventOption option, GameInstance gi)
+        private static string BuildResultText(GameEventResult result, GameInstance gi)
         {
-            string text = option != null && !string.IsNullOrEmpty(option.ResultText)
-                ? option.ResultText
+            string text = !string.IsNullOrEmpty(result.ResultText)
+                ? result.ResultText
                 : "事件已处理。";
 
-            if (option != null)
-            {
-                text += "\n\n食物：" + Signed(option.FoodDelta)
-                    + "\n腐蚀度：" + Signed(option.CorruptionDelta);
-            }
+            text += "\n\n食物：" + Signed(result.FoodDelta)
+                + "\n腐蚀度：" + Signed(result.CorruptionDelta);
 
             if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)
             {

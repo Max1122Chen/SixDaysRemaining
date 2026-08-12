@@ -19,11 +19,11 @@
 | `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Done | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat` | Max | StreamingAssets；硬失败 |
 | `UI-F01` | 战斗卡牌交互修复（伴生/复位/叠层/槽高亮） | UI | Done | `designs/UI-F01-combat-card-interaction.md` | — | `feat/ui` | Max / UI | 已合 main |
 | `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Done | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | 可玩主线已合 |
-| `CORE-F05` | AppFlow 编排收敛 + PresentationManager | CORE | Done | `designs/CORE-F05-appflow-presentation.md` | — | `main` | Max | Flow 在 `Gameplay/`；`PresentationManager` 在 UI；`TD-007` 事件队列 |
-| `CORE-F04` | Scene-owned GameInstance + Hybrid Debug | CORE | In Progress | `designs/CORE-F04-scene-gameinstance-debug.md` | — | `main` | Max | Inspector + `~` 控制台；F05 边界已就绪 |
+| `CORE-F05` | AppFlow 编排收敛 + PresentationManager | CORE | Done | `designs/CORE-F05-appflow-presentation.md` | — | `main` | Max | Flow 编译在 App 程序集；命名空间 Gameplay；`TD-007` |
+| `CORE-F04` | Scene-owned GameInstance + Hybrid Debug | CORE | Done | `designs/CORE-F04-scene-gameinstance-debug.md` | — | `main` | Max | `~` 控制台 + gate + 全命令；`run.day skip` 后续可选 |
 | `SHLT-F02` | 幸存者身份目录 + 入住/状态/死亡 | SHLT | Done | `designs/SHLT-F02-survivor-identity.md` | — | `feat/shelter` | Max | 已合 main |
-| `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Draft | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `feat/combat` | Max | block 改为每步生效；腐蚀统一入口 |
-| `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | Draft | `designs/EVT-F01-game-event-subsystem.md` | — | `feat/events` | Max | 随机事件 / 幸存者事件 / fragment / 数据驱动 |
+| `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Done | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `main` | Max | `40bdf58` 落地；文档 2026-08-12 收口 |
+| `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | In Progress | `designs/EVT-F01-game-event-subsystem.md` | — | `feat/events` | Max | Events asmdef；全日 cap=3；三钩子；`TD-007` Resolved |
 
 ## 域代码
 

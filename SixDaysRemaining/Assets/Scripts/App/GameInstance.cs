@@ -1,4 +1,6 @@
 using SixDaysRemaining.Combat;
+using SixDaysRemaining.Events;
+using SixDaysRemaining.Events.Content;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
 using UnityEngine;
@@ -39,6 +41,8 @@ namespace SixDaysRemaining.App
         public ShelterManager Shelter { get; private set; }
 
         public CombatManager Combat { get; private set; }
+
+        public GameEventSubsystem Events { get; private set; }
 
         public PlayerCombatComponent PlayerCombat
         {
@@ -90,6 +94,7 @@ namespace SixDaysRemaining.App
 
             Gameplay = new GameplaySubsystem();
             Combat = new CombatManager();
+            Events = new GameEventSubsystem();
             Mode = AppMode.MainMenu;
         }
 
@@ -117,6 +122,23 @@ namespace SixDaysRemaining.App
             Shelter = new ShelterManager(Gameplay.State);
             Shelter.InitializeDefaultRoster(StartingFoodStock);
             ApplyDebugShelterOverrides();
+            BindEventsSubsystem(seed);
+        }
+
+        private void BindEventsSubsystem(int seed)
+        {
+            if (Events == null)
+            {
+                Events = new GameEventSubsystem();
+            }
+
+            EventContent content = EventContent.Ensure();
+            Events.Bind(Gameplay, Shelter, content);
+            Events.SetProviders(new IGameEventProvider[]
+            {
+                new RandomPoolProvider(seed)
+            });
+            Events.ResetDailyBudget();
         }
 
         private void ApplyDebugStartCorruption()

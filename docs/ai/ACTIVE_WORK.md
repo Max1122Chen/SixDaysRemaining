@@ -4,19 +4,19 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `CORE-F04` Scene-owned GameInstance + Hybrid Debug | In Progress | Max | Play/EditMode 验证；gate 主菜单 help 待 Play 确认 |
-| P1 | `COMB-F09` 每步格挡结算 + Corruption Gateway | Draft | Max | 审阅 design；确认每步清 block 边界 |
-| P3 | `EVT-F01` GameEventSubsystem + 同质事件模型 | Draft | Max | 审阅 design；确认 fragment 边界与调度时机；承接 `TD-007` |
+| P0 | `EVT-F01` GameEventSubsystem + 同质事件模型 | In Progress | Max | Play 回归；合 `feat/events` → `main` |
 | — | 特质 `defId` 挂钩（替代名字碎片） | Discuss | Max | 与 UI 伙伴 `SurvivorTrait` 对齐 |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
-| — | `TD-004` / `TD-005` / `TD-006` / `TD-007` | Open | Max | 见 TECH_DEBT |
+| — | `TD-004` / `TD-005` / `TD-006` | Open | Max | 见 TECH_DEBT |
 
 ## 近期已收口
 
 | ID | 状态 | 备注 |
 |----|------|------|
+| `CORE-F04` | Done | Scene GameInstance + Hybrid Debug |
+| `CORE-F05` | Done | Flow / Presentation；`TD-007` 已由 EVT-F01 退出 |
+| `COMB-F09` | Done | 每步清 block + Corruption Gateway |
 | `SHLT-F02` | Done | 身份 JSON + 入住/状态/死亡 |
-| `CORE-F05` | Done | Flow → `Gameplay/AppFlowController`；`PresentationManager`；`TD-007` |
 | `COMB-F01`～`F08` | Done | 含 StreamingAssets 战斗 JSON |
 | `UI-F01` / `CORE-F03` | Done | 含伙伴 UI 提交 |
 
