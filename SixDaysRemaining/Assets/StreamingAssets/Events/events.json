@@ -1,38 +1,112 @@
 {
   "events": [
     {
-      "id": "wanderer_plea",
-      "title": "流浪者求助",
-      "body": "一名浑身尘土的流浪者敲响庇护所的门，声称知道附近一处藏粮点。",
+      "id": "child_stone_day2",
+      "title": "角落里的石子",
+      "body": "幼童攥着磨圆的石头蹲在角落，举起石子盯着你，突然说：「明天能不能陪我玩一会抛石头？没人陪我玩，我好孤单……英雄一定可以解决我的烦恼。」",
       "trigger": "AfterTriumph",
-      "priority": 0,
-      "weight": 1,
+      "priority": 90,
+      "requiredDayMin": 2,
+      "requiredDayMax": 2,
+      "requiredSurvivorIds": ["child"],
       "options": [
         {
-          "id": "take_in",
-          "label": "收留他",
-          "resultText": "你收留了政治家，他带来了外面世界的消息。",
+          "id": "stay_play",
+          "label": "放下搜集计划，留下来陪他玩耍",
+          "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -20 },
+            { "op": "SetFlag", "flagId": "child_play_promised" }
+          ]
+        },
+        {
+          "id": "decline",
+          "label": "婉拒，优先外出搜集物资",
+          "resultText": "幼童没再说话，把石头攥得更紧了。",
+          "effects": [
+            { "op": "SetFlag", "flagId": "child_stone_declined_d2" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "child_stone_day3",
+      "title": "角落里的石子",
+      "body": "幼童又攥着磨圆的石头蹲在角落，举起石子盯着你，突然说：「明天能不能陪我玩一会抛石头？没人陪我玩，我好孤单……」",
+      "trigger": "AfterTriumph",
+      "priority": 90,
+      "requiredDayMin": 3,
+      "requiredDayMax": 3,
+      "requiredSurvivorIds": ["child"],
+      "options": [
+        {
+          "id": "stay_play",
+          "label": "放下搜集计划，留下来陪他玩耍",
+          "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -20 },
+            { "op": "SetFlag", "flagId": "child_play_promised" }
+          ]
+        },
+        {
+          "id": "decline",
+          "label": "婉拒，优先外出搜集物资",
+          "resultText": "幼童没再说话，把石头攥得更紧了。",
+          "effects": [
+            { "op": "SetFlag", "flagId": "child_stone_declined_d3" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "child_stole_food_day4",
+      "title": "空荡的角落",
+      "body": "小孩偷走了 1 份食物，偷偷溜走了。庇护所里的人责怪你斤斤计较，对你产生了一些怨言。",
+      "trigger": "BeforeDepart",
+      "priority": 95,
+      "requiredDayMin": 4,
+      "requiredDayMax": 4,
+      "requiredSurvivorIds": ["child"],
+      "requiredFlags": ["child_stone_declined_d2", "child_stone_declined_d3"],
+      "options": [
+        {
+          "id": "acknowledge",
+          "label": "默默接受",
+          "resultText": "桌上没有出现可爱的石头，人也不知道躲到哪里去了……",
           "effects": [
             { "op": "FoodDelta", "amount": -1 },
-            { "op": "CorruptionDelta", "amount": 1 },
+            { "op": "CorruptionDelta", "amount": 20 },
+            { "op": "ExpelSurvivor", "survivorDefId": "child" },
+            { "op": "ClearFlag", "flagId": "child_stone_declined_d2" },
+            { "op": "ClearFlag", "flagId": "child_stone_declined_d3" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "politician_knock_day3",
+      "title": "门外的交换",
+      "body": "有一位风尘仆仆但依旧难掩贵气和高傲的男士前来敲门。他带着一些食物作为交换条件，希望可以进入庇护所得到你的帮助。",
+      "trigger": "AfterTriumph",
+      "priority": 10,
+      "requiredDayMin": 3,
+      "requiredDayMax": 3,
+      "requiredAbsentSurvivorIds": ["politician"],
+      "options": [
+        {
+          "id": "admit",
+          "label": "虽然有点被他的势气冒犯到，但让他进来",
+          "resultText": "他踏入庇护所，粮食堆上了货架。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 5 },
             { "op": "TakeInSurvivor", "survivorDefId": "politician" }
           ]
         },
         {
-          "id": "feed",
-          "label": "给他一顿饭",
-          "resultText": "他吃下一顿热饭后默默离开。",
-          "effects": [
-            { "op": "FoodDelta", "amount": -1 }
-          ]
-        },
-        {
-          "id": "turn_away",
-          "label": "驱赶他",
-          "resultText": "你关上门，他在夜色中消失。",
-          "effects": [
-            { "op": "CorruptionDelta", "amount": 1 }
-          ]
+          "id": "refuse",
+          "label": "他看起来不是什么好应付的，回绝他的交换请求",
+          "resultText": "你关上门。他在门外站了一会儿，转身消失在废墟里。",
+          "effects": []
         }
       ]
     },

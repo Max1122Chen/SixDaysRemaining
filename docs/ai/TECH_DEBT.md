@@ -10,6 +10,7 @@
 | `TD-005` | Open | `Bootstrap` | `GameInstance.debugStartCorruption` 为 Play 调试入口，正式发版应默认 0 或移除。 | 误留高值会污染开局手感/直接结局。 | Max | 2026-08-07 | F07 测完或进发版前 | 删字段或加 `#if UNITY_EDITOR` / Development Build 守卫 |
 | `TD-006` | Open | `COMB-F08` | StreamingAssets 在部分移动平台需 `UnityWebRequest`；首版仅 Editor/Standalone `File.ReadAllText`。F08 **硬失败**，移动包未补齐前会直接抛错。 | 进移动目标前必须补读盘。 | Max | 2026-08-07 | 目标平台确定后 | 补异步加载；失败仍 throw（不引入 fallback） |
 | `TD-007` | Resolved | `CORE-F05` / `EVT-F01` | 事件队列已迁入 `GameEventSubsystem`（`Assets/Scripts/Events/`）。 | — | Max | 2026-08-11 | 2026-08-12 | Flow 仅订阅广播 / 时机钩子 |
+| `TD-008` | Open | `CORE-F04` / Debug | `combat.win` 可用，但 **`combat.skip` / `combat.sweep` Play 实测无效**（开关可设但行为未达 CORE-F04 设计：`skip` 出征应不进战斗直接结算；`sweep` 应强制胜场结算）。 | 事件/流程回归、速测战斗链受阻。 | Max | 2026-08-12 | EVT-F02 实现前或同会话 | `combat.skip on` 后点出征跳过 `CombatView` 并 `OnCombatFinished`；`combat.sweep on` 后战斗结束恒为 Win（非 flee）；补 EditMode/Play 抽测 |
 
 ## 状态
 

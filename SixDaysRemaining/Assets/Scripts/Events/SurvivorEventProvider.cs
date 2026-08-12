@@ -1,21 +1,12 @@
-using System;
 using System.Collections.Generic;
 
 namespace SixDaysRemaining.Events
 {
     /// <summary>
-    /// F01：按 trigger 过滤后洗牌取候选；四池字段仅占位不过滤。
-    /// F02：幸存者专属（requiredSurvivorIds 非空）由 SurvivorEventProvider 收录。
+    /// EVT-F02：仅收录 requiredSurvivorIds 非空的幸存者专属事件。
     /// </summary>
-    public sealed class RandomPoolProvider : IGameEventProvider
+    public sealed class SurvivorEventProvider : IGameEventProvider
     {
-        private readonly int seed;
-
-        public RandomPoolProvider(int seed)
-        {
-            this.seed = seed;
-        }
-
         public IEnumerable<GameEventDef> Collect(GameEventQuery query, IReadOnlyList<GameEventDef> library)
         {
             if (query == null || library == null || query.RemainingDailyBudget <= 0)
@@ -27,7 +18,7 @@ namespace SixDaysRemaining.Events
             for (int i = 0; i < library.Count; i++)
             {
                 GameEventDef def = library[i];
-                if (def == null || EventRequirements.HasRequiredSurvivors(def))
+                if (def == null || !EventRequirements.HasRequiredSurvivors(def))
                 {
                     continue;
                 }
@@ -46,16 +37,12 @@ namespace SixDaysRemaining.Events
             }
 
             matched.Sort(ComparePriorityThenId);
-            Random rng = new Random(unchecked(seed * 7919 + query.Day * 104729 + (int)query.Trigger * 997));
-            for (int i = matched.Count - 1; i > 0; i--)
+            int take = matched.Count;
+            if (take > query.RemainingDailyBudget)
             {
-                int j = rng.Next(i + 1);
-                GameEventDef tmp = matched[i];
-                matched[i] = matched[j];
-                matched[j] = tmp;
+                take = query.RemainingDailyBudget;
             }
 
-            int take = Math.Min(query.RemainingDailyBudget, matched.Count);
             for (int i = 0; i < take; i++)
             {
                 yield return matched[i];

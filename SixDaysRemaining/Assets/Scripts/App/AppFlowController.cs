@@ -141,6 +141,11 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
+            if (gi.Gameplay.HasStoryFlag(RunStoryFlags.ChildPlayPromised))
+            {
+                return;
+            }
+
             if (gi.PlayerCombat == null || gi.EnemyPrefab == null)
             {
                 return;
@@ -305,6 +310,7 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
+            gi.Gameplay.ClearStoryFlag(RunStoryFlags.ChildPlayPromised);
             EnterShelterWithBeforeDepart(resetBudget: true);
         }
 

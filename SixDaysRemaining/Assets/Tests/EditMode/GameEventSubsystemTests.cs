@@ -83,12 +83,161 @@ namespace SixDaysRemaining.Tests.EditMode
       ""id"": ""o"",
       ""label"": ""L"",
       ""resultText"": ""r"",
-      ""effects"": [ { ""op"": ""SetFlag"", ""flagId"": ""f"" } ]
+      ""effects"": [ { ""op"": ""OverrideHungerDecay"", ""amount"": 1 } ]
     } ]
   } ]
 }";
             Assert.Throws<System.InvalidOperationException>(() =>
                 EventContentJsonLoader.LoadFromJsonText(bad, "test"));
+        }
+
+        [Test]
+        public void Loader_AcceptsSetFlag()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""flag"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [ { ""op"": ""SetFlag"", ""flagId"": ""test_flag"" } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> defs = EventContentJsonLoader.LoadFromJsonText(json, "flag");
+            Assert.AreEqual(1, defs.Count);
+        }
+
+        [Test]
+        public void SurvivorProvider_OnlyWhenDefInShelter()
+        {
+            string json = @"{
+  ""events"": [
+    {
+      ""id"": ""child_only"",
+      ""title"": ""t"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""priority"": 90,
+      ""requiredSurvivorIds"": [""child""],
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    },
+    {
+      ""id"": ""random"",
+      ""title"": ""r"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    }
+  ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "survivor");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            shelter.InitializeDefaultRoster(5);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[]
+            {
+                new SurvivorEventProvider(),
+                new RandomPoolProvider(1)
+            });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+
+            Assert.AreEqual("child_only", events.CurrentEvent.Id);
+
+            shelter.ExpelSurvivor("child");
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            Assert.AreEqual("random", events.CurrentEvent.Id);
+        }
+
+        [Test]
+        public void DayRangeAndAbsentSurvivor_Filter()
+        {
+            string json = @"{
+  ""events"": [
+    {
+      ""id"": ""pol_knock"",
+      ""title"": ""p"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""requiredDayMin"": 3,
+      ""requiredDayMax"": 3,
+      ""requiredAbsentSurvivorIds"": [""politician""],
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    },
+    {
+      ""id"": ""fallback"",
+      ""title"": ""f"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    }
+  ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "day");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            gameplay.SetDay(2);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            Assert.AreEqual("fallback", events.CurrentEvent.Id);
+
+            gameplay.SetDay(3);
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            Assert.AreEqual("pol_knock", events.CurrentEvent.Id);
+
+            shelter.TakeIn("politician");
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            Assert.AreEqual("fallback", events.CurrentEvent.Id);
+        }
+
+        [Test]
+        public void ApplyOption_SetFlag_AndChildLine()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""play"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""stay"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [
+        { ""op"": ""SetFlag"", ""flagId"": ""child_play_promised"" }
+      ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "play");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            events.ApplyOption(0);
+            Assert.IsTrue(gameplay.HasStoryFlag(RunStoryFlags.ChildPlayPromised));
         }
 
         [Test]

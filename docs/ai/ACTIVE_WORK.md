@@ -4,11 +4,12 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `EVT-F02` 幸存者特殊事件 | Draft | Max | 审阅 `designs/EVT-F02-survivor-events.md` 后实现 |
-| P1 | `EVT-F01` GameEventSubsystem | Review | Max | 已合 commit `9567b64`；Play 回归后可标 Done / 合 main |
+| P0 | `EVT-F02` 幸存者特殊事件 | Review | Max | 已实现；Play 验收（幼童线 / 政治家 D3） |
+| P1 | `TD-008` Debug combat skip/sweep | Open | Max | `combat.win` 可用；`skip`/`sweep` 待修 |
+| P1 | `EVT-F01` GameEventSubsystem | Review | Max | 与 F02 同批 Play 回归后标 Done |
 | — | 特质 `defId` 挂钩（替代名字碎片） | Discuss | Max | 与 UI 伙伴 `SurvivorTrait` 对齐 |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
-| — | `TD-004` / `TD-005` / `TD-006` | Open | Max | 见 TECH_DEBT |
+| — | `TD-004` / `TD-005` / `TD-006` / `TD-008` | Open | Max | 见 TECH_DEBT |
 
 ## 近期已收口
 

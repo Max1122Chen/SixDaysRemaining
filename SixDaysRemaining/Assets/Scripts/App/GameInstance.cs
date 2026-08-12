@@ -136,6 +136,7 @@ namespace SixDaysRemaining.App
             Events.Bind(Gameplay, Shelter, content);
             Events.SetProviders(new IGameEventProvider[]
             {
+                new SurvivorEventProvider(),
                 new RandomPoolProvider(seed)
             });
             Events.ResetDailyBudget();

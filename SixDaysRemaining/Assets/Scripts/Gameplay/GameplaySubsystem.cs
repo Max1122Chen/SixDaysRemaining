@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SixDaysRemaining.Combat.Cards;
 
 namespace SixDaysRemaining.Gameplay
@@ -9,6 +10,8 @@ namespace SixDaysRemaining.Gameplay
     public class GameplaySubsystem
     {
         public const int MaxDay = 6;
+
+        private readonly HashSet<string> storyFlags = new HashSet<string>();
 
         public GameState State { get; private set; }
 
@@ -28,6 +31,7 @@ namespace SixDaysRemaining.Gameplay
         public void StartNewRun(int seed)
         {
             State = new GameState();
+            storyFlags.Clear();
             State.day = 1;
             State.foodStock = 0;
             State.corruption = 0;
@@ -148,6 +152,48 @@ namespace SixDaysRemaining.Gameplay
             }
 
             State.foodStock = UnityEngine.Mathf.Max(0, State.foodStock + delta);
+        }
+
+        public bool HasStoryFlag(string flagId)
+        {
+            return !string.IsNullOrEmpty(flagId) && storyFlags.Contains(flagId);
+        }
+
+        public void SetStoryFlag(string flagId)
+        {
+            if (string.IsNullOrEmpty(flagId))
+            {
+                return;
+            }
+
+            storyFlags.Add(flagId);
+        }
+
+        public void ClearStoryFlag(string flagId)
+        {
+            if (string.IsNullOrEmpty(flagId))
+            {
+                return;
+            }
+
+            storyFlags.Remove(flagId);
+        }
+
+        public string[] GetStoryFlagSnapshot()
+        {
+            if (storyFlags.Count == 0)
+            {
+                return System.Array.Empty<string>();
+            }
+
+            string[] snapshot = new string[storyFlags.Count];
+            int index = 0;
+            foreach (string flag in storyFlags)
+            {
+                snapshot[index++] = flag;
+            }
+
+            return snapshot;
         }
 
         public void SetPhase(GameplayPhase phase)

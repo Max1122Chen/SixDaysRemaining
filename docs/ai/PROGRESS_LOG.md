@@ -2,6 +2,18 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-12（EVT-F02 实现）
+
+- 范围：SurvivorEventProvider + 幼童抛石头线 + 政治家 D3 敲门
+- 已完成：
+  - `SurvivorEventProvider` 优先于 `RandomPoolProvider`
+  - `EventRequirements`：`requiredDayMin/Max`、`requiredAbsentSurvivorIds`、Flag 过滤
+  - `SetFlag` / `ClearFlag` fragment + `GameplaySubsystem` story flags
+  - `events.json`：删 `wanderer_plea`；幼童 D2/D3/D4 + `politician_knock_day3`
+  - 陪玩 → 次日禁出征（`child_play_promised` + Shelter 出发按钮）
+  - EditMode：`GameEventSubsystemTests` 扩展
+- 待验证：Play 幼童线 + 政治家 D3；`TD-008` 仍 Open
+
 ## 2026-08-12（EVT-F02 设计起草）
 
 - 范围：幸存者专属事件调度

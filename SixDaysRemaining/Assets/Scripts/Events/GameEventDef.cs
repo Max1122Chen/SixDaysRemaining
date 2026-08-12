@@ -16,9 +16,9 @@ namespace SixDaysRemaining.Events
         TakeInSurvivor = 2,
         ExpelSurvivor = 3,
         JumpToEnding = 4,
-        // Reserved (F01 load hard-fails if present in JSON until implemented):
         SetFlag = 100,
         ClearFlag = 101,
+        // Reserved (F01 load hard-fails if present in JSON until implemented):
         OverrideHungerDecay = 102
     }
 
@@ -30,7 +30,10 @@ namespace SixDaysRemaining.Events
         public GameEventTrigger Trigger;
         public int Priority;
         public string[] RequiredSurvivorIds = Array.Empty<string>();
+        public string[] RequiredAbsentSurvivorIds = Array.Empty<string>();
         public string[] RequiredFlags = Array.Empty<string>();
+        public int? RequiredDayMin;
+        public int? RequiredDayMax;
         public string PoolId;
         public int? CorruptionMin;
         public int? CorruptionMax;
@@ -74,5 +77,6 @@ namespace SixDaysRemaining.Events
         public int Population;
         public int RemainingDailyBudget;
         public string[] OwnedSurvivorDefIds = Array.Empty<string>();
+        public string[] ActiveStoryFlags = Array.Empty<string>();
     }
 }

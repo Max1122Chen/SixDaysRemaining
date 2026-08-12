@@ -1,6 +1,7 @@
 using System.Text;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.App;
+using SixDaysRemaining.Events;
 using SixDaysRemaining.Shelter;
 using TMPro;
 using UnityEngine;
@@ -82,6 +83,21 @@ namespace SixDaysRemaining.UI
                 + "\n腐蚀：" + state.corruption
                 + "\n人口：" + state.population
                 + "\n阶段：" + state.currentPhase;
+
+            bool expeditionBlocked = gi.Gameplay.HasStoryFlag(RunStoryFlags.ChildPlayPromised);
+            if (departButton != null)
+            {
+                departButton.interactable = !expeditionBlocked
+                    && state.currentPhase == GameplayPhase.ExpeditionPrep
+                    && (gi.Events == null || !gi.Events.IsSequenceActive);
+                TextMeshProUGUI label = departButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null)
+                {
+                    label.text = expeditionBlocked
+                        ? "你答应了幼童，今天要陪他一起玩抛石头"
+                        : "出发";
+                }
+            }
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < gi.Shelter.Survivors.Count; i++)

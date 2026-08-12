@@ -19,7 +19,9 @@ namespace SixDaysRemaining.Events.Content
             "CorruptionDelta",
             "TakeInSurvivor",
             "ExpelSurvivor",
-            "JumpToEnding"
+            "JumpToEnding",
+            "SetFlag",
+            "ClearFlag"
         };
 
         public static string EventsFolderPath
@@ -156,6 +158,7 @@ namespace SixDaysRemaining.Events.Content
                     Trigger = trigger,
                     Priority = dto.priority,
                     RequiredSurvivorIds = dto.requiredSurvivorIds ?? Array.Empty<string>(),
+                    RequiredAbsentSurvivorIds = dto.requiredAbsentSurvivorIds ?? Array.Empty<string>(),
                     RequiredFlags = dto.requiredFlags ?? Array.Empty<string>(),
                     PoolId = dto.poolId,
                     Weight = dto.weight <= 0 ? 1 : dto.weight,
@@ -180,6 +183,23 @@ namespace SixDaysRemaining.Events.Content
                 if (dto.populationMax != int.MaxValue)
                 {
                     def.PopulationMax = dto.populationMax;
+                }
+
+                if (dto.requiredDayMin != int.MinValue)
+                {
+                    def.RequiredDayMin = dto.requiredDayMin;
+                }
+
+                if (dto.requiredDayMax != int.MaxValue)
+                {
+                    def.RequiredDayMax = dto.requiredDayMax;
+                }
+
+                if (def.RequiredDayMin.HasValue && def.RequiredDayMax.HasValue
+                    && def.RequiredDayMin.Value > def.RequiredDayMax.Value)
+                {
+                    throw new InvalidOperationException(
+                        "Event '" + dto.id + "' requiredDayMin > requiredDayMax in " + path);
                 }
 
                 result.Add(def);

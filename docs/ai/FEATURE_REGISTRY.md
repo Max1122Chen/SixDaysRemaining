@@ -23,8 +23,8 @@
 | `CORE-F04` | Scene-owned GameInstance + Hybrid Debug | CORE | Done | `designs/CORE-F04-scene-gameinstance-debug.md` | — | `main` | Max | `~` 控制台 + gate + 全命令；`run.day skip` 后续可选 |
 | `SHLT-F02` | 幸存者身份目录 + 入住/状态/死亡 | SHLT | Done | `designs/SHLT-F02-survivor-identity.md` | — | `feat/shelter` | Max | 已合 main |
 | `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Done | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `main` | Max | `40bdf58` 落地；文档 2026-08-12 收口 |
-| `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | In Progress | `designs/EVT-F01-game-event-subsystem.md` | — | `feat/events` | Max | 已实现于 `9567b64`；待 Play 标 Done |
-| `EVT-F02` | 幸存者特殊事件（SurvivorEventProvider） | EVT | Draft | `designs/EVT-F02-survivor-events.md` | — | `feat/events` | Max | defId 专属事件；与随机池争全日额度 |
+| `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | Review | `designs/EVT-F01-game-event-subsystem.md` | — | `feat/events` | Max | F02 扩展同分支；Play 回归后标 Done |
+| `EVT-F02` | 幸存者特殊事件（SurvivorEventProvider） | EVT | Review | `designs/EVT-F02-survivor-events.md` | — | `feat/events` | Max | 幼童线 + 政治家 D3；day 区间 + absent |
 
 ## 域代码
 

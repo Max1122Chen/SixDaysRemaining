@@ -214,7 +214,8 @@ namespace SixDaysRemaining.Events
                 Corruption = gameplay != null && gameplay.State != null ? gameplay.State.corruption : 0,
                 Population = shelter != null ? shelter.Population : 0,
                 RemainingDailyBudget = RemainingDailyBudget,
-                OwnedSurvivorDefIds = owned.ToArray()
+                OwnedSurvivorDefIds = owned.ToArray(),
+                ActiveStoryFlags = gameplay != null ? gameplay.GetStoryFlagSnapshot() : Array.Empty<string>()
             };
         }
 
@@ -253,6 +254,18 @@ namespace SixDaysRemaining.Events
                 case GameEventEffectOp.JumpToEnding:
                     gameplay.ForceEnding(EndingReason.Debug);
                     result.EndedRun = true;
+                    break;
+                case GameEventEffectOp.SetFlag:
+                    if (!string.IsNullOrEmpty(fragment.FlagId))
+                    {
+                        gameplay.SetStoryFlag(fragment.FlagId);
+                    }
+                    break;
+                case GameEventEffectOp.ClearFlag:
+                    if (!string.IsNullOrEmpty(fragment.FlagId))
+                    {
+                        gameplay.ClearStoryFlag(fragment.FlagId);
+                    }
                     break;
                 default:
                     throw new InvalidOperationException("Unimplemented fragment at runtime: " + fragment.Op);

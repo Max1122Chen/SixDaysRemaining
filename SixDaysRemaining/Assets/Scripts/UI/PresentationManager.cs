@@ -267,6 +267,11 @@ namespace SixDaysRemaining.UI
             {
                 hudView.Refresh();
             }
+
+            if (shelterView != null && activeScreen == shelterView.gameObject)
+            {
+                shelterView.Refresh();
+            }
         }
 
         private void RefreshDebugPresentation()
