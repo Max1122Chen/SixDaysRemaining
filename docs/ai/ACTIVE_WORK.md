@@ -4,7 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `EVT-F02` 幸存者特殊事件 | Review | Max | 已实现；Play 验收（幼童线 / 政治家 D3） |
+| P0 | `EVT-F02` 幸存者特殊事件 | Review | Max | 已实现；含 `BUG-EVT-001` 修复，待 Play 复验（幼童线 / 政治家 D3） |
 | P1 | `TD-008` Debug combat skip/sweep | Open | Max | `combat.win` 可用；`skip`/`sweep` 待修 |
 | P1 | `EVT-F01` GameEventSubsystem | Review | Max | 与 F02 同批 Play 回归后标 Done |
 | — | 特质 `defId` 挂钩（替代名字碎片） | Discuss | Max | 与 UI 伙伴 `SurvivorTrait` 对齐 |

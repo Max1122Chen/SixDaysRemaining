@@ -394,6 +394,7 @@ namespace SixDaysRemaining.Gameplay
                     break;
                 case EventChainPhase.BeforeDepart:
                     eventChainPhase = EventChainPhase.None;
+                    CloseOverlay();
                     RefreshHud?.Invoke();
                     break;
                 default:

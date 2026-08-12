@@ -12,6 +12,7 @@
   - `events.json`：删 `wanderer_plea`；幼童 D2/D3/D4 + `politician_knock_day3`
   - 陪玩 → 次日禁出征（`child_play_promised` + Shelter 出发按钮）
   - EditMode：`GameEventSubsystemTests` 扩展
+  - `BUG-EVT-001`：修复 `BeforeDepart` 最后一个事件结果继续后 overlay 未关闭；补 `AppFlowControllerTests`
 - 待验证：Play 幼童线 + 政治家 D3；`TD-008` 仍 Open
 
 ## 2026-08-12（EVT-F02 设计起草）
