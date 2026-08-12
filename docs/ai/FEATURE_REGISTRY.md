@@ -19,13 +19,19 @@
 | `COMB-F08` | 战斗内容 JSON 数据驱动 | COMB | Done | `designs/COMB-F08-data-driven-content.md` | — | `feat/combat` | Max | StreamingAssets；硬失败 |
 | `UI-F01` | 战斗卡牌交互修复（伴生/复位/叠层/槽高亮） | UI | Done | `designs/UI-F01-combat-card-interaction.md` | — | `feat/ui` | Max / UI | 已合 main |
 | `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Done | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | 可玩主线已合 |
-| `CORE-F05` | AppFlow 编排收敛 + PresentationManager | CORE | Done | `designs/CORE-F05-appflow-presentation.md` | — | `main` | Max | Flow 编译在 App 程序集；命名空间 Gameplay；`TD-007` |
-| `CORE-F04` | Scene-owned GameInstance + Hybrid Debug | CORE | Done | `designs/CORE-F04-scene-gameinstance-debug.md` | — | `main` | Max | `~` 控制台 + gate + 全命令；`run.day skip` 后续可选 |
-| `CORE-F06` | GameplayTag 基础设施 | CORE | Done | `designs/CORE-F06-gameplay-tags.md` | — | `main` | Max | Tag 容器 / 层级匹配 / Count / Query；已合 main |
+| `CORE-F05` | AppFlow 编排收敛 + PresentationManager | CORE | Done | `designs/CORE-F05-appflow-presentation.md` | — | `main` | Max | Flow 在 App 程序集 |
+| `CORE-F04` | Scene-owned GameInstance + Hybrid Debug | CORE | Done | `designs/CORE-F04-scene-gameinstance-debug.md` | — | `main` | Max | `~` 控制台 + gate |
+| `CORE-F06` | GameplayTag 基础设施 | CORE | Done | `designs/CORE-F06-gameplay-tags.md` | — | `main` | Max | Tag 容器 / 层级 / Query |
 | `SHLT-F02` | 幸存者身份目录 + 入住/状态/死亡 | SHLT | Done | `designs/SHLT-F02-survivor-identity.md` | — | `feat/shelter` | Max | 已合 main |
-| `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Done | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `main` | Max | `40bdf58` 落地；文档 2026-08-12 收口 |
-| `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | Review | `designs/EVT-F01-game-event-subsystem.md` | — | `feat/events` | Max | F02 扩展同分支；Play 回归后标 Done |
-| `EVT-F02` | 幸存者特殊事件（SurvivorEventProvider） | EVT | Review | `designs/EVT-F02-survivor-events.md` | — | `feat/events` | Max | 幼童线 + 政治家 D3；day 区间 + absent |
+| `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Done | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `main` | Max | 已落地 |
+| `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | Done | `designs/EVT-F01-game-event-subsystem.md` | — | `main` | Max | 已 merge `feat/events` |
+| `EVT-F02` | 幸存者特殊事件（SurvivorEventProvider） | EVT | Done | `designs/EVT-F02-survivor-events.md` | — | `main` | Max | 幼童线 Play 通过；政治家 D3 待复验 |
+| `CORE-F07` | GameplayTag 业务迁移（storyFlags → Tag） | CORE | Planned | `designs/CORE-F06-gameplay-tags.md` | — | `main` | Max | 下一 commit；`RequiredTags` + 剩余 SetFlag |
+| `SHLT-F03` | 幸存者被动（腐蚀/日结 hook） | SHLT | Planned | — | — | `main` | Max | 幼童常驻 −8 等；需 design |
+| `END-F01` | 结局钩子 + EndingEvaluator | CORE | Planned | — | — | `main` | Max | 政治家战败 E；需 design |
+| `COMB-F10` | 特质卡系统（defId 解锁 + 战斗集成） | COMB | Planned | — | — | `main` | Max | 承接 `TraitCatalog`；需 design |
+| `META-F01` | 结局回顾（成就式 run summary） | META | Planned | — | — | `main` | Max | 轻量 metadata；不依赖 mid-run 存档 |
+| `SAVE-F01` | 受限存档读档 | CORE | Planned | — | — | `main` | Max | 等 Tag/defId/Ending 模型稳定后 |
 
 ## 域代码
 
@@ -33,7 +39,16 @@
 - `SHLT` - 庇护所、NPC、饱食度
 - `COMB` - 卡牌战斗
 - `UI` - 界面交互与呈现
-- `EVT` - 突发事件（延后）
+- `EVT` - 突发事件
+- `META` - 局外回顾 / 成就式元数据
+
+## 近期执行顺序（2026-08-12 拍板，可灵活调整）
+
+1. **TD-008** — `combat.skip` / `combat.sweep` 修复（`main`）
+2. **CORE-F07** — Tag 业务迁移（独立 commit）
+3. **EVT-F02 余量** — 政治家 Play 复验；Out 项拆到 SHLT-F03 / END-F01
+4. **COMB-F10** — 特质卡（先 defId 挂钩 + design）
+5. **META-F01** → **SAVE-F01**
 
 ## 状态说明
 

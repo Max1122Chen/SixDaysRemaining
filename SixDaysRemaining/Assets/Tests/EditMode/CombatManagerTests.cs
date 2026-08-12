@@ -128,6 +128,22 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void ForceOutcome_Lose_WithCombatSweep_ResolvesWin()
+        {
+            Start(new CombatStartConfig
+            {
+                PlayerMaxHp = 100f,
+                EnemyMaxHp = 100f,
+                EncounterId = EncounterIds.Mob01,
+                DeckSeed = 1
+            });
+
+            manager.CombatSweep = true;
+            Assert.IsTrue(manager.ForceOutcome(CombatOutcome.Lose));
+            Assert.AreEqual(CombatOutcome.Win, manager.Result.Outcome);
+        }
+
+        [Test]
         public void Manager_HasNoSelectOrPlayApis()
         {
             MethodInfo[] methods = typeof(CombatManager).GetMethods(

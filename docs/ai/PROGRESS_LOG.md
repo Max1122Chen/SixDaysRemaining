@@ -35,7 +35,14 @@
   - `BUG-EVT-001`：修复 `BeforeDepart` 最后一个事件结果继续后 overlay 未关闭；补 `AppFlowControllerTests`
 - 待验证：Play 幼童线 + 政治家 D3；`TD-008` 仍 Open
 
-## 2026-08-12（EditMode 修复：GameInstance 子系统初始化）
+## 2026-08-12（merge feat/events + TD-008 修复）
+
+- 范围：`main` 合入 `feat/events`（fast-forward `ebcf6b9`）；Debug skip/sweep
+- 已完成：
+  - `FEATURE_REGISTRY` / `ACTIVE_WORK` 登记 CORE-F07～SAVE-F01 路线图
+  - TD-008：`OnDepart` 在 `skipCombat` 时不再要求 PlayerCombat/EnemyPrefab
+  - EditMode：`AppFlowControllerTests` / `CombatManagerTests` / `DebugCommandRegistryTests`
+- 下一步：CORE-F07 Tag 业务迁移
 
 - 范围：`GameInstance.EnsureSubsystemsInitialized` + `AppFlowControllerTests`
 - 已完成：EditMode `AddComponent` 不跑 `Awake` 时 `StartNewGame` 不再 NRE；全 EditMode 绿

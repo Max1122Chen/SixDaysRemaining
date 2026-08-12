@@ -1,7 +1,10 @@
 using NUnit.Framework;
+using SixDaysRemaining.App;
+using SixDaysRemaining.Combat;
 using SixDaysRemaining.Debugging;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
+using UnityEngine;
 
 namespace SixDaysRemaining.Tests.EditMode
 {
@@ -105,6 +108,58 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(before + 2, shelter.Survivors[0].hunger);
             StringAssert.Contains("已调整", result);
+        }
+
+        [Test]
+        public void Execute_CombatSkip_SetsDebugFlag()
+        {
+            GameObject go = new GameObject("DebugSkipTest");
+            try
+            {
+                GameplaySubsystem gameplay = new GameplaySubsystem();
+                gameplay.StartNewRun(1);
+                GameInstance gi = go.AddComponent<GameInstance>();
+                DebugCommandRegistry registry = new DebugCommandRegistry();
+
+                string result = registry.Execute(new DebugCommandContext
+                {
+                    Gameplay = gameplay,
+                    GameInstance = gi
+                }, "combat.skip on");
+
+                Assert.AreEqual("跳战：开", result);
+                Assert.IsTrue(gi.DebugSettings.skipCombat);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void Execute_CombatSweep_SyncsCombatManager()
+        {
+            GameObject go = new GameObject("DebugSweepTest");
+            try
+            {
+                GameInstance gi = go.AddComponent<GameInstance>();
+                CombatManager combat = new CombatManager();
+                DebugCommandRegistry registry = new DebugCommandRegistry();
+
+                string result = registry.Execute(new DebugCommandContext
+                {
+                    Combat = combat,
+                    GameInstance = gi
+                }, "combat.sweep on");
+
+                Assert.AreEqual("扫荡：开", result);
+                Assert.IsTrue(gi.DebugSettings.combatSweep);
+                Assert.IsTrue(combat.CombatSweep);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
         }
 
         [Test]

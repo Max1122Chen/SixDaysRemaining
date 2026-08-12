@@ -146,17 +146,23 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
-            if (gi.PlayerCombat == null || gi.EnemyPrefab == null)
+            DebugRunSettings debug = gi.DebugSettings;
+            bool skipCombat = debug != null && debug.skipCombat;
+            if (!skipCombat && (gi.PlayerCombat == null || gi.EnemyPrefab == null))
             {
                 return;
             }
 
             gi.Gameplay.AdvancePhase();
 
-            DebugRunSettings debug = gi.DebugSettings;
-            if (debug != null && debug.skipCombat)
+            if (skipCombat)
             {
                 ResolveSkippedCombat(gi);
+                return;
+            }
+
+            if (gi.PlayerCombat == null || gi.EnemyPrefab == null)
+            {
                 return;
             }
 

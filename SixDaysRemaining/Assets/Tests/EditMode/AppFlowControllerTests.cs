@@ -39,6 +39,31 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void OnDepart_SkipCombat_WithoutCombatRefs_AdvancesToTriumphReturn()
+        {
+            GameObject giGo = new GameObject("GameInstanceSkipTest");
+            GameObject flowGo = new GameObject("AppFlowSkipTest");
+            try
+            {
+                GameInstance gi = giGo.AddComponent<GameInstance>();
+                gi.StartNewGame(1);
+                gi.DebugSettings.skipCombat = true;
+
+                AppFlowController flow = flowGo.AddComponent<AppFlowController>();
+                flow.BindGame(gi);
+
+                flow.OnDepart();
+
+                Assert.AreEqual(GameplayPhase.TriumphReturn, gi.Gameplay.CurrentPhase);
+            }
+            finally
+            {
+                Object.DestroyImmediate(flowGo);
+                Object.DestroyImmediate(giGo);
+            }
+        }
+
+        [Test]
         public void HandleEventSequenceFinished_BeforeDepart_ClosesOverlay()
         {
             GameObject go = new GameObject("AppFlowControllerTests");
