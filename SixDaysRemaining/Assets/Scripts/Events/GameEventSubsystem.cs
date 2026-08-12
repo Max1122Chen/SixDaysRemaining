@@ -215,8 +215,41 @@ namespace SixDaysRemaining.Events
                 Population = shelter != null ? shelter.Population : 0,
                 RemainingDailyBudget = RemainingDailyBudget,
                 OwnedSurvivorDefIds = owned.ToArray(),
-                ActiveStoryFlags = gameplay != null ? gameplay.GetStoryFlagSnapshot() : Array.Empty<string>()
+                ActiveTags = BuildActiveTags(gameplay)
             };
+        }
+
+        private static string[] BuildActiveTags(GameplaySubsystem gameplaySubsystem)
+        {
+            if (gameplaySubsystem == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            System.Collections.Generic.IReadOnlyDictionary<string, int> snapshot = gameplaySubsystem.GetTagSnapshot();
+            if (snapshot == null || snapshot.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            string[] tags = new string[snapshot.Count];
+            int index = 0;
+            foreach (System.Collections.Generic.KeyValuePair<string, int> entry in snapshot)
+            {
+                if (entry.Value > 0)
+                {
+                    tags[index++] = entry.Key;
+                }
+            }
+
+            if (index == tags.Length)
+            {
+                return tags;
+            }
+
+            string[] trimmed = new string[index];
+            Array.Copy(tags, trimmed, index);
+            return trimmed;
         }
 
         private void ApplyFragment(GameEventEffectFragment fragment, ref GameEventResult result)
@@ -254,18 +287,6 @@ namespace SixDaysRemaining.Events
                 case GameEventEffectOp.JumpToEnding:
                     gameplay.ForceEnding(EndingReason.Debug);
                     result.EndedRun = true;
-                    break;
-                case GameEventEffectOp.SetFlag:
-                    if (!string.IsNullOrEmpty(fragment.FlagId))
-                    {
-                        gameplay.SetStoryFlag(fragment.FlagId);
-                    }
-                    break;
-                case GameEventEffectOp.ClearFlag:
-                    if (!string.IsNullOrEmpty(fragment.FlagId))
-                    {
-                        gameplay.ClearStoryFlag(fragment.FlagId);
-                    }
                     break;
                 case GameEventEffectOp.AddTag:
                     if (!string.IsNullOrEmpty(fragment.TagId))

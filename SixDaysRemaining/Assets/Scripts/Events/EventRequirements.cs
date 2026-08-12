@@ -29,7 +29,7 @@ namespace SixDaysRemaining.Events
                 return false;
             }
 
-            if (!PassesFlagRequirements(def, query))
+            if (!PassesTagRequirements(def, query))
             {
                 return false;
             }
@@ -118,22 +118,22 @@ namespace SixDaysRemaining.Events
             return true;
         }
 
-        private static bool PassesFlagRequirements(GameEventDef def, GameEventQuery query)
+        private static bool PassesTagRequirements(GameEventDef def, GameEventQuery query)
         {
-            if (def.RequiredFlags == null)
+            if (def.RequiredTags == null)
             {
                 return true;
             }
 
-            for (int i = 0; i < def.RequiredFlags.Length; i++)
+            for (int i = 0; i < def.RequiredTags.Length; i++)
             {
-                string flag = def.RequiredFlags[i];
-                if (string.IsNullOrEmpty(flag))
+                string tag = def.RequiredTags[i];
+                if (string.IsNullOrEmpty(tag))
                 {
                     continue;
                 }
 
-                if (!ContainsId(query.ActiveStoryFlags, flag))
+                if (!ContainsId(query.ActiveTags, tag))
                 {
                     return false;
                 }

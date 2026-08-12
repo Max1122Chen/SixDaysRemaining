@@ -18,6 +18,7 @@ namespace SixDaysRemaining.Events.Content
         public int priority;
         public string[] requiredSurvivorIds;
         public string[] requiredAbsentSurvivorIds;
+        public string[] requiredTags;
         public string[] requiredFlags;
         public string poolId;
         public int corruptionMin = int.MinValue;
@@ -45,7 +46,7 @@ namespace SixDaysRemaining.Events.Content
         public string op;
         public int amount;
         public string survivorDefId;
-        public string flagId;
         public string tagId;
+        public string flagId;
     }
 }

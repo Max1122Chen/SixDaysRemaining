@@ -16,8 +16,6 @@ namespace SixDaysRemaining.Events
         TakeInSurvivor = 2,
         ExpelSurvivor = 3,
         JumpToEnding = 4,
-        SetFlag = 100,
-        ClearFlag = 101,
         AddTag = 103,
         RemoveTag = 104,
         // Reserved (F01 load hard-fails if present in JSON until implemented):
@@ -33,7 +31,7 @@ namespace SixDaysRemaining.Events
         public int Priority;
         public string[] RequiredSurvivorIds = Array.Empty<string>();
         public string[] RequiredAbsentSurvivorIds = Array.Empty<string>();
-        public string[] RequiredFlags = Array.Empty<string>();
+        public string[] RequiredTags = Array.Empty<string>();
         public int? RequiredDayMin;
         public int? RequiredDayMax;
         public string PoolId;
@@ -58,7 +56,6 @@ namespace SixDaysRemaining.Events
         public GameEventEffectOp Op;
         public int Amount;
         public string SurvivorDefId;
-        public string FlagId;
         public string TagId;
     }
 
@@ -80,6 +77,6 @@ namespace SixDaysRemaining.Events
         public int Population;
         public int RemainingDailyBudget;
         public string[] OwnedSurvivorDefIds = Array.Empty<string>();
-        public string[] ActiveStoryFlags = Array.Empty<string>();
+        public string[] ActiveTags = Array.Empty<string>();
     }
 }

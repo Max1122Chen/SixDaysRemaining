@@ -26,7 +26,7 @@
 | `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Done | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `main` | Max | 已落地 |
 | `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | Done | `designs/EVT-F01-game-event-subsystem.md` | — | `main` | Max | 已 merge `feat/events` |
 | `EVT-F02` | 幸存者特殊事件（SurvivorEventProvider） | EVT | Done | `designs/EVT-F02-survivor-events.md` | — | `main` | Max | 幼童线 Play 通过；政治家 D3 待复验 |
-| `CORE-F07` | GameplayTag 业务迁移（storyFlags → Tag） | CORE | Planned | `designs/CORE-F06-gameplay-tags.md` | — | `main` | Max | 下一 commit；`RequiredTags` + 剩余 SetFlag |
+| `CORE-F07` | GameplayTag 业务迁移（storyFlags → Tag） | CORE | Done | `designs/CORE-F07-gameplay-tag-migration.md` | — | `main` | Max | Story Tag + requiredTags；删 storyFlags |
 | `SHLT-F03` | 幸存者被动（腐蚀/日结 hook） | SHLT | Planned | — | — | `main` | Max | 幼童常驻 −8 等；需 design |
 | `END-F01` | 结局钩子 + EndingEvaluator | CORE | Planned | — | — | `main` | Max | 政治家战败 E；需 design |
 | `COMB-F10` | 特质卡系统（defId 解锁 + 战斗集成） | COMB | Planned | — | — | `main` | Max | 承接 `TraitCatalog`；需 design |

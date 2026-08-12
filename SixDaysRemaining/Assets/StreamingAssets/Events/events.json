@@ -24,7 +24,7 @@
           "label": "婉拒，优先外出搜集物资",
           "resultText": "幼童没再说话，把石头攥得更紧了。",
           "effects": [
-            { "op": "SetFlag", "flagId": "child_stone_declined_d2" }
+            { "op": "AddTag", "tagId": "Story.ChildStone.Declined.Day2" }
           ]
         }
       ]
@@ -53,7 +53,7 @@
           "label": "婉拒，优先外出搜集物资",
           "resultText": "幼童没再说话，把石头攥得更紧了。",
           "effects": [
-            { "op": "SetFlag", "flagId": "child_stone_declined_d3" }
+            { "op": "AddTag", "tagId": "Story.ChildStone.Declined.Day3" }
           ]
         }
       ]
@@ -67,7 +67,7 @@
       "requiredDayMin": 4,
       "requiredDayMax": 4,
       "requiredSurvivorIds": ["child"],
-      "requiredFlags": ["child_stone_declined_d2", "child_stone_declined_d3"],
+      "requiredTags": ["Story.ChildStone.Declined.Day2", "Story.ChildStone.Declined.Day3"],
       "options": [
         {
           "id": "acknowledge",
@@ -77,8 +77,8 @@
             { "op": "FoodDelta", "amount": -1 },
             { "op": "CorruptionDelta", "amount": 20 },
             { "op": "ExpelSurvivor", "survivorDefId": "child" },
-            { "op": "ClearFlag", "flagId": "child_stone_declined_d2" },
-            { "op": "ClearFlag", "flagId": "child_stone_declined_d3" }
+            { "op": "RemoveTag", "tagId": "Story.ChildStone.Declined.Day2" },
+            { "op": "RemoveTag", "tagId": "Story.ChildStone.Declined.Day3" }
           ]
         }
       ]

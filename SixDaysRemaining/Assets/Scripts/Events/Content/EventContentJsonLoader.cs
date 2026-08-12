@@ -20,10 +20,14 @@ namespace SixDaysRemaining.Events.Content
             "TakeInSurvivor",
             "ExpelSurvivor",
             "JumpToEnding",
-            "SetFlag",
-            "ClearFlag",
             "AddTag",
             "RemoveTag"
+        };
+
+        private static readonly HashSet<string> RetiredOps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "SetFlag",
+            "ClearFlag"
         };
 
         public static string EventsFolderPath
@@ -145,6 +149,13 @@ namespace SixDaysRemaining.Events.Content
                     throw new InvalidOperationException("Duplicate event id '" + dto.id + "' in " + path);
                 }
 
+                if (dto.requiredFlags != null && dto.requiredFlags.Length > 0)
+                {
+                    throw new InvalidOperationException(
+                        "Event '" + dto.id + "' uses retired field 'requiredFlags' in " + path
+                        + "; use 'requiredTags' instead.");
+                }
+
                 GameEventTrigger trigger;
                 if (!Enum.TryParse(dto.trigger, true, out trigger))
                 {
@@ -161,7 +172,7 @@ namespace SixDaysRemaining.Events.Content
                     Priority = dto.priority,
                     RequiredSurvivorIds = dto.requiredSurvivorIds ?? Array.Empty<string>(),
                     RequiredAbsentSurvivorIds = dto.requiredAbsentSurvivorIds ?? Array.Empty<string>(),
-                    RequiredFlags = dto.requiredFlags ?? Array.Empty<string>(),
+                    RequiredTags = dto.requiredTags ?? Array.Empty<string>(),
                     PoolId = dto.poolId,
                     Weight = dto.weight <= 0 ? 1 : dto.weight,
                     Options = BuildOptions(dto, path)
@@ -262,6 +273,20 @@ namespace SixDaysRemaining.Events.Content
                         "Event '" + eventId + "' option '" + opt.id + "' has invalid effect in " + path);
                 }
 
+                if (RetiredOps.Contains(fx.op))
+                {
+                    throw new InvalidOperationException(
+                        "Retired fragment op '" + fx.op + "' on event '" + eventId + "' in " + path
+                        + "; use AddTag/RemoveTag instead.");
+                }
+
+                if (!string.IsNullOrEmpty(fx.flagId))
+                {
+                    throw new InvalidOperationException(
+                        "Retired field 'flagId' on event '" + eventId + "' in " + path
+                        + "; use 'tagId' with AddTag/RemoveTag instead.");
+                }
+
                 if (!ImplementedOps.Contains(fx.op))
                 {
                     throw new InvalidOperationException(
@@ -281,7 +306,6 @@ namespace SixDaysRemaining.Events.Content
                     Op = op,
                     Amount = fx.amount,
                     SurvivorDefId = fx.survivorDefId,
-                    FlagId = fx.flagId,
                     TagId = fx.tagId
                 };
             }

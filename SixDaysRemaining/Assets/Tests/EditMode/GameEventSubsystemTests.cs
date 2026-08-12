@@ -92,7 +92,7 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void Loader_AcceptsSetFlag()
+        public void Loader_RejectsSetFlag()
         {
             string json = @"{
   ""events"": [ {
@@ -108,8 +108,117 @@ namespace SixDaysRemaining.Tests.EditMode
     } ]
   } ]
 }";
-            IReadOnlyList<GameEventDef> defs = EventContentJsonLoader.LoadFromJsonText(json, "flag");
-            Assert.AreEqual(1, defs.Count);
+            Assert.Throws<System.InvalidOperationException>(() =>
+                EventContentJsonLoader.LoadFromJsonText(json, "flag"));
+        }
+
+        [Test]
+        public void Loader_RejectsRequiredFlags()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""legacy"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""BeforeDepart"",
+    ""requiredFlags"": [""old_flag""],
+    ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+  } ]
+}";
+            Assert.Throws<System.InvalidOperationException>(() =>
+                EventContentJsonLoader.LoadFromJsonText(json, "legacy"));
+        }
+
+        [Test]
+        public void RequiredTags_AllMustMatch_ForChildStoleFood()
+        {
+            string json = @"{
+  ""events"": [
+    {
+      ""id"": ""stole"",
+      ""title"": ""t"",
+      ""body"": ""b"",
+      ""trigger"": ""BeforeDepart"",
+      ""requiredDayMin"": 4,
+      ""requiredDayMax"": 4,
+      ""requiredSurvivorIds"": [""child""],
+      ""requiredTags"": [
+        ""Story.ChildStone.Declined.Day2"",
+        ""Story.ChildStone.Declined.Day3""
+      ],
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    },
+    {
+      ""id"": ""fallback"",
+      ""title"": ""f"",
+      ""body"": ""b"",
+      ""trigger"": ""BeforeDepart"",
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    }
+  ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "tags");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            gameplay.SetDay(4);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            shelter.InitializeDefaultRoster(5);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[]
+            {
+                new SurvivorEventProvider(),
+                new RandomPoolProvider(1)
+            });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.BeforeDepart);
+            Assert.AreEqual("fallback", events.CurrentEvent.Id);
+
+            gameplay.AddTag(GameplayTags.ChildStoneDeclinedDay2);
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.BeforeDepart);
+            Assert.AreEqual("fallback", events.CurrentEvent.Id);
+
+            gameplay.AddTag(GameplayTags.ChildStoneDeclinedDay3);
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.BeforeDepart);
+            Assert.AreEqual("stole", events.CurrentEvent.Id);
+        }
+
+        [Test]
+        public void ApplyOption_ChildStoneDeclined_AddsStoryTag()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""decline"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""no"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [
+        { ""op"": ""AddTag"", ""tagId"": ""Story.ChildStone.Declined.Day2"" }
+      ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "decline");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            events.ApplyOption(0);
+
+            Assert.IsTrue(gameplay.HasTagExact(GameplayTags.ChildStoneDeclinedDay2));
+            Assert.IsFalse(gameplay.HasTagExact(GameplayTags.ChildStoneDeclinedDay3));
         }
 
         [Test]

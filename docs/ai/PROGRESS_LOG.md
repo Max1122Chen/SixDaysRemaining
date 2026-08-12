@@ -35,6 +35,22 @@
   - `BUG-EVT-001`：修复 `BeforeDepart` 最后一个事件结果继续后 overlay 未关闭；补 `AppFlowControllerTests`
 - 待验证：Play 幼童线 + 政治家 D3；`TD-008` 仍 Open
 
+## 2026-08-12（CORE-F07 实现）
+
+- 范围：storyFlags → GameplayTag 单轨迁移
+- 已完成：
+  - `Story.ChildStone.Declined.Day2/Day3`；`requiredTags` All + Exact
+  - 删除 `storyFlags` / `SetFlag` / `ClearFlag` / `RunStoryFlags`
+  - loader 硬失败遗留 `requiredFlags` / `SetFlag` / `flagId`
+  - EditMode：`GameEventSubsystemTests` 扩展
+- 待验证：Play 幼童拒玩 ×2 → D4 偷粮线
+
+## 2026-08-12（CORE-F07 设计起草）
+
+- 范围：storyFlags → GameplayTag 单轨迁移
+- 已完成：起草 `designs/CORE-F07-gameplay-tag-migration.md`；登记 Draft
+- 下一步：审阅拍板（硬切 schema、Exact All、Debug 边界）后实现
+
 ## 2026-08-12（merge feat/events + TD-008 修复）
 
 - 范围：`main` 合入 `feat/events`（fast-forward `ebcf6b9`）；Debug skip/sweep
