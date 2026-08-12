@@ -92,9 +92,7 @@ namespace SixDaysRemaining.App
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            Gameplay = new GameplaySubsystem();
-            Combat = new CombatManager();
-            Events = new GameEventSubsystem();
+            EnsureSubsystemsInitialized();
             Mode = AppMode.MainMenu;
         }
 
@@ -116,6 +114,7 @@ namespace SixDaysRemaining.App
         /// </summary>
         public void StartNewGame(int seed)
         {
+            EnsureSubsystemsInitialized();
             Mode = AppMode.InGame;
             Gameplay.StartNewRun(seed);
             ApplyDebugStartCorruption();
@@ -173,6 +172,24 @@ namespace SixDaysRemaining.App
             }
 
             Mode = AppMode.MainMenu;
+        }
+
+        private void EnsureSubsystemsInitialized()
+        {
+            if (Gameplay == null)
+            {
+                Gameplay = new GameplaySubsystem();
+            }
+
+            if (Combat == null)
+            {
+                Combat = new CombatManager();
+            }
+
+            if (Events == null)
+            {
+                Events = new GameEventSubsystem();
+            }
         }
     }
 }

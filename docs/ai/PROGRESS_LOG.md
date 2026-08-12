@@ -35,6 +35,12 @@
   - `BUG-EVT-001`：修复 `BeforeDepart` 最后一个事件结果继续后 overlay 未关闭；补 `AppFlowControllerTests`
 - 待验证：Play 幼童线 + 政治家 D3；`TD-008` 仍 Open
 
+## 2026-08-12（EditMode 修复：GameInstance 子系统初始化）
+
+- 范围：`GameInstance.EnsureSubsystemsInitialized` + `AppFlowControllerTests`
+- 已完成：EditMode `AddComponent` 不跑 `Awake` 时 `StartNewGame` 不再 NRE；全 EditMode 绿
+- 下一步：Play 复验 EVT-F02
+
 ## 2026-08-12（EVT-F02 设计起草）
 
 - 范围：幸存者专属事件调度

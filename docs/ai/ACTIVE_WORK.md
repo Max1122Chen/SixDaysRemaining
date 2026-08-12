@@ -4,7 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | `EVT-F02` 幸存者特殊事件 | In Progress | Max | 幼童禁出征迁 GameplayTag；修复 blocked day 日结；Play 复验 |
+| P0 | `EVT-F02` 幸存者特殊事件 | Review | Max | Play 复验幼童线 / 政治家 D3；通过后标 Done |
 | P0 | `CORE-F06` GameplayTag 基础设施 | Done | Max | 已合 `main` 并 merge 到 `feat/events` |
 | P1 | `TD-008` Debug combat skip/sweep | Open | Max | `combat.win` 可用；`skip`/`sweep` 待修 |
 | P1 | `EVT-F01` GameEventSubsystem | Review | Max | 与 F02 同批 Play 回归后标 Done |

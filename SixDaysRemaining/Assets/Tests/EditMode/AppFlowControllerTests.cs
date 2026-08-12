@@ -23,6 +23,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
                 AppFlowController flow = flowGo.AddComponent<AppFlowController>();
                 flow.BindGame(gi);
+                flow.CloseOverlayCallback = () => { };
 
                 flow.OnDayEndContinue();
 
