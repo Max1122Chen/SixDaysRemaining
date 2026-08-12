@@ -4,6 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
+| P0 | `CORE-F06` GameplayTag 基础设施 | In Progress | Max | 实现 Tag Runtime + EditMode 测试；不迁 EVT 业务 |
 | P0 | `CORE-F04` Scene-owned GameInstance + Hybrid Debug | In Progress | Max | Play/EditMode 验证；gate 主菜单 help 待 Play 确认 |
 | P1 | `COMB-F09` 每步格挡结算 + Corruption Gateway | Draft | Max | 审阅 design；确认每步清 block 边界 |
 | P3 | `EVT-F01` GameEventSubsystem + 同质事件模型 | Draft | Max | 审阅 design；确认 fragment 边界与调度时机；承接 `TD-007` |

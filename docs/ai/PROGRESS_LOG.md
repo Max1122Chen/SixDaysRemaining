@@ -2,6 +2,22 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-12（CORE-F06 实现）
+
+- 范围：GameplayTag 基础设施（CORE）
+- 已完成：
+  - `Assets/Scripts/Gameplay/Tags/`：`GameplayTag` / `GameplayTagContainer` / `GameplayTagQuery`
+  - `GameplaySubsystem` façade API + `StartNewRun()` 清空 tag 容器
+  - EditMode：`GameplayTagTests`（解析、层级、计数、All/Any/None、生命周期、快照）
+- 未做：EVT/Flow 业务迁移（`storyFlags` / `child_play_promised` 等保持原状）
+- 下一步：Unity EditMode 全绿 → prepare commit；后续单独开迁移 slice（如 `State.ForbiddenExpedition.Once`）
+
+## 2026-08-12（CORE-F06 设计起草）
+
+- 范围：GameplayTag 基础设施（CORE）
+- 已完成：登记 `CORE-F06`；明确首版只做基础设施，不迁具体业务
+- 下一步：审阅 `designs/CORE-F06-gameplay-tags.md`；通过后切 `main` 实现
+
 ## 2026-08-11（CORE-F04 命令与门禁实现）
 
 - 范围：Hybrid Debug 命令表 + 业务 API + gate
