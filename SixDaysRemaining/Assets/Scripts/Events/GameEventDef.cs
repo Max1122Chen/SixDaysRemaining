@@ -18,6 +18,8 @@ namespace SixDaysRemaining.Events
         JumpToEnding = 4,
         SetFlag = 100,
         ClearFlag = 101,
+        AddTag = 103,
+        RemoveTag = 104,
         // Reserved (F01 load hard-fails if present in JSON until implemented):
         OverrideHungerDecay = 102
     }
@@ -57,6 +59,7 @@ namespace SixDaysRemaining.Events
         public int Amount;
         public string SurvivorDefId;
         public string FlagId;
+        public string TagId;
     }
 
     public struct GameEventResult

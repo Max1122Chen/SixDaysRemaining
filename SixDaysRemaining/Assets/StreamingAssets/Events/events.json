@@ -16,7 +16,7 @@
           "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
           "effects": [
             { "op": "CorruptionDelta", "amount": -20 },
-            { "op": "SetFlag", "flagId": "child_play_promised" }
+            { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" }
           ]
         },
         {
@@ -45,7 +45,7 @@
           "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
           "effects": [
             { "op": "CorruptionDelta", "amount": -20 },
-            { "op": "SetFlag", "flagId": "child_play_promised" }
+            { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" }
           ]
         },
         {

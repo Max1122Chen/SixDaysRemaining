@@ -1,7 +1,6 @@
 using System.Text;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.App;
-using SixDaysRemaining.Events;
 using SixDaysRemaining.Shelter;
 using TMPro;
 using UnityEngine;
@@ -31,6 +30,9 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private Button menuButton;
 
+        [SerializeField]
+        private Button dayEndButton;
+
         public static ShelterView Build(Transform parent, AppFlowController flow)
         {
             GameObject panel = UiFactory.CreatePanel(parent, "ShelterScreen", new Color(0.08f, 0.10f, 0.12f, 1f));
@@ -42,6 +44,7 @@ namespace SixDaysRemaining.UI
             view.survivorText = UiFactory.CreateText(panel.transform, "Txt_Survivors", "", 20, new Vector2(330f, 180f), new Vector2(560f, 220f), TextAlignmentOptions.Left);
 
             view.departButton = UiFactory.CreateButton(panel.transform, "Btn_Depart", "出发", null, new Vector2(0f, -280f), new Vector2(220f, 60f), null, 22);
+            view.dayEndButton = UiFactory.CreateButton(panel.transform, "Btn_DayEnd", "结束今天", null, new Vector2(0f, -200f), new Vector2(220f, 48f), new Color(0.22f, 0.32f, 0.28f, 1f), 20);
             view.settingsButton = UiFactory.CreateButton(panel.transform, "Btn_Settings", "设置", null, new Vector2(-250f, -280f), new Vector2(140f, 48f), new Color(0.22f, 0.26f, 0.32f, 1f), 20);
             view.menuButton = UiFactory.CreateButton(panel.transform, "Btn_Menu", "返回主菜单", null, new Vector2(250f, -280f), new Vector2(180f, 48f), new Color(0.22f, 0.26f, 0.32f, 1f), 20);
             view.Wire(flow);
@@ -52,6 +55,7 @@ namespace SixDaysRemaining.UI
         {
             this.flow = flow;
             WireButton(departButton, flow.OnDepart);
+            WireButton(dayEndButton, flow.BeginDayEnd);
             WireButton(settingsButton, flow.ShowSettings);
             WireButton(menuButton, flow.OnBackToMenu);
         }
@@ -84,7 +88,7 @@ namespace SixDaysRemaining.UI
                 + "\n人口：" + state.population
                 + "\n阶段：" + state.currentPhase;
 
-            bool expeditionBlocked = gi.Gameplay.HasStoryFlag(RunStoryFlags.ChildPlayPromised);
+            bool expeditionBlocked = gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition);
             if (departButton != null)
             {
                 departButton.interactable = !expeditionBlocked
@@ -97,6 +101,15 @@ namespace SixDaysRemaining.UI
                         ? "你答应了幼童，今天要陪他一起玩抛石头"
                         : "出发";
                 }
+            }
+
+            if (dayEndButton != null)
+            {
+                bool showDayEnd = expeditionBlocked
+                    && state.currentPhase == GameplayPhase.ExpeditionPrep
+                    && (gi.Events == null || !gi.Events.IsSequenceActive);
+                dayEndButton.gameObject.SetActive(showDayEnd);
+                dayEndButton.interactable = showDayEnd;
             }
 
             StringBuilder sb = new StringBuilder();

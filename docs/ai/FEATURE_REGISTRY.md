@@ -21,6 +21,7 @@
 | `CORE-F03` | 可玩接入层（单场景 + 输入 + Log） | CORE | Done | `designs/CORE-F03-playable-loop.md` | — | `feat/playable-loop` | Max | 可玩主线已合 |
 | `CORE-F05` | AppFlow 编排收敛 + PresentationManager | CORE | Done | `designs/CORE-F05-appflow-presentation.md` | — | `main` | Max | Flow 编译在 App 程序集；命名空间 Gameplay；`TD-007` |
 | `CORE-F04` | Scene-owned GameInstance + Hybrid Debug | CORE | Done | `designs/CORE-F04-scene-gameinstance-debug.md` | — | `main` | Max | `~` 控制台 + gate + 全命令；`run.day skip` 后续可选 |
+| `CORE-F06` | GameplayTag 基础设施 | CORE | Done | `designs/CORE-F06-gameplay-tags.md` | — | `main` | Max | Tag 容器 / 层级匹配 / Count / Query；已合 main |
 | `SHLT-F02` | 幸存者身份目录 + 入住/状态/死亡 | SHLT | Done | `designs/SHLT-F02-survivor-identity.md` | — | `feat/shelter` | Max | 已合 main |
 | `COMB-F09` | 每步格挡结算 + Corruption Gateway | COMB | Done | `designs/COMB-F09-per-step-block-and-corruption-gateway.md` | — | `main` | Max | `40bdf58` 落地；文档 2026-08-12 收口 |
 | `EVT-F01` | GameEventSubsystem + 同质事件模型 | EVT | Review | `designs/EVT-F01-game-event-subsystem.md` | — | `feat/events` | Max | F02 扩展同分支；Play 回归后标 Done |

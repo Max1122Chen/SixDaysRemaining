@@ -5,7 +5,6 @@ namespace SixDaysRemaining.Events
     /// </summary>
     public static class RunStoryFlags
     {
-        public const string ChildPlayPromised = "child_play_promised";
         public const string ChildStoneDeclinedD2 = "child_stone_declined_d2";
         public const string ChildStoneDeclinedD3 = "child_stone_declined_d3";
     }

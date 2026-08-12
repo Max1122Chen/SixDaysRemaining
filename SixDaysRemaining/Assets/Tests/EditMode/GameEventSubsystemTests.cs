@@ -208,7 +208,7 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void ApplyOption_SetFlag_AndChildLine()
+        public void ApplyOption_AddTag_ForbiddenExpeditionOnce()
         {
             string json = @"{
   ""events"": [ {
@@ -221,7 +221,7 @@ namespace SixDaysRemaining.Tests.EditMode
       ""label"": ""L"",
       ""resultText"": ""r"",
       ""effects"": [
-        { ""op"": ""SetFlag"", ""flagId"": ""child_play_promised"" }
+        { ""op"": ""AddTag"", ""tagId"": ""State.ForbiddenExpedition.Once"" }
       ]
     } ]
   } ]
@@ -237,7 +237,8 @@ namespace SixDaysRemaining.Tests.EditMode
             events.ResetDailyBudget();
             events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
             events.ApplyOption(0);
-            Assert.IsTrue(gameplay.HasStoryFlag(RunStoryFlags.ChildPlayPromised));
+            Assert.IsTrue(gameplay.HasTag(GameplayTags.ForbiddenExpedition));
+            Assert.IsTrue(gameplay.HasTagExact(GameplayTags.ForbiddenExpeditionOnce));
         }
 
         [Test]

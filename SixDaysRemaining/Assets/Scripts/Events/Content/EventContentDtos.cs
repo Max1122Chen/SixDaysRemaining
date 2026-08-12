@@ -46,5 +46,6 @@ namespace SixDaysRemaining.Events.Content
         public int amount;
         public string survivorDefId;
         public string flagId;
+        public string tagId;
     }
 }

@@ -11,7 +11,8 @@ namespace SixDaysRemaining.Gameplay
     {
         public const int MaxDay = 6;
 
-        private readonly HashSet<string> storyFlags = new HashSet<string>();
+        readonly GameplayTagContainer gameplayTags = new GameplayTagContainer();
+        readonly HashSet<string> storyFlags = new HashSet<string>();
 
         public GameState State { get; private set; }
 
@@ -30,6 +31,7 @@ namespace SixDaysRemaining.Gameplay
         /// </summary>
         public void StartNewRun(int seed)
         {
+            gameplayTags.Clear();
             State = new GameState();
             storyFlags.Clear();
             State.day = 1;
@@ -38,6 +40,41 @@ namespace SixDaysRemaining.Gameplay
             State.rngSeed = seed;
             State.population = 0;
             State.currentPhase = GameplayPhase.ExpeditionPrep;
+        }
+
+        public void AddTag(string tag, int count = 1)
+        {
+            gameplayTags.AddTag(GameplayTag.Parse(tag), count);
+        }
+
+        public void RemoveTag(string tag, int count = 1)
+        {
+            gameplayTags.RemoveTag(GameplayTag.Parse(tag), count);
+        }
+
+        public bool HasTag(string tag)
+        {
+            return gameplayTags.HasTag(GameplayTag.Parse(tag));
+        }
+
+        public bool HasTagExact(string tag)
+        {
+            return gameplayTags.HasTagExact(GameplayTag.Parse(tag));
+        }
+
+        public int GetTagCount(string tag)
+        {
+            return gameplayTags.GetCount(GameplayTag.Parse(tag));
+        }
+
+        public bool MatchesQuery(GameplayTagQuery query)
+        {
+            return gameplayTags.MatchesQuery(query);
+        }
+
+        public IReadOnlyDictionary<string, int> GetTagSnapshot()
+        {
+            return gameplayTags.ToReadOnlySnapshot();
         }
 
         /// <summary>

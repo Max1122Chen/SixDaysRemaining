@@ -21,7 +21,9 @@ namespace SixDaysRemaining.Events.Content
             "ExpelSurvivor",
             "JumpToEnding",
             "SetFlag",
-            "ClearFlag"
+            "ClearFlag",
+            "AddTag",
+            "RemoveTag"
         };
 
         public static string EventsFolderPath
@@ -279,7 +281,8 @@ namespace SixDaysRemaining.Events.Content
                     Op = op,
                     Amount = fx.amount,
                     SurvivorDefId = fx.survivorDefId,
-                    FlagId = fx.flagId
+                    FlagId = fx.flagId,
+                    TagId = fx.tagId
                 };
             }
 

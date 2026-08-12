@@ -267,6 +267,18 @@ namespace SixDaysRemaining.Events
                         gameplay.ClearStoryFlag(fragment.FlagId);
                     }
                     break;
+                case GameEventEffectOp.AddTag:
+                    if (!string.IsNullOrEmpty(fragment.TagId))
+                    {
+                        gameplay.AddTag(fragment.TagId);
+                    }
+                    break;
+                case GameEventEffectOp.RemoveTag:
+                    if (!string.IsNullOrEmpty(fragment.TagId))
+                    {
+                        gameplay.RemoveTag(fragment.TagId);
+                    }
+                    break;
                 default:
                     throw new InvalidOperationException("Unimplemented fragment at runtime: " + fragment.Op);
             }

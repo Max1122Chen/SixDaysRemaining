@@ -2,7 +2,27 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-12（CORE-F06 实现 + merge 到 feat/events）
+
+- 范围：GameplayTag 基础设施（CORE）
+- 已完成：
+  - `Assets/Scripts/Gameplay/Tags/`：`GameplayTag` / `GameplayTagContainer` / `GameplayTagQuery`
+  - `GameplaySubsystem` façade API + `StartNewRun()` 清空 tag 容器
+  - EditMode：`GameplayTagTests`；已 commit 到 `main` 并 merge 进 `feat/events`
+- 进行中：幼童禁出征迁 `State.ForbiddenExpedition.Once`
+
+## 2026-08-12（幼童禁出征 Tag 迁移）
+
+- 范围：`feat/events` 业务重构
+- 已完成：
+  - 事件 JSON：`AddTag` → `State.ForbiddenExpedition.Once`；新增 `AddTag`/`RemoveTag` fragment
+  - Flow / Shelter 消费 `GameplayTags.ForbiddenExpedition`；移除 `child_play_promised`
+  - 修复清除时机：禁出征日通过「结束今天」日结，不再在凯旋日结误清 tag
+  - EditMode：`GameEventSubsystemTests` / `AppFlowControllerTests` 更新
+- 待验证：Play 幼童 D2 陪玩 → D3 禁出征 → 结束今天 → D4 可出发
+
 ## 2026-08-12（EVT-F02 实现）
+
 
 - 范围：SurvivorEventProvider + 幼童抛石头线 + 政治家 D3 敲门
 - 已完成：
@@ -54,6 +74,13 @@
   - `ACTIVE_WORK`：下一 P0 为 `EVT-F01`（承接 `TD-007`）
   - 更新 FEATURE_REGISTRY / design 验收清单 / PROJECT_CONTEXT / BOOTSTRAP_DIGEST
 - 下一步：审阅 `EVT-F01` design 后实现
+
+## 2026-08-12（CORE-F06 设计起草）
+
+- 范围：GameplayTag 基础设施（CORE）
+- 已完成：登记 `CORE-F06`；明确首版只做基础设施，不迁具体业务
+- 下一步：审阅 `designs/CORE-F06-gameplay-tags.md`；通过后切 `main` 实现
+
 
 ## 2026-08-11（CORE-F04 命令与门禁实现）
 

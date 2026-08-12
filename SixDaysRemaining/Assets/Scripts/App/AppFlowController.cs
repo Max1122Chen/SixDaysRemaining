@@ -141,7 +141,7 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
-            if (gi.Gameplay.HasStoryFlag(RunStoryFlags.ChildPlayPromised))
+            if (gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition))
             {
                 return;
             }
@@ -302,7 +302,19 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
-            gi.Gameplay.AdvancePhase();
+            bool blockedExpeditionDay = gi.Gameplay.CurrentPhase == GameplayPhase.ExpeditionPrep
+                && gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition);
+
+            if (blockedExpeditionDay)
+            {
+                gi.Gameplay.RemoveTag(GameplayTags.ForbiddenExpeditionOnce);
+                AdvanceDayWithoutCombat(gi);
+            }
+            else
+            {
+                gi.Gameplay.AdvancePhase();
+            }
+
             CloseOverlay();
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
@@ -310,8 +322,21 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
-            gi.Gameplay.ClearStoryFlag(RunStoryFlags.ChildPlayPromised);
             EnterShelterWithBeforeDepart(resetBudget: true);
+        }
+
+        private static void AdvanceDayWithoutCombat(GameInstance gi)
+        {
+            GameplaySubsystem gameplay = gi.Gameplay;
+            gameplay.State.day += 1;
+            if (gameplay.State.day > GameplaySubsystem.MaxDay)
+            {
+                gameplay.SetPhase(GameplayPhase.Ending);
+            }
+            else
+            {
+                gameplay.SetPhase(GameplayPhase.ExpeditionPrep);
+            }
         }
 
         public void OnBackToMenu()

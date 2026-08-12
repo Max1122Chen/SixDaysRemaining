@@ -1,5 +1,6 @@
 using System.Reflection;
 using NUnit.Framework;
+using SixDaysRemaining.App;
 using SixDaysRemaining.Gameplay;
 using UnityEngine;
 
@@ -7,6 +8,35 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class AppFlowControllerTests
     {
+        [Test]
+        public void OnDayEndContinue_BlockedExpeditionDay_AdvancesDayAndClearsTag()
+        {
+            GameObject giGo = new GameObject("GameInstanceTest");
+            GameObject flowGo = new GameObject("AppFlowControllerTest");
+            try
+            {
+                GameInstance gi = giGo.AddComponent<GameInstance>();
+                gi.StartNewGame(1);
+                gi.Gameplay.SetPhase(GameplayPhase.ExpeditionPrep);
+                gi.Gameplay.State.day = 3;
+                gi.Gameplay.AddTag(GameplayTags.ForbiddenExpeditionOnce);
+
+                AppFlowController flow = flowGo.AddComponent<AppFlowController>();
+                flow.BindGame(gi);
+
+                flow.OnDayEndContinue();
+
+                Assert.IsFalse(gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition));
+                Assert.AreEqual(4, gi.Gameplay.State.day);
+                Assert.AreEqual(GameplayPhase.ExpeditionPrep, gi.Gameplay.CurrentPhase);
+            }
+            finally
+            {
+                Object.DestroyImmediate(flowGo);
+                Object.DestroyImmediate(giGo);
+            }
+        }
+
         [Test]
         public void HandleEventSequenceFinished_BeforeDepart_ClosesOverlay()
         {
