@@ -119,6 +119,7 @@ namespace SixDaysRemaining.App
             Gameplay.StartNewRun(seed);
             ApplyDebugStartCorruption();
             Shelter = new ShelterManager(Gameplay.State);
+            Shelter.BindGameplay(Gameplay);
             Shelter.InitializeDefaultRoster(StartingFoodStock);
             ApplyDebugShelterOverrides();
             BindEventsSubsystem(seed);

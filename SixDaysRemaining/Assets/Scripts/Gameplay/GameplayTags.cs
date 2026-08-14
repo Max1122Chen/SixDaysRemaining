@@ -10,5 +10,7 @@ namespace SixDaysRemaining.Gameplay
 
         public const string ChildStoneDeclinedDay2 = "Story.ChildStone.Declined.Day2";
         public const string ChildStoneDeclinedDay3 = "Story.ChildStone.Declined.Day3";
+
+        public const string PoliticianRefused = "Story.Politician.Refused";
     }
 }

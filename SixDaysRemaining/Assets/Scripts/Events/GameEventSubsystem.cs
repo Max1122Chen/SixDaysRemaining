@@ -284,9 +284,21 @@ namespace SixDaysRemaining.Events
                         shelter.ExpelSurvivor(fragment.SurvivorDefId);
                     }
                     break;
-                case GameEventEffectOp.JumpToEnding:
-                    gameplay.ForceEnding(EndingReason.Debug);
+                case GameEventEffectOp.ForceEnding:
+                    gameplay.ForceEnding(fragment.EndingId);
                     result.EndedRun = true;
+                    break;
+                case GameEventEffectOp.GrantPassive:
+                    if (shelter != null && !string.IsNullOrEmpty(fragment.PassiveId))
+                    {
+                        shelter.Passives.GrantPassive(fragment.PassiveId, fragment.SurvivorDefId);
+                    }
+                    break;
+                case GameEventEffectOp.RevokePassive:
+                    if (shelter != null && !string.IsNullOrEmpty(fragment.PassiveId))
+                    {
+                        shelter.Passives.RevokePassive(fragment.PassiveId);
+                    }
                     break;
                 case GameEventEffectOp.AddTag:
                     if (!string.IsNullOrEmpty(fragment.TagId))

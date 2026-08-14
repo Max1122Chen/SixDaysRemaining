@@ -457,6 +457,102 @@ namespace SixDaysRemaining.Tests.EditMode
             GameEventResult result = events.ApplyOption(0);
             Assert.IsTrue(result.EndedRun);
             Assert.AreEqual(GameplayPhase.Ending, gameplay.CurrentPhase);
+            Assert.AreEqual(EndingIds.G, gameplay.State.endingId);
+        }
+
+        [Test]
+        public void Loader_RejectsJumpToEnding()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""legacy_end"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [ { ""op"": ""JumpToEnding"" } ]
+    } ]
+  } ]
+}";
+            Assert.Throws<System.InvalidOperationException>(() =>
+                EventContentJsonLoader.LoadFromJsonText(json, "jump"));
+        }
+
+        [Test]
+        public void ApplyOption_ForceEnding_WritesEndingId()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""end"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [ { ""op"": ""ForceEnding"", ""endingId"": ""Ending.E"" } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "force");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+
+            GameEventResult result = events.ApplyOption(0);
+            Assert.IsTrue(result.EndedRun);
+            Assert.AreEqual(EndingIds.E, gameplay.State.endingId);
+            Assert.AreEqual(GameplayPhase.Ending, gameplay.CurrentPhase);
+        }
+
+        [Test]
+        public void ApplyOption_GrantAndRevokePassive()
+        {
+            ShelterContent.ClearForTests();
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""grant"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [
+        { ""op"": ""GrantPassive"", ""passiveId"": ""passive.child.corruption_daily"", ""survivorDefId"": ""child"" }
+      ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "grant");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            shelter.BindGameplay(gameplay);
+            shelter.InitializeDefaultRoster(5);
+            shelter.Passives.RevokePassive(PassiveIds.ChildCorruptionDaily);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+
+            events.ApplyOption(0);
+            Assert.AreEqual(1, shelter.Passives.ActivePassives.Count);
+            Assert.AreEqual(PassiveIds.ChildCorruptionDaily, shelter.Passives.ActivePassives[0].PassiveId);
+            ShelterContent.ClearForTests();
         }
     }
 }

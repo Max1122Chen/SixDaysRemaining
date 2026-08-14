@@ -76,6 +76,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(GameplaySubsystem.MaxDay + 1, gameplay.State.day);
             Assert.AreEqual(GameplayPhase.Ending, gameplay.CurrentPhase);
+            Assert.AreEqual(EndingIds.MaxDay, gameplay.State.endingId);
         }
 
         [Test]

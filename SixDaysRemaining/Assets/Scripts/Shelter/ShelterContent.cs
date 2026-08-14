@@ -4,11 +4,12 @@ using SixDaysRemaining.Shelter.Content;
 namespace SixDaysRemaining.Shelter
 {
     /// <summary>
-    /// SHLT-F02 身份内容入口：StreamingAssets 加载；失败硬抛错。
+    /// SHLT-F02/F03 身份与被动内容入口：StreamingAssets 加载；失败硬抛错。
     /// </summary>
     public static class ShelterContent
     {
         private static InMemorySurvivorLibrary library;
+        private static InMemoryPassiveLibrary passives;
         private static string[] starterIds;
         private static bool ready;
 
@@ -18,6 +19,15 @@ namespace SixDaysRemaining.Shelter
             {
                 Ensure();
                 return library;
+            }
+        }
+
+        public static IPassiveLibrary Passives
+        {
+            get
+            {
+                Ensure();
+                return passives;
             }
         }
 
@@ -39,6 +49,7 @@ namespace SixDaysRemaining.Shelter
 
             ShelterContentJsonLoader.LoadResult loaded = ShelterContentJsonLoader.LoadFromStreamingAssets();
             library = loaded.Library;
+            passives = loaded.Passives;
             starterIds = loaded.StarterIds;
             ready = true;
         }
@@ -47,12 +58,16 @@ namespace SixDaysRemaining.Shelter
         public static void ClearForTests()
         {
             library = null;
+            passives = null;
             starterIds = null;
             ready = false;
         }
 
         /// <summary>测试用：注入已加载内容，跳过 StreamingAssets。</summary>
-        public static void ResetForTests(InMemorySurvivorLibrary lib, string[] starters)
+        public static void ResetForTests(
+            InMemorySurvivorLibrary lib,
+            string[] starters,
+            InMemoryPassiveLibrary passiveLibrary = null)
         {
             if (lib == null)
             {
@@ -70,6 +85,7 @@ namespace SixDaysRemaining.Shelter
             }
 
             library = lib;
+            passives = passiveLibrary ?? new InMemoryPassiveLibrary();
             starterIds = (string[])starters.Clone();
             ready = true;
         }

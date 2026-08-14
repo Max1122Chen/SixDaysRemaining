@@ -192,7 +192,7 @@ namespace SixDaysRemaining.Debugging
             bool fused = context.Gameplay.SetCorruption(value);
             if (fused)
             {
-                context.Flow?.ForceEndingFlow(EndingReason.CorruptionFuse);
+                context.Flow?.ForceEndingFlow(EndingIds.G);
             }
             else
             {
@@ -215,7 +215,7 @@ namespace SixDaysRemaining.Debugging
             bool ended = context.Gameplay.SetDay(value);
             if (ended)
             {
-                context.Flow?.ForceEndingFlow(EndingReason.MaxDayReached);
+                context.Flow?.ForceEndingFlow(EndingIds.MaxDay);
             }
             else
             {
@@ -263,7 +263,10 @@ namespace SixDaysRemaining.Debugging
             context.Gameplay.AdvancePhase();
             if (context.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
-                context.Flow?.ForceEndingFlow(EndingReason.MaxDayReached);
+                context.Flow?.ForceEndingFlow(
+                    string.IsNullOrEmpty(context.Gameplay.State.endingId)
+                        ? EndingIds.MaxDay
+                        : context.Gameplay.State.endingId);
                 return "阶段已推进，进入终局。";
             }
 
@@ -290,8 +293,14 @@ namespace SixDaysRemaining.Debugging
                 return "无法触发终局。";
             }
 
-            context.Flow.ForceEndingFlow(EndingReason.Debug);
-            return "已强制进入终局。";
+            string endingId = EndingIds.Debug;
+            if (args != null && args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
+            {
+                endingId = args[0].Trim();
+            }
+
+            context.Flow.ForceEndingFlow(endingId);
+            return "已强制进入终局：" + endingId;
         }
 
         private static string HandleShelterList(DebugCommandContext context, string[] args)

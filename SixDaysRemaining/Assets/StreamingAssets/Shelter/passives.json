@@ -1,0 +1,15 @@
+{
+  "passives": [
+    {
+      "id": "passive.child.corruption_daily",
+      "displayName": "幼童的腐蚀",
+      "scope": "SurvivorPresence",
+      "ownerDefId": "child",
+      "tick": "EndOfDay",
+      "effect": {
+        "type": "CorruptionDelta",
+        "amount": -8
+      }
+    }
+  ]
+}

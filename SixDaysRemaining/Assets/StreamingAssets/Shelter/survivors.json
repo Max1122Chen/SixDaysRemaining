@@ -5,7 +5,8 @@
       "displayName": "幼童",
       "defaultHunger": 0,
       "defaultStatus": "Dying",
-      "hungryToDyingDays": 1
+      "hungryToDyingDays": 1,
+      "passiveIds": ["passive.child.corruption_daily"]
     },
     {
       "id": "athlete",

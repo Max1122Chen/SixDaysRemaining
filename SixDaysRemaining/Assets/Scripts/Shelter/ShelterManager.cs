@@ -5,7 +5,7 @@ using SixDaysRemaining.Gameplay;
 namespace SixDaysRemaining.Shelter
 {
     /// <summary>
-    /// 庇护所域：幸存者列表、食物入库/分配、日结饱食度。
+    /// 庇护所域：幸存者列表、食物入库/分配、日结饱食度、被动。
     /// </summary>
     public class ShelterManager
     {
@@ -17,10 +17,16 @@ namespace SixDaysRemaining.Shelter
         private readonly List<Survivor> survivors = new List<Survivor>();
         private readonly List<string> personnelChanges = new List<string>();
         private readonly GameState state;
+        private readonly ShelterPassiveService passives;
 
         public int HungryThreshold { get; set; } = DefaultHungryThreshold;
         public int HungerPerFoodUnit { get; set; } = DefaultHungerPerFoodUnit;
         public int DailyHungerDecay { get; set; } = DefaultDailyHungerDecay;
+
+        public ShelterPassiveService Passives
+        {
+            get { return passives; }
+        }
 
         public IReadOnlyList<Survivor> Survivors
         {
@@ -52,6 +58,12 @@ namespace SixDaysRemaining.Shelter
         public ShelterManager(GameState gameState)
         {
             state = gameState;
+            passives = new ShelterPassiveService(this);
+        }
+
+        public void BindGameplay(GameplaySubsystem gameplay)
+        {
+            passives.BindGameplay(gameplay);
         }
 
         /// <summary>
@@ -61,6 +73,7 @@ namespace SixDaysRemaining.Shelter
         {
             survivors.Clear();
             personnelChanges.Clear();
+            passives.Clear();
 
             string[] starterIds = ShelterContent.StarterIds;
             for (int i = 0; i < starterIds.Length; i++)
@@ -86,6 +99,7 @@ namespace SixDaysRemaining.Shelter
 
             survivors.Add(survivor);
             UpdateSurvivorStatus(survivor);
+            GrantPassivesFromDef(survivor);
             SyncPopulation();
         }
 
@@ -123,9 +137,7 @@ namespace SixDaysRemaining.Shelter
                 return false;
             }
 
-            target.status = SurvivorStatus.Left;
-            SyncPopulation();
-            personnelChanges.Add("驱赶了 " + target.name);
+            MarkLeft(target);
             return true;
         }
 
@@ -137,10 +149,14 @@ namespace SixDaysRemaining.Shelter
                 return false;
             }
 
-            survivor.status = SurvivorStatus.Left;
-            SyncPopulation();
-            personnelChanges.Add("驱赶了 " + survivor.name);
+            MarkLeft(survivor);
             return true;
+        }
+
+        public bool IsSurvivorPresent(string defId)
+        {
+            Survivor survivor = FindByDefId(defId);
+            return survivor != null && IsAlive(survivor);
         }
 
         public bool TryResolveSurvivor(string target, out Survivor survivor)
@@ -256,11 +272,10 @@ namespace SixDaysRemaining.Shelter
         }
 
         /// <summary>
-        /// 日结：扣饱食度并更新状态；Dying 且仍无饱食度则死亡。
-        /// 耐饿：提案 A（饥饿档累计天数达到身份阈值 → Dying）。
-        /// 在 day++ 之前（TriumphReturn 末）调用。
+        /// 日结：扣饱食度并更新状态；Dying 且仍无饱食度则死亡；再跑被动 tick。
+        /// 返回是否因被动腐蚀熔断进入 Ending。
         /// </summary>
-        public void ProcessEndOfDay()
+        public bool ProcessEndOfDay()
         {
             for (int i = 0; i < survivors.Count; i++)
             {
@@ -289,6 +304,9 @@ namespace SixDaysRemaining.Shelter
             }
 
             SyncPopulation();
+            bool fused = passives.TickEndOfDay();
+            CleanupPassivesForAbsentSurvivors();
+            return fused;
         }
 
         /// <summary>
@@ -315,6 +333,50 @@ namespace SixDaysRemaining.Shelter
 
             survivor.hungryDayCount = 0;
             survivor.status = SurvivorStatus.Healthy;
+        }
+
+        private void GrantPassivesFromDef(Survivor survivor)
+        {
+            if (survivor == null || string.IsNullOrEmpty(survivor.defId))
+            {
+                return;
+            }
+
+            SurvivorDef def;
+            if (!ShelterContent.Survivors.TryGet(survivor.defId, out def) || def.PassiveIds == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < def.PassiveIds.Length; i++)
+            {
+                passives.GrantPassive(def.PassiveIds[i], survivor.defId);
+            }
+        }
+
+        private void MarkLeft(Survivor survivor)
+        {
+            survivor.status = SurvivorStatus.Left;
+            passives.RevokeBySourceDefId(survivor.defId);
+            SyncPopulation();
+            personnelChanges.Add("驱赶了 " + survivor.name);
+        }
+
+        private void CleanupPassivesForAbsentSurvivors()
+        {
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                Survivor survivor = survivors[i];
+                if (survivor == null || string.IsNullOrEmpty(survivor.defId))
+                {
+                    continue;
+                }
+
+                if (!IsAlive(survivor))
+                {
+                    passives.RevokeBySourceDefId(survivor.defId);
+                }
+            }
         }
 
         private void ApplyDailyHungerStatus(Survivor survivor)

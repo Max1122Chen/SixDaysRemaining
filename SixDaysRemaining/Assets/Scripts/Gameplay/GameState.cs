@@ -29,5 +29,8 @@ namespace SixDaysRemaining.Gameplay
         public int rngSeed;
         public int population;
         public GameplayPhase currentPhase;
+
+        /// <summary>本局结局 id（如 Ending.G）；未终局时为 null/空。</summary>
+        public string endingId;
     }
 }

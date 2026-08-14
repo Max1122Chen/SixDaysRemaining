@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 结局占位：正式文案/分支等策划数据到位后替换。
+    /// 结局展示：按 <see cref="GameState.endingId"/> 查文案。
     /// </summary>
     public class EndingView : MonoBehaviour
     {
@@ -44,14 +44,40 @@ namespace SixDaysRemaining.UI
         public void Refresh()
         {
             GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
-            if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null
+            string endingId = gi != null && gi.Gameplay != null && gi.Gameplay.State != null
+                ? gi.Gameplay.State.endingId
+                : null;
+
+            if (string.IsNullOrEmpty(endingId)
+                && gi != null && gi.Gameplay != null && gi.Gameplay.State != null
                 && gi.Gameplay.State.corruption >= CorruptedRules.FuseThreshold)
             {
-                endingText.text = "腐蚀吞噬了一切。\n你已无法继续……（结局 G 占位）";
-                return;
+                endingId = EndingIds.G;
             }
 
-            endingText.text = "六日已过，避难所的故事暂时告一段落。\n结局内容待策划标准化后接入。";
+            endingText.text = ResolveEndingText(endingId);
+        }
+
+        public static string ResolveEndingText(string endingId)
+        {
+            if (string.IsNullOrEmpty(endingId))
+            {
+                return "六日已过，避难所的故事暂时告一段落。\n结局内容待策划标准化后接入。";
+            }
+
+            switch (endingId)
+            {
+                case EndingIds.G:
+                    return "腐蚀吞噬了一切。\n你已无法继续……（结局 G）";
+                case EndingIds.E:
+                    return "政治家倒在废墟里。\n庇护所失去了最后的筹码……（结局 E 占位）";
+                case EndingIds.MaxDay:
+                    return "六日已过。\n你们暂时熬过了这段日子……（天数结局）";
+                case EndingIds.Debug:
+                    return "（Debug 强制终局）";
+                default:
+                    return "终局：" + endingId + "\n（文案待补）";
+            }
         }
     }
 }

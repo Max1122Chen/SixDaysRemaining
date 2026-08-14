@@ -48,5 +48,7 @@ namespace SixDaysRemaining.Events.Content
         public string survivorDefId;
         public string tagId;
         public string flagId;
+        public string passiveId;
+        public string endingId;
     }
 }

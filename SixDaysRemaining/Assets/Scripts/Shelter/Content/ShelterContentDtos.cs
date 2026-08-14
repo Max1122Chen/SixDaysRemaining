@@ -16,11 +16,36 @@ namespace SixDaysRemaining.Shelter.Content
         public int defaultHunger;
         public string defaultStatus;
         public int hungryToDyingDays;
+        public string[] passiveIds;
     }
 
     [Serializable]
     public class StarterFileDto
     {
         public string[] ids;
+    }
+
+    [Serializable]
+    public class PassivesFileDto
+    {
+        public PassiveDefDto[] passives;
+    }
+
+    [Serializable]
+    public class PassiveDefDto
+    {
+        public string id;
+        public string displayName;
+        public string scope;
+        public string ownerDefId;
+        public string tick;
+        public PassiveEffectDto effect;
+    }
+
+    [Serializable]
+    public class PassiveEffectDto
+    {
+        public string type;
+        public int amount;
     }
 }

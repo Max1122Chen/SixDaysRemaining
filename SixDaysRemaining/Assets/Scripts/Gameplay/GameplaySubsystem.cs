@@ -38,6 +38,7 @@ namespace SixDaysRemaining.Gameplay
             State.rngSeed = seed;
             State.population = 0;
             State.currentPhase = GameplayPhase.ExpeditionPrep;
+            State.endingId = null;
         }
 
         public void AddTag(string tag, int count = 1)
@@ -88,9 +89,7 @@ namespace SixDaysRemaining.Gameplay
             State.corruption = UnityEngine.Mathf.Max(0, State.corruption + delta);
             if (State.corruption >= CorruptedRules.FuseThreshold)
             {
-                State.corruption = CorruptedRules.FuseThreshold;
-                State.currentPhase = GameplayPhase.Ending;
-                return true;
+                return ForceEnding(EndingIds.G);
             }
 
             return false;
@@ -110,8 +109,7 @@ namespace SixDaysRemaining.Gameplay
             State.corruption = clamped;
             if (clamped >= CorruptedRules.FuseThreshold)
             {
-                State.currentPhase = GameplayPhase.Ending;
-                return true;
+                return ForceEnding(EndingIds.G);
             }
 
             return false;
@@ -127,7 +125,7 @@ namespace SixDaysRemaining.Gameplay
             State.day = UnityEngine.Mathf.Clamp(day, 1, MaxDay);
             if (State.day >= MaxDay)
             {
-                return ForceEnding(EndingReason.MaxDayReached);
+                return ForceEnding(EndingIds.MaxDay);
             }
 
             return false;
@@ -144,17 +142,18 @@ namespace SixDaysRemaining.Gameplay
         }
 
         /// <summary>
-        /// 统一终局入口：设 phase=Ending；腐蚀熔断时同步 clamp 腐蚀值。
+        /// 统一终局入口：设 phase=Ending 并写入 endingId；Ending.G 时同步 clamp 腐蚀。
         /// </summary>
-        public bool ForceEnding(EndingReason reason)
+        public bool ForceEnding(string endingId)
         {
-            if (State == null)
+            if (State == null || string.IsNullOrWhiteSpace(endingId))
             {
                 return false;
             }
 
             State.currentPhase = GameplayPhase.Ending;
-            if (reason == EndingReason.CorruptionFuse)
+            State.endingId = endingId.Trim();
+            if (string.Equals(State.endingId, EndingIds.G, System.StringComparison.Ordinal))
             {
                 State.corruption = CorruptedRules.FuseThreshold;
             }
@@ -228,7 +227,7 @@ namespace SixDaysRemaining.Gameplay
                     State.day += 1;
                     if (State.day > MaxDay)
                     {
-                        State.currentPhase = GameplayPhase.Ending;
+                        ForceEnding(EndingIds.MaxDay);
                     }
                     else
                     {

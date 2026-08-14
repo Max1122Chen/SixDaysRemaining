@@ -19,15 +19,18 @@ namespace SixDaysRemaining.Events.Content
             "CorruptionDelta",
             "TakeInSurvivor",
             "ExpelSurvivor",
-            "JumpToEnding",
+            "ForceEnding",
             "AddTag",
-            "RemoveTag"
+            "RemoveTag",
+            "GrantPassive",
+            "RevokePassive"
         };
 
         private static readonly HashSet<string> RetiredOps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "SetFlag",
-            "ClearFlag"
+            "ClearFlag",
+            "JumpToEnding"
         };
 
         public static string EventsFolderPath
@@ -275,9 +278,11 @@ namespace SixDaysRemaining.Events.Content
 
                 if (RetiredOps.Contains(fx.op))
                 {
+                    string hint = fx.op.Equals("JumpToEnding", StringComparison.OrdinalIgnoreCase)
+                        ? "; use ForceEnding with endingId instead."
+                        : "; use AddTag/RemoveTag instead.";
                     throw new InvalidOperationException(
-                        "Retired fragment op '" + fx.op + "' on event '" + eventId + "' in " + path
-                        + "; use AddTag/RemoveTag instead.");
+                        "Retired fragment op '" + fx.op + "' on event '" + eventId + "' in " + path + hint);
                 }
 
                 if (!string.IsNullOrEmpty(fx.flagId))
@@ -301,12 +306,27 @@ namespace SixDaysRemaining.Events.Content
                         "Failed to parse fragment op '" + fx.op + "' on event '" + eventId + "' in " + path);
                 }
 
+                if (op == GameEventEffectOp.ForceEnding && string.IsNullOrWhiteSpace(fx.endingId))
+                {
+                    throw new InvalidOperationException(
+                        "ForceEnding on event '" + eventId + "' requires endingId in " + path);
+                }
+
+                if ((op == GameEventEffectOp.GrantPassive || op == GameEventEffectOp.RevokePassive)
+                    && string.IsNullOrWhiteSpace(fx.passiveId))
+                {
+                    throw new InvalidOperationException(
+                        op + " on event '" + eventId + "' requires passiveId in " + path);
+                }
+
                 effects[i] = new GameEventEffectFragment
                 {
                     Op = op,
                     Amount = fx.amount,
                     SurvivorDefId = fx.survivorDefId,
-                    TagId = fx.tagId
+                    TagId = fx.tagId,
+                    PassiveId = fx.passiveId,
+                    EndingId = fx.endingId
                 };
             }
 

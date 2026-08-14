@@ -4,10 +4,11 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | **EVT-F02** 政治家 D3 | Review | Max | Play 复验敲门线 |
-| P1 | **COMB-F10** 特质卡系统 | Planned | Max | 先 design + defId 挂钩 |
+| P0 | **SHLT-F03** Play 手测 | Review | Max | 幼童 −8 / 政治家回访 / Ending 文案 |
+| P1 | **END-F01** 结局钩子 | Planned | Max | design：战败 → Ending.E |
+| P2 | **COMB-F10** 特质卡系统 | Planned | Max | 人设基础稳定后 design |
 | P2 | **META-F01** 结局回顾 | Planned | Max | run summary UI；不绑 mid-run 存档 |
-| P2 | **SAVE-F01** 存档 | Planned | Max | CORE-F07 + 特质稳定后再做 |
+| P2 | **SAVE-F01** 存档 | Planned | Max | endingId + Tag + Passive 稳定后再做 |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
 | — | `TD-004` / `TD-005` / `TD-006` | Open | Max | 见 TECH_DEBT |
 
@@ -15,10 +16,9 @@
 
 | ID | 状态 | 备注 |
 |----|------|------|
-| `feat/events` → `main` | Done | fast-forward `ebcf6b9` |
-| `EVT-F01` / `EVT-F02` | Done | 幼童线 Play 通过 |
-| `CORE-F06` | Done | GameplayTag 基础设施 |
-| `CORE-F07` | Done | storyFlags → Tag 单轨 |
+| `SHLT-F03` | Done | Passive + endingId + 政治家拒收/回访；待 Play |
+| `CORE-F06` / `CORE-F07` | Done | Tag 基础设施 + storyFlags 迁移 |
+| `feat/events` → `main` | Done | EVT-F01 / F02 |
 | `CORE-F04` / `CORE-F05` / `COMB-F09` | Done | — |
 | `SHLT-F02` / `COMB-F01`～`F08` / `UI-F01` / `CORE-F03` | Done | — |
 

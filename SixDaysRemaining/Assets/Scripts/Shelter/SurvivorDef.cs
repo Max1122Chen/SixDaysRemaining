@@ -1,3 +1,5 @@
+using System;
+
 namespace SixDaysRemaining.Shelter
 {
     /// <summary>
@@ -10,6 +12,7 @@ namespace SixDaysRemaining.Shelter
         public int DefaultHunger;
         public SurvivorStatus? DefaultStatus;
         public int HungryToDyingDays;
+        public string[] PassiveIds = Array.Empty<string>();
     }
 
     /// <summary>稳定身份 id（与 survivors.json 一致）。</summary>

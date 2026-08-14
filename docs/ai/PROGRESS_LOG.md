@@ -2,6 +2,20 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-13（SHLT-F03 实现）
+
+- 范围：幸存者被动 + endingId + 人设 content（幼童/政治家）
+- 拍板：JumpToEnding 硬切；只留 endingId（删 EndingReason）；Passive 在 Shelter 服务类
+- 已完成：
+  - `StreamingAssets/Shelter/passives.json` + Loader；`survivors.json` child `passiveIds`
+  - `ShelterPassiveService`：Grant/Revoke/日结 tick；入住自动 Grant；Expel/Dead cleanup
+  - `GameState.endingId`；`ForceEnding(string)`；`EndingIds`；删除 `EndingReason`
+  - 事件 fragment：`GrantPassive` / `RevokePassive` / `ForceEnding`；`JumpToEnding` 硬失败
+  - 政治家：`Story.Politician.Refused` + `politician_knock_revisit`（D4–D6 占位文案）
+  - `EndingView` 按 endingId 文案；AppFlow 日结熔断切 Ending
+  - EditMode：`ShelterPassiveTests` + Events/Gameplay 相关用例
+- 待验证：Play 幼童 −8、政治家拒收回访、结局屏
+
 ## 2026-08-12（CORE-F06 实现 + merge 到 feat/events）
 
 - 范围：GameplayTag 基础设施（CORE）

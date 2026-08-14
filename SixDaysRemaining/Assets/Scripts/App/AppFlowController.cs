@@ -209,12 +209,12 @@ namespace SixDaysRemaining.Gameplay
             PresentDayEnd();
         }
 
-        public void ForceEndingFlow(EndingReason reason)
+        public void ForceEndingFlow(string endingId)
         {
             GameInstance gi = Game;
             if (gi?.Gameplay != null)
             {
-                gi.Gameplay.ForceEnding(reason);
+                gi.Gameplay.ForceEnding(endingId);
             }
 
             eventChainPhase = EventChainPhase.None;
@@ -246,7 +246,7 @@ namespace SixDaysRemaining.Gameplay
             GameInstance gi = Game;
             if (gi?.Gameplay != null)
             {
-                gi.Gameplay.ForceEnding(EndingReason.CorruptionFuse);
+                gi.Gameplay.ForceEnding(EndingIds.G);
             }
 
             ShowEnding();
@@ -444,6 +444,13 @@ namespace SixDaysRemaining.Gameplay
             }
 
             gi.Shelter.ProcessEndOfDay();
+            if (gi.Gameplay != null && gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
+            {
+                CloseOverlay();
+                ShowEnding();
+                return;
+            }
+
             ShowDayEndOverlay?.Invoke(gi.Shelter.ConsumePersonnelChanges());
             RefreshHud?.Invoke();
         }

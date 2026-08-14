@@ -15,10 +15,12 @@ namespace SixDaysRemaining.Events
         CorruptionDelta = 1,
         TakeInSurvivor = 2,
         ExpelSurvivor = 3,
-        JumpToEnding = 4,
+        ForceEnding = 4,
         AddTag = 103,
         RemoveTag = 104,
-        // Reserved (F01 load hard-fails if present in JSON until implemented):
+        GrantPassive = 105,
+        RevokePassive = 106,
+        // Reserved (load hard-fails if present in JSON until implemented):
         OverrideHungerDecay = 102
     }
 
@@ -57,6 +59,8 @@ namespace SixDaysRemaining.Events
         public int Amount;
         public string SurvivorDefId;
         public string TagId;
+        public string PassiveId;
+        public string EndingId;
     }
 
     public struct GameEventResult

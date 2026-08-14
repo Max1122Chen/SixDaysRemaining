@@ -169,6 +169,9 @@ namespace SixDaysRemaining.Tests.EditMode
             File.Copy(
                 Path.Combine(src, ShelterContentJsonLoader.StarterFileName),
                 Path.Combine(dir, ShelterContentJsonLoader.StarterFileName));
+            File.Copy(
+                Path.Combine(src, ShelterContentJsonLoader.PassivesFileName),
+                Path.Combine(dir, ShelterContentJsonLoader.PassivesFileName));
             return dir;
         }
     }

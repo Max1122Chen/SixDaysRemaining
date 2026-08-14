@@ -106,6 +106,37 @@
           "id": "refuse",
           "label": "他看起来不是什么好应付的，回绝他的交换请求",
           "resultText": "你关上门。他在门外站了一会儿，转身消失在废墟里。",
+          "effects": [
+            { "op": "AddTag", "tagId": "Story.Politician.Refused" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "politician_knock_revisit",
+      "title": "门外的交换（再访）",
+      "body": "[PLACEHOLDER] 那位风尘仆仆的男士再次出现在门外。他似乎还记得上次被拒，但手里仍带着一些食物。",
+      "trigger": "AfterTriumph",
+      "priority": 15,
+      "requiredDayMin": 4,
+      "requiredDayMax": 6,
+      "requiredAbsentSurvivorIds": ["politician"],
+      "requiredTags": ["Story.Politician.Refused"],
+      "options": [
+        {
+          "id": "admit",
+          "label": "这次让他进来",
+          "resultText": "他踏入庇护所，粮食堆上了货架。上次的尴尬被一笔带过。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 5 },
+            { "op": "TakeInSurvivor", "survivorDefId": "politician" },
+            { "op": "RemoveTag", "tagId": "Story.Politician.Refused" }
+          ]
+        },
+        {
+          "id": "refuse_again",
+          "label": "再次回绝",
+          "resultText": "门再次关上。他没有再多说什么。",
           "effects": []
         }
       ]
