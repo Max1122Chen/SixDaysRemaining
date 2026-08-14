@@ -19,6 +19,7 @@ namespace SixDaysRemaining.Shelter
     public static class SurvivorIds
     {
         public const string Child = "child";
+        public const string Farmer = "farmer";
         public const string Athlete = "athlete";
         public const string Politician = "politician";
         public const string Nurse = "nurse";
