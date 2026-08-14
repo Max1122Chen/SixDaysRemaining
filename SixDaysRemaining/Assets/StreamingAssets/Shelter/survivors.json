@@ -8,6 +8,13 @@
       "hungryToDyingDays": 1
     },
     {
+      "id": "farmer",
+      "displayName": "农民",
+      "defaultHunger": 2,
+      "defaultStatus": "Healthy",
+      "hungryToDyingDays": 1
+    },
+    {
       "id": "athlete",
       "displayName": "运动员",
       "defaultHunger": 3,

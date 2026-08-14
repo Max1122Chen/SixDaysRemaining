@@ -156,9 +156,9 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(2, shelter.Survivors.Count);
             Assert.AreEqual(SurvivorIds.Child, shelter.Survivors[0].defId);
-            Assert.AreEqual(SurvivorIds.Athlete, shelter.Survivors[1].defId);
+            Assert.AreEqual(SurvivorIds.Farmer, shelter.Survivors[1].defId);
             Assert.AreEqual("幼童", shelter.Survivors[0].name);
-            Assert.AreEqual("运动员", shelter.Survivors[1].name);
+            Assert.AreEqual("农民", shelter.Survivors[1].name);
             Assert.AreEqual(ShelterManager.DefaultStartingFoodStock, state.foodStock);
             Assert.AreEqual(2, shelter.Population);
             Assert.AreEqual(2, state.population);

@@ -16,6 +16,7 @@ namespace SixDaysRemaining.Shelter
 
         private readonly List<Survivor> survivors = new List<Survivor>();
         private readonly List<string> personnelChanges = new List<string>();
+        private readonly List<string> bulletins = new List<string>();
         private readonly GameState state;
 
         public int HungryThreshold { get; set; } = DefaultHungryThreshold;
@@ -30,6 +31,11 @@ namespace SixDaysRemaining.Shelter
         public IReadOnlyList<string> RecentPersonnelChanges
         {
             get { return personnelChanges; }
+        }
+
+        public IReadOnlyList<string> RecentBulletins
+        {
+            get { return bulletins; }
         }
 
         public int Population
@@ -61,6 +67,7 @@ namespace SixDaysRemaining.Shelter
         {
             survivors.Clear();
             personnelChanges.Clear();
+            bulletins.Clear();
 
             string[] starterIds = ShelterContent.StarterIds;
             for (int i = 0; i < starterIds.Length; i++)
@@ -126,6 +133,7 @@ namespace SixDaysRemaining.Shelter
             target.status = SurvivorStatus.Left;
             SyncPopulation();
             personnelChanges.Add("驱赶了 " + target.name);
+            bulletins.Add("驱赶了 " + target.name);
             return true;
         }
 
@@ -140,6 +148,7 @@ namespace SixDaysRemaining.Shelter
             survivor.status = SurvivorStatus.Left;
             SyncPopulation();
             personnelChanges.Add("驱赶了 " + survivor.name);
+            bulletins.Add("驱赶了 " + survivor.name);
             return true;
         }
 
@@ -220,6 +229,13 @@ namespace SixDaysRemaining.Shelter
             return copy;
         }
 
+        public List<string> ConsumeBulletins()
+        {
+            List<string> copy = new List<string>(bulletins);
+            bulletins.Clear();
+            return copy;
+        }
+
         /// <summary>
         /// 凯旋后入库：战斗收获折算进 foodStock。
         /// </summary>
@@ -281,6 +297,7 @@ namespace SixDaysRemaining.Shelter
                 {
                     survivor.status = SurvivorStatus.Dead;
                     personnelChanges.Add(survivor.name + " 因饥饿离世");
+                    bulletins.Add(survivor.name + " 因饥饿离世");
                 }
                 else
                 {
@@ -309,6 +326,11 @@ namespace SixDaysRemaining.Shelter
 
             if (survivor.hunger <= HungryThreshold)
             {
+                if (survivor.status != SurvivorStatus.Hungry)
+                {
+                    survivor.hungryDayCount = 0;
+                }
+
                 survivor.status = SurvivorStatus.Hungry;
                 return;
             }
@@ -324,9 +346,8 @@ namespace SixDaysRemaining.Shelter
                 return;
             }
 
-            if (survivor.hunger == 0)
+            if (survivor.status == SurvivorStatus.Dying)
             {
-                survivor.status = SurvivorStatus.Dying;
                 return;
             }
 

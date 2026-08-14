@@ -32,13 +32,13 @@ namespace SixDaysRemaining.Tests.EditMode
         {
             ShelterContent.Ensure();
 
-            Assert.AreEqual(5, ShelterContent.Survivors.All.Count);
+            Assert.AreEqual(6, ShelterContent.Survivors.All.Count);
             Assert.AreEqual("幼童", ShelterContent.Survivors.Get(SurvivorIds.Child).DisplayName);
             Assert.AreEqual(2, ShelterContent.Survivors.Get(SurvivorIds.Athlete).HungryToDyingDays);
             Assert.AreEqual(3, ShelterContent.Survivors.Get(SurvivorIds.Politician).HungryToDyingDays);
             Assert.AreEqual(2, ShelterContent.StarterIds.Length);
             Assert.AreEqual(SurvivorIds.Child, ShelterContent.StarterIds[0]);
-            Assert.AreEqual(SurvivorIds.Athlete, ShelterContent.StarterIds[1]);
+            Assert.AreEqual(SurvivorIds.Farmer, ShelterContent.StarterIds[1]);
         }
 
         [Test]
