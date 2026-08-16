@@ -2,6 +2,24 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（COMB-F11 卡牌数值 2.0 + 半开放移交）
+
+- 验收：EVT-F03 / SHLT-F04–F05 / EVT-F04 / SAVE-F02 / COMB-F10 标 **Review（半开放）**，Play 交给他人
+- COMB-F11：按 `卡牌2.0.xlsx` 同步敌人回合；新增意图 `2303`（防御3）、`2085`（休眠+5）
+- 玩家基础牌 / starter 与表一致，未改数值
+- 状态：COMB-F11 **Review**（内容已写入；待 EditMode/轻 Play）
+
+## 2026-08-16（SHLT-F05 / EVT-F04 / SAVE-F02 实现）
+
+- 范围：事件 3.0 S5 深度（辟谷、幼童日调制、实验点名、临时 HP、D4 存档、D5 日常）
+- 已完成：
+  - SHLT-F05：`BiguFunded`→日结激活 `BiguActive`；跳过喂食/饥饿；幼童 `PlayBoost.Once`（−12）/ `PassiveOff.Once`（当日跳过，不永久 Revoke）
+  - EVT-F04：`SetRandomSurvivorHealthy` / `KillRandomSurvivor`；围栏粘液 `TempPlayerHp.Once`（Max50/开局45）；D5 蟑螂/马桶复用
+  - SAVE-F02：Day4 AfterTriumph 链后弹存档询问；`Story.Save.Day4Prompted` 防重复
+  - UI：喂食「辟谷中」；存档 overlay；结果文案附（对象：name）
+  - EditMode：bigu / child 调制 / random heal-kill / PlayerStartHp / Day4 prompt
+- 状态：**Review（半开放）**（待他人 Play 签字）
+
 ## 2026-08-16（EVT-F03 S0–S4 实现）
 
 - 范围：人物/事件 3.0 灌入 + 满员置换 + OptionGate + doctor 改名
@@ -14,7 +32,7 @@
   - 濒死宽限：饱食度 0 的濒死者需再撑一次日结才死亡（接纳当天可抢救）
   - EditMode：gates / followUp / enabled / TakeIn full / doctor 特质 / 濒死宽限
 - 状态：**Review**（EditMode 绿；待完整 Play 签字）
-- 未做（S5）：辟谷分配例外、陪玩当日翻倍、D4 存档询问、战斗临时 MaxHP；卡牌 2.0
+- S5：已拆出并实现为 SHLT-F05 / EVT-F04 / SAVE-F02；卡牌 2.0 仍另批
 
 ## 2026-08-16（EVT-F03 设计稿）
 

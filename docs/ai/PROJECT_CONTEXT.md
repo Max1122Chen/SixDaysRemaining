@@ -32,13 +32,16 @@
 已落地：
 - 可玩主线（Prep→战斗→凯旋→事件→日结→次日）
 - 战斗 F01–F09；庇护所 F02 + F03；特质 COMB-F10（半开放）
+- 事件 3.0 深度（SHLT-F05 / EVT-F04 / SAVE-F02）半开放待他人验收
+- COMB-F11：卡牌数值 2.0 已写入 Combat JSON
 - EVT / Tag / END-F01
 - Persist + Meta 回顾 + 单局粗检查点（CORE-F08 / META-F01 / SAVE-F01）
 - UI：伙伴主界面/HUD + UI-F01
 
 下一里程碑：
-- `COMB-F10`：半开放 Review（人设齐后完整 Play）
-- 可选：卡牌数值表 2.0 同步进 JSON
+- `COMB-F10`：半开放 Review（他人 Play）
+- `COMB-F11`：卡牌数值 2.0 → JSON（进行中/刚同步）
+- 事件 3.0 批次：半开放 Review（他人 Play）
 
 ## 4) 协作约定
 

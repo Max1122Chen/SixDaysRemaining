@@ -163,6 +163,16 @@
       ]
     },
     {
+      "id": 2303,
+      "displayName": "防御 3",
+      "description": "",
+      "tags": ["Defend", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "GainBlock", "amount": 3, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
       "id": 2304,
       "displayName": "防御 4",
       "description": "",
@@ -170,6 +180,16 @@
       "canBlacken": false,
       "effects": [
         { "op": "GainBlock", "amount": 4, "amountSecondary": 0, "target": "Self" }
+      ]
+    },
+    {
+      "id": 2085,
+      "displayName": "休眠",
+      "description": "回复少量生命。",
+      "tags": ["Sleep", "Intent"],
+      "canBlacken": false,
+      "effects": [
+        { "op": "Heal", "amount": 5, "amountSecondary": 0, "target": "Self" }
       ]
     },
     {

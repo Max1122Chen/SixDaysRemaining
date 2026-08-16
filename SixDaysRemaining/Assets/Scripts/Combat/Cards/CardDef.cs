@@ -83,6 +83,7 @@ namespace SixDaysRemaining.Combat.Cards
         public const int BiYou = 1004;
         public const int HuanShi = 1005;
 
+        public const int SleepFive = 2085;
         public const int Sleep = 2090;
         public const int AttackCharge = 2100;
 

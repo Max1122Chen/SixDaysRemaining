@@ -32,6 +32,14 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(EncounterIds.Mob01, day1.Id);
             Assert.AreEqual(35f, day1.MaxHp);
             Assert.AreEqual(5, day1.RoundPlans[0].Length);
+            Assert.AreEqual(CardIds.Attack(3), day1.RoundPlans[0][0]);
+            Assert.AreEqual(CardIds.SleepFive, day1.RoundPlans[3][2]);
+
+            CardDef defend3 = CombatContent.Cards.Get(CardIds.Defend(3));
+            Assert.AreEqual(3f, defend3.Effects[0].Amount);
+            CardDef sleepFive = CombatContent.Cards.Get(CardIds.SleepFive);
+            Assert.AreEqual(EffectOp.Heal, sleepFive.Effects[0].Op);
+            Assert.AreEqual(5f, sleepFive.Effects[0].Amount);
 
             System.Collections.Generic.List<CardDef> starter = CombatContent.CreateDefaultStarterDefs();
             Assert.AreEqual(16, starter.Count);

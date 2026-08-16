@@ -14,9 +14,9 @@
 
 ## 当前快照（2026-08-16）
 
-- `main`：含 Persist/Meta/Save（Done）、EVT-F03 / COMB-F10（Review 待 Play）。
+- `main`：Persist/Meta/Save Done；事件 3.0 深度 + COMB-F10 为 **Review（半开放，他人验收）**；**COMB-F11** 卡牌数值 2.0 进行中/刚同步。
 - 内容编辑：`StreamingAssets/Shelter/`、`StreamingAssets/Events/`、`StreamingAssets/Combat/`（改完需重启 Play）。
-- **下一批：** EVT-F03 Play 验收；通过后 COMB-F10 Done；S5 深度与卡牌 2.0 可后。
+- **下一批：** COMB-F11 收口；半开放 feat 由他人 Play 后标 Done。
 
 ## 不可协商的协作规则
 

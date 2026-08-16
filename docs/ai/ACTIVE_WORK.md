@@ -4,10 +4,10 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | **EVT-F03** 人物/事件 3.0 | Review | Max | Play 验收人设闭环；S5 深度可后 |
-| P1 | **SHLT-F04**（并入 F03） | Review | Max | cap5/死亡+8 已落地；分配例外属 S5 |
-| P2 | **COMB-F10** 特质 | Review | Max | doctor 已对齐；Play 后人设闭环标 Done |
-| — | 卡牌数值 2.0 | Planned | Max | 另批；不挡 F03 |
+| P0 | **COMB-F11** 卡牌数值 2.0 | Review | Max | JSON 已同步；轻 Play / EditMode 后可 Done |
+| — | **SHLT-F05** / **EVT-F04** / **SAVE-F02** | Review（半开放） | 他人验收 | Play：辟谷、陪玩 −12、实验、临时 HP、D4 存档、D5 |
+| — | **EVT-F03**（+ **SHLT-F04**） | Review（半开放） | 他人验收 | 人设闭环 Play |
+| — | **COMB-F10** 特质 | Review（半开放） | 他人验收 | 与人设同批；通过后标 Done |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
 | — | `TD-004` / `TD-005` / `TD-006` | Open | Max | 见 TECH_DEBT |
 
