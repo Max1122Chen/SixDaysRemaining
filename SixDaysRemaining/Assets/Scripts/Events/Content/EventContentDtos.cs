@@ -28,6 +28,7 @@ namespace SixDaysRemaining.Events.Content
         public int requiredDayMin = int.MinValue;
         public int requiredDayMax = int.MaxValue;
         public int weight = 1;
+        public bool enabled = true;
         public EventOptionDto[] options;
     }
 
@@ -37,7 +38,22 @@ namespace SixDaysRemaining.Events.Content
         public string id;
         public string label;
         public string resultText;
+        public string disabledHint;
+        public float successChance = 1f;
+        public string failureResultText;
+        public string followUpEventId;
+        public EventGateDto[] gates;
         public EventEffectDto[] effects;
+        public EventEffectDto[] failureEffects;
+    }
+
+    [Serializable]
+    public class EventGateDto
+    {
+        public string op;
+        public int amount;
+        public string survivorDefId;
+        public string tagId;
     }
 
     [Serializable]

@@ -85,13 +85,14 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(SurvivorIds.Child, child.defId);
             child.status = SurvivorStatus.Dying;
             child.hunger = 0;
+            child.dyingGraceConsumed = true;
             gameplay.State.corruption = 40;
 
-            // Dying + hunger 0 → Dead；tick 时已不在场，不扣腐蚀，随后 cleanup 移除被动
+            // 濒死宽限已用尽 → Dead（SHLT-F04：死亡腐蚀 +8）；tick 时已不在场，被动不扣减，随后 cleanup 移除被动
             shelter.ProcessEndOfDay();
 
             Assert.AreEqual(SurvivorStatus.Dead, child.status);
-            Assert.AreEqual(40, gameplay.State.corruption);
+            Assert.AreEqual(40 + ShelterManager.CorruptionOnDeath, gameplay.State.corruption);
             Assert.AreEqual(0, shelter.Passives.ActivePassives.Count);
         }
 

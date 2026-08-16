@@ -8,7 +8,7 @@ using UnityEngine;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 战斗界面特质卡功能区：固定三个圆形头像槽（英雄 / 护士 / 小贼）。
+    /// 战斗界面特质卡功能区：固定三个圆形头像槽（英雄 / 医生 / 小贼）。
     /// </summary>
     public class TraitBarView : MonoBehaviour
     {

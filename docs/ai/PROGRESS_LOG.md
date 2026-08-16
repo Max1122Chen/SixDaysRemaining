@@ -2,6 +2,27 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（EVT-F03 S0–S4 实现）
+
+- 范围：人物/事件 3.0 灌入 + 满员置换 + OptionGate + doctor 改名
+- 已完成：
+  - SHLT：`MaxPopulation=5`；死亡腐蚀 +8；满员 TakeIn 抛错 + Flow 置换 Overlay
+  - EVT：`enabled` / `gates` / `successChance` / `failureEffects` / `followUpEventId` / `KillSurvivor`
+  - 内容：`events.json` 对齐 3.0（流浪者/小贼链/农民→医生/政治家/日常/步兵）；旧池与偷粮 `enabled:false`
+  - `nurse`→`doctor`（survivors / traits / tests）
+  - 幼童 −8：Passive + 日结 bulletin（不双重扣）
+  - 濒死宽限：饱食度 0 的濒死者需再撑一次日结才死亡（接纳当天可抢救）
+  - EditMode：gates / followUp / enabled / TakeIn full / doctor 特质 / 濒死宽限
+- 状态：**Review**（EditMode 绿；待完整 Play 签字）
+- 未做（S5）：辟谷分配例外、陪玩当日翻倍、D4 存档询问、战斗临时 MaxHP；卡牌 2.0
+
+## 2026-08-16（EVT-F03 设计稿）
+
+- 产品源：`docs/designs/六日英雄 人物设定+随机事件3.0.docx`
+- 新增：`designs/EVT-F03-persona-and-events-3.md`（Discuss）
+- 登记：`EVT-F03` + `SHLT-F04`（规则切片并入 F03 design）
+- 下一步：你审阅拍板表后按 S0–S4 实现
+
 ## 2026-08-16（Persist / META / SAVE 收口）
 
 - 范围：CORE-F08 + META-F01 + SAVE-F01

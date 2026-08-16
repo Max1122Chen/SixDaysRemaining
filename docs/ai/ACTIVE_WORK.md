@@ -4,7 +4,10 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | **COMB-F10** 特质卡 | Review | Max | 半开放：人设/入住齐后完整 Play |
+| P0 | **EVT-F03** 人物/事件 3.0 | Review | Max | Play 验收人设闭环；S5 深度可后 |
+| P1 | **SHLT-F04**（并入 F03） | Review | Max | cap5/死亡+8 已落地；分配例外属 S5 |
+| P2 | **COMB-F10** 特质 | Review | Max | doctor 已对齐；Play 后人设闭环标 Done |
+| — | 卡牌数值 2.0 | Planned | Max | 另批；不挡 F03 |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
 | — | `TD-004` / `TD-005` / `TD-006` | Open | Max | 见 TECH_DEBT |
 
@@ -12,8 +15,7 @@
 
 | ID | 状态 | 备注 |
 |----|------|------|
-| `CORE-F08` / `META-F01` / `SAVE-F01` | Done | EditMode 全绿；Play 基本正常 |
-| `COMB-F10` | Review | 半开放待人设 |
+| `CORE-F08` / `META-F01` / `SAVE-F01` | Done | EditMode + Play |
 | `END-F01` | Done | 政治家战败 → Ending.E |
 | `SHLT-F03` | Done | Passive + endingId |
 

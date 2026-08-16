@@ -23,7 +23,8 @@ namespace SixDaysRemaining.Events.Content
             "AddTag",
             "RemoveTag",
             "GrantPassive",
-            "RevokePassive"
+            "RevokePassive",
+            "KillSurvivor"
         };
 
         private static readonly HashSet<string> RetiredOps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -173,6 +174,7 @@ namespace SixDaysRemaining.Events.Content
                     Body = dto.body ?? string.Empty,
                     Trigger = trigger,
                     Priority = dto.priority,
+                    Enabled = dto.enabled,
                     RequiredSurvivorIds = dto.requiredSurvivorIds ?? Array.Empty<string>(),
                     RequiredAbsentSurvivorIds = dto.requiredAbsentSurvivorIds ?? Array.Empty<string>(),
                     RequiredTags = dto.requiredTags ?? Array.Empty<string>(),
@@ -252,28 +254,74 @@ namespace SixDaysRemaining.Events.Content
                     Id = string.IsNullOrWhiteSpace(opt.id) ? eventDto.id + "_opt" + i : opt.id,
                     Label = opt.label,
                     ResultText = opt.resultText ?? string.Empty,
-                    Effects = BuildEffects(eventDto.id, opt, path)
+                    DisabledHint = opt.disabledHint,
+                    SuccessChance = opt.successChance <= 0f ? 1f : Mathf.Clamp01(opt.successChance),
+                    FailureResultText = opt.failureResultText,
+                    FollowUpEventId = string.IsNullOrWhiteSpace(opt.followUpEventId) ? null : opt.followUpEventId.Trim(),
+                    Gates = BuildGates(eventDto.id, opt, path),
+                    Effects = BuildEffects(eventDto.id, opt.effects, opt.id, path),
+                    FailureEffects = BuildEffects(eventDto.id, opt.failureEffects, opt.id, path)
                 };
             }
 
             return options;
         }
 
-        private static GameEventEffectFragment[] BuildEffects(string eventId, EventOptionDto opt, string path)
+        private static OptionGateDef[] BuildGates(string eventId, EventOptionDto opt, string path)
         {
-            if (opt.effects == null || opt.effects.Length == 0)
+            if (opt.gates == null || opt.gates.Length == 0)
+            {
+                return Array.Empty<OptionGateDef>();
+            }
+
+            OptionGateDef[] gates = new OptionGateDef[opt.gates.Length];
+            for (int i = 0; i < opt.gates.Length; i++)
+            {
+                EventGateDto g = opt.gates[i];
+                if (g == null || string.IsNullOrWhiteSpace(g.op))
+                {
+                    throw new InvalidOperationException(
+                        "Event '" + eventId + "' option '" + opt.id + "' has invalid gate in " + path);
+                }
+
+                OptionGateOp op;
+                if (!Enum.TryParse(g.op, true, out op))
+                {
+                    throw new InvalidOperationException(
+                        "Unknown gate op '" + g.op + "' on event '" + eventId + "' in " + path);
+                }
+
+                gates[i] = new OptionGateDef
+                {
+                    Op = op,
+                    Amount = g.amount,
+                    SurvivorDefId = g.survivorDefId,
+                    TagId = g.tagId
+                };
+            }
+
+            return gates;
+        }
+
+        private static GameEventEffectFragment[] BuildEffects(
+            string eventId,
+            EventEffectDto[] source,
+            string optionId,
+            string path)
+        {
+            if (source == null || source.Length == 0)
             {
                 return Array.Empty<GameEventEffectFragment>();
             }
 
-            GameEventEffectFragment[] effects = new GameEventEffectFragment[opt.effects.Length];
-            for (int i = 0; i < opt.effects.Length; i++)
+            GameEventEffectFragment[] effects = new GameEventEffectFragment[source.Length];
+            for (int i = 0; i < source.Length; i++)
             {
-                EventEffectDto fx = opt.effects[i];
+                EventEffectDto fx = source[i];
                 if (fx == null || string.IsNullOrWhiteSpace(fx.op))
                 {
                     throw new InvalidOperationException(
-                        "Event '" + eventId + "' option '" + opt.id + "' has invalid effect in " + path);
+                        "Event '" + eventId + "' option '" + optionId + "' has invalid effect in " + path);
                 }
 
                 if (RetiredOps.Contains(fx.op))

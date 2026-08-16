@@ -120,10 +120,49 @@ namespace SixDaysRemaining.Tests.EditMode
             shelter.RegisterSurvivor(survivor);
 
             shelter.ProcessEndOfDay();
+            Assert.AreEqual(SurvivorStatus.Dying, survivor.status);
+            Assert.IsTrue(survivor.dyingGraceConsumed);
+
+            shelter.ProcessEndOfDay();
 
             Assert.AreEqual(SurvivorStatus.Dead, survivor.status);
             Assert.AreEqual(0, shelter.Population);
             Assert.AreEqual(0, state.population);
+        }
+
+        [Test]
+        public void TakeInDying_SurvivesAdmissionDayEnd()
+        {
+            ShelterContent.ClearForTests();
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager bound = new ShelterManager(gameplay.State);
+            bound.BindGameplay(gameplay);
+            bound.InitializeDefaultRoster(10);
+            bound.TakeIn(SurvivorIds.Doctor);
+
+            Survivor doctor = null;
+            for (int i = 0; i < bound.Survivors.Count; i++)
+            {
+                if (bound.Survivors[i] != null
+                    && bound.Survivors[i].defId == SurvivorIds.Doctor)
+                {
+                    doctor = bound.Survivors[i];
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(doctor);
+            Assert.AreEqual(SurvivorStatus.Dying, doctor.status);
+            Assert.AreEqual(0, doctor.hunger);
+
+            bound.ProcessEndOfDay();
+            Assert.AreEqual(SurvivorStatus.Dying, doctor.status);
+            Assert.IsFalse(doctor.status == SurvivorStatus.Dead);
+
+            bound.ProcessEndOfDay();
+            Assert.AreEqual(SurvivorStatus.Dead, doctor.status);
+            ShelterContent.ClearForTests();
         }
 
         [Test]

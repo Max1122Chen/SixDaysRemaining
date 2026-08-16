@@ -11,7 +11,7 @@
     {
       "id": "farmer",
       "displayName": "农民",
-      "defaultHunger": 2,
+      "defaultHunger": 1,
       "defaultStatus": "Healthy",
       "hungryToDyingDays": 1
     },
@@ -30,16 +30,30 @@
       "hungryToDyingDays": 3
     },
     {
-      "id": "nurse",
-      "displayName": "护士",
-      "defaultHunger": 2,
-      "defaultStatus": "Hungry",
+      "id": "doctor",
+      "displayName": "医生",
+      "defaultHunger": 0,
+      "defaultStatus": "Dying",
       "hungryToDyingDays": 1
     },
     {
       "id": "thief",
       "displayName": "小贼",
-      "defaultHunger": 2,
+      "defaultHunger": 0,
+      "defaultStatus": "Healthy",
+      "hungryToDyingDays": 1
+    },
+    {
+      "id": "wanderer",
+      "displayName": "流浪者",
+      "defaultHunger": 0,
+      "defaultStatus": "Dying",
+      "hungryToDyingDays": 1
+    },
+    {
+      "id": "soldier",
+      "displayName": "步兵",
+      "defaultHunger": 0,
       "defaultStatus": "Hungry",
       "hungryToDyingDays": 1
     }

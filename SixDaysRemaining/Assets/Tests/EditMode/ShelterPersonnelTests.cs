@@ -65,7 +65,7 @@ namespace SixDaysRemaining.Tests.EditMode
         [Test]
         public void ConsumePersonnelChanges_ClearsList()
         {
-            shelter.TakeIn(SurvivorIds.Nurse);
+            shelter.TakeIn(SurvivorIds.Doctor);
             System.Collections.Generic.List<string> changes = shelter.ConsumePersonnelChanges();
 
             Assert.AreEqual(1, changes.Count);
@@ -73,11 +73,40 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void TakeIn_WhenFull_Throws()
+        {
+            shelter.TakeIn(SurvivorIds.Politician);
+            shelter.TakeIn(SurvivorIds.Doctor);
+            shelter.TakeIn(SurvivorIds.Thief);
+            Assert.AreEqual(ShelterManager.MaxPopulation, shelter.Population);
+            Assert.Throws<System.InvalidOperationException>(() => shelter.TakeIn(SurvivorIds.Athlete));
+        }
+
+        [Test]
+        public void KillSurvivor_AppliesCorruptionOnDeath()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager bound = new ShelterManager(gameplay.State);
+            bound.BindGameplay(gameplay);
+            bound.InitializeDefaultRoster(10);
+            int before = gameplay.State.corruption;
+            Assert.IsTrue(bound.KillSurvivor(SurvivorIds.Child));
+            Assert.AreEqual(before + ShelterManager.CorruptionOnDeath, gameplay.State.corruption);
+        }
+
+        [Test]
         public void ProcessEndOfDay_RecordsDeath()
         {
             state = new GameState();
             shelter = new ShelterManager(state);
-            Survivor dying = new Survivor { name = "Test", hunger = 0, status = SurvivorStatus.Dying };
+            Survivor dying = new Survivor
+            {
+                name = "Test",
+                hunger = 0,
+                status = SurvivorStatus.Dying,
+                dyingGraceConsumed = true
+            };
             shelter.RegisterSurvivor(dying);
 
             shelter.ProcessEndOfDay();

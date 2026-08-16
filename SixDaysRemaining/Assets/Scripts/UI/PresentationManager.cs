@@ -3,6 +3,7 @@ using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Events;
 using SixDaysRemaining.Gameplay;
+using SixDaysRemaining.Shelter;
 using UnityEngine;
 
 namespace SixDaysRemaining.UI
@@ -108,6 +109,7 @@ namespace SixDaysRemaining.UI
             flow.ShowGameEventOverlay = ShowGameEvent;
             flow.ShowGameEventResultOverlay = ShowGameEventResult;
             flow.ShowDayEndOverlay = ShowDayEnd;
+            flow.ShowTakeInSwapOverlay = ShowTakeInSwap;
         }
 
         public void WireViews()
@@ -280,6 +282,18 @@ namespace SixDaysRemaining.UI
 
             ShowOverlay(view.gameObject);
             view.ShowEvent(def);
+        }
+
+        private void ShowTakeInSwap(IReadOnlyList<Survivor> alive)
+        {
+            GameEventView view = EnsureGameEventView();
+            if (view == null)
+            {
+                return;
+            }
+
+            ShowOverlay(view.gameObject);
+            view.ShowTakeInSwap(alive);
         }
 
         private void ShowGameEventResult(GameEventResult result)

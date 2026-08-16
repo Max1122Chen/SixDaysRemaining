@@ -128,6 +128,13 @@ namespace SixDaysRemaining.Shelter
                 {
                     fused = true;
                 }
+
+                if (string.Equals(def.Id, PassiveIds.ChildCorruptionDaily, StringComparison.Ordinal)
+                    && shelter != null)
+                {
+                    shelter.AddBulletin(
+                        "幼童在角落玩石头，庇护所里的气氛缓和了一些。（腐蚀度-8）");
+                }
             }
 
             return fused;

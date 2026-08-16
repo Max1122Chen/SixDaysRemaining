@@ -29,6 +29,7 @@ namespace SixDaysRemaining.App.Save
         public int status;
         public int hungryDayCount;
         public int hungryToDyingDays = 1;
+        public bool dyingGraceConsumed;
     }
 
     [Serializable]

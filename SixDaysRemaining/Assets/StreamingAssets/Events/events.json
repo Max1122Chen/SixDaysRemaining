@@ -1,11 +1,205 @@
 {
   "events": [
     {
+      "id": "wanderer_night_day1",
+      "title": "门外的一夜",
+      "body": "一名浑身沾着腐蚀粘液的流浪老者叩响了门，他肩上扛着鼓鼓的粮袋，身体却摇摇欲坠。他看着你的眼睛说：“孩子，腐蚀粘液已经浸透我的身体了，我活不过今晚。让我倒在一个温暖的房间里吧，我把袋里的吃食全都留给你，只求借你屋内角落歇一夜。明天一早……我会回到母亲的怀抱。”",
+      "trigger": "AfterTriumph",
+      "priority": 80,
+      "enabled": true,
+      "requiredDayMin": 1,
+      "requiredDayMax": 1,
+      "requiredAbsentSurvivorIds": ["wanderer"],
+      "options": [
+        {
+          "id": "let_in",
+          "label": "默许他进来，让他在房里过夜",
+          "resultText": "他把粮袋放下。明天一早，角落里只会剩下空袋。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 3 },
+            { "op": "TakeInSurvivor", "survivorDefId": "wanderer" }
+          ]
+        },
+        {
+          "id": "ignore",
+          "label": "移开视线忽视他，关上房门隔绝粘液",
+          "resultText": "老人带着歉意的笑了笑，慢慢走远了。",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "daily_cockroach_day1",
+      "title": "存粮木桶",
+      "body": "存粮木桶爬满腐蚀变异蟑螂，持续啃食储备粮食，必须处理。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 1,
+      "requiredDayMax": 1,
+      "options": [
+        {
+          "id": "clean_alone",
+          "label": "通宵独自清理变异虫群",
+          "resultText": "你清干净了木桶，粘液也沾上了身体。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 10 } ]
+        },
+        {
+          "id": "herb_seal",
+          "label": "制作驱虫草药封堵木桶缝隙",
+          "resultText": "虫群退去，木桶暂时安全了。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 1 } ],
+          "disabledHint": "需要食物 ≥ 1",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -2 },
+            { "op": "FoodDelta", "amount": -1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "thief_knock_day2",
+      "title": "门外的撬锁声",
+      "body": "铁丝撬锁的声音从大门传来，其中夹杂着几声年轻女孩的咳嗽和钝器敲击的声音，要开门看看吗？",
+      "trigger": "AfterTriumph",
+      "priority": 85,
+      "enabled": true,
+      "requiredDayMin": 2,
+      "requiredDayMax": 2,
+      "corruptionMax": 9,
+      "requiredAbsentSurvivorIds": ["thief"],
+      "options": [
+        {
+          "id": "open_door",
+          "label": "开门看看谁在装神弄鬼",
+          "resultText": "门后站着一个紧张的女孩。",
+          "followUpEventId": "thief_knock_day2_followup",
+          "effects": [ { "op": "AddTag", "tagId": "Story.Thief.Opened" } ]
+        },
+        {
+          "id": "reinforce",
+          "label": "加固房门，假装没听见",
+          "resultText": "你用材料把门锁死，门外的动静渐渐远去。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 1 } ],
+          "disabledHint": "加固需要食物 ≥ 1",
+          "effects": [ { "op": "FoodDelta", "amount": -1 } ]
+        }
+      ]
+    },
+    {
+      "id": "thief_knock_day2_followup",
+      "title": "门外的小贼",
+      "body": "站在门外的是一个小女孩，她有些被发现的紧张，但依旧抬头与你对视。原来她是一名靠偷窃生存的小贼，她希望留下来，她说她会帮得上忙的。",
+      "trigger": "AfterTriumph",
+      "priority": 86,
+      "enabled": true,
+      "requiredTags": ["Story.Thief.Opened"],
+      "options": [
+        {
+          "id": "accept",
+          "label": "接纳",
+          "resultText": "她走进庇护所，承诺会帮上忙。",
+          "effects": [
+            { "op": "TakeInSurvivor", "survivorDefId": "thief" },
+            { "op": "CorruptionDelta", "amount": -6 },
+            { "op": "RemoveTag", "tagId": "Story.Thief.Opened" }
+          ]
+        },
+        {
+          "id": "refuse",
+          "label": "拒绝",
+          "resultText": "她离开时顺走了点东西。",
+          "effects": [
+            { "op": "FoodDelta", "amount": -1 },
+            { "op": "RemoveTag", "tagId": "Story.Thief.Opened" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "daily_fence_day2",
+      "title": "围栏破损",
+      "body": "庇护所外围静电防御围栏被变异人类撕裂，粘液持续侵扰屋内幸存者，向你求助。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 2,
+      "requiredDayMax": 2,
+      "corruptionMin": 41,
+      "options": [
+        {
+          "id": "repair_alone",
+          "label": "连夜独自修补围栏",
+          "resultText": "静电灼烧了你的躯体，缺口暂时封住。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 8 } ]
+        },
+        {
+          "id": "use_wood",
+          "label": "拆解储物木架取木料修补",
+          "resultText": "木料换来了暂时的安全。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 2 } ],
+          "disabledHint": "需要食物 ≥ 2",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -5 },
+            { "op": "FoodDelta", "amount": -2 }
+          ]
+        },
+        {
+          "id": "slime_seal",
+          "label": "外放体内粘液带走魔物封住缺口",
+          "resultText": "缺口封住了，粘液也更深地缠上了你。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 15 } ]
+        }
+      ]
+    },
+    {
+      "id": "daily_fence_day2_low",
+      "title": "围栏破损",
+      "body": "庇护所外围静电防御围栏被变异人类撕裂，粘液持续侵扰屋内幸存者，向你求助。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 2,
+      "requiredDayMax": 2,
+      "corruptionMax": 40,
+      "options": [
+        {
+          "id": "repair_alone",
+          "label": "连夜独自修补围栏",
+          "resultText": "静电灼烧了你的躯体，缺口暂时封住。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 8 } ]
+        },
+        {
+          "id": "use_wood",
+          "label": "拆解储物木架取木料修补",
+          "resultText": "木料换来了暂时的安全。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 2 } ],
+          "disabledHint": "需要食物 ≥ 2",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -5 },
+            { "op": "FoodDelta", "amount": -2 }
+          ]
+        },
+        {
+          "id": "sword_aura",
+          "label": "试一试英雄血脉的剑气",
+          "resultText": "剑气吓退了它们，你也付出了代价。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 1 } ],
+          "disabledHint": "需要食物 ≥ 1",
+          "effects": [
+            { "op": "FoodDelta", "amount": -1 },
+            { "op": "CorruptionDelta", "amount": -10 }
+          ]
+        }
+      ]
+    },
+    {
       "id": "child_stone_day2",
       "title": "角落里的石子",
-      "body": "幼童攥着磨圆的石头蹲在角落，举起石子盯着你，突然说：「明天能不能陪我玩一会抛石头？没人陪我玩，我好孤单……英雄一定可以解决我的烦恼。」",
+      "body": "（旧版 D2，已停用）",
       "trigger": "AfterTriumph",
       "priority": 90,
+      "enabled": false,
       "requiredDayMin": 2,
       "requiredDayMax": 2,
       "requiredSurvivorIds": ["child"],
@@ -13,7 +207,7 @@
         {
           "id": "stay_play",
           "label": "放下搜集计划，留下来陪他玩耍",
-          "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
+          "resultText": "你答应了他。",
           "effects": [
             { "op": "CorruptionDelta", "amount": -20 },
             { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" }
@@ -22,7 +216,7 @@
         {
           "id": "decline",
           "label": "婉拒，优先外出搜集物资",
-          "resultText": "幼童没再说话，把石头攥得更紧了。",
+          "resultText": "幼童没再说话。",
           "effects": [
             { "op": "AddTag", "tagId": "Story.ChildStone.Declined.Day2" }
           ]
@@ -32,9 +226,10 @@
     {
       "id": "child_stone_day3",
       "title": "角落里的石子",
-      "body": "幼童又攥着磨圆的石头蹲在角落，举起石子盯着你，突然说：「明天能不能陪我玩一会抛石头？没人陪我玩，我好孤单……」",
+      "body": "幼童攥着磨圆的石头蹲在角落，举起石子盯着你，突然说：“明天能不能陪我玩一会抛石头？没人陪我玩，我好孤单。英雄一定可以解决我的烦恼！”",
       "trigger": "AfterTriumph",
-      "priority": 90,
+      "priority": 95,
+      "enabled": true,
       "requiredDayMin": 3,
       "requiredDayMax": 3,
       "requiredSurvivorIds": ["child"],
@@ -51,9 +246,161 @@
         {
           "id": "decline",
           "label": "婉拒，优先外出搜集物资",
-          "resultText": "幼童没再说话，把石头攥得更紧了。",
+          "resultText": "他似乎生闷气了，桌上没有出现可爱的石头，人也不知道躲到哪里去了……",
           "effects": [
+            { "op": "RevokePassive", "passiveId": "passive.child.corruption_daily" },
             { "op": "AddTag", "tagId": "Story.ChildStone.Declined.Day3" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "politician_knock_day3",
+      "title": "门外的交换",
+      "body": "有一位风尘仆仆但依旧难掩贵气和高傲的男士前来敲门，他带着一些食物作为交换条件，希望可以进入庇护所得到你的帮助。",
+      "trigger": "AfterTriumph",
+      "priority": 70,
+      "enabled": true,
+      "requiredDayMin": 3,
+      "requiredDayMax": 3,
+      "requiredAbsentSurvivorIds": ["politician"],
+      "options": [
+        {
+          "id": "admit",
+          "label": "虽然有点被他的势气冒犯到，但我们需要食物，让他进来",
+          "resultText": "食物+5、人口+1。他踏入庇护所，粮食堆上了货架。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 5 },
+            { "op": "TakeInSurvivor", "survivorDefId": "politician" }
+          ]
+        },
+        {
+          "id": "refuse",
+          "label": "他看起来不是什么好应付的，回绝他的交换请求",
+          "resultText": "你将他赶走，锁上了门。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": 8 },
+            { "op": "AddTag", "tagId": "Story.Politician.Refused" }
+          ]
+        },
+        {
+          "id": "rob",
+          "label": "抢走他的食物并驱逐他",
+          "resultText": "哈哈，你做到了。你假意答应，但拿到他的食物后立即关闭大门、用利剑恐吓驱逐他。这位政治家气的面红耳赤，狼狈的离开了。",
+          "gates": [ { "op": "CorruptionAtLeast", "amount": 41 } ],
+          "disabledHint": "需要腐蚀度 > 40",
+          "successChance": 0.5,
+          "failureResultText": "你温和的和他闲聊着，试图转移他的注意力。可惜，正当你准备行动时，抬头间对上了他的眼睛。政治家识破你的伪装，抱紧食物逃走了。",
+          "effects": [
+            { "op": "FoodDelta", "amount": 3 },
+            { "op": "CorruptionDelta", "amount": 12 },
+            { "op": "AddTag", "tagId": "Story.Politician.Refused" }
+          ],
+          "failureEffects": [
+            { "op": "CorruptionDelta", "amount": 10 },
+            { "op": "AddTag", "tagId": "Story.Politician.Refused" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "farmer_cousin_doctor_day3",
+      "title": "血迹斑斑的传真",
+      "body": "我有一个远房表弟，灾难来临那天他在出诊，我们失联了很久。今天早晨我收到了他的传真，上面血迹斑斑。于是我马上将我们的位置写给了他，现在他就在门外，让他进来吧！英雄，您既然是英雄，必须得帮帮他啊！",
+      "trigger": "AfterTriumph",
+      "priority": 75,
+      "enabled": true,
+      "requiredDayMin": 3,
+      "requiredDayMax": 3,
+      "requiredSurvivorIds": ["farmer"],
+      "requiredAbsentSurvivorIds": ["doctor"],
+      "options": [
+        {
+          "id": "admit_doctor",
+          "label": "当然让他进来，我是英雄，就不可能见死不救",
+          "resultText": "这是一名医生，也许外出战斗打猎时他能帮得上忙。你用了些资源抢救他。",
+          "effects": [
+            { "op": "FoodDelta", "amount": -1 },
+            { "op": "TakeInSurvivor", "survivorDefId": "doctor" }
+          ]
+        },
+        {
+          "id": "refuse_door",
+          "label": "别开门！为了庇护所里居民的安危，我得谨慎一些",
+          "resultText": "你决绝的态度让庇护所里的居民感到吃惊，农民对你产生了一些怨言。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 10 } ]
+        },
+        {
+          "id": "kill_farmer_take_doctor",
+          "label": "既然他的表弟会医术，一定比他有用吧",
+          "resultText": "你杀了农民，伪造出他摔倒的假象。然后将医生带进庇护所，用了些资源抢救他。",
+          "gates": [ { "op": "CorruptionAtLeast", "amount": 41 } ],
+          "disabledHint": "需要腐蚀度 > 40",
+          "effects": [
+            { "op": "KillSurvivor", "survivorDefId": "farmer" },
+            { "op": "FoodDelta", "amount": -1 },
+            { "op": "TakeInSurvivor", "survivorDefId": "doctor" },
+            { "op": "CorruptionDelta", "amount": 15 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "daily_toilet_day3_low",
+      "title": "马桶淤泥",
+      "body": "幸存者投诉马桶底部堆满霉菌淤泥，刺鼻气味弥漫房间。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 3,
+      "requiredDayMax": 3,
+      "corruptionMax": 40,
+      "options": [
+        {
+          "id": "clean_hand",
+          "label": "亲手清理霉菌污秽",
+          "resultText": "毒素侵入体内，气味散去一些。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 10 } ]
+        },
+        {
+          "id": "seal_box",
+          "label": "拆掉闲置木箱并填土隔绝毒气",
+          "resultText": "毒气被隔开了。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 2 } ],
+          "disabledHint": "需要食物 ≥ 2",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -5 },
+            { "op": "FoodDelta", "amount": -2 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "daily_toilet_day3_high",
+      "title": "马桶淤泥",
+      "body": "幸存者投诉马桶底部堆满霉菌淤泥，刺鼻气味弥漫房间。腐蚀让一切更糟。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 3,
+      "requiredDayMax": 3,
+      "corruptionMin": 41,
+      "options": [
+        {
+          "id": "clean_hand",
+          "label": "亲手清理霉菌污秽",
+          "resultText": "毒素侵入体内，气味散去一些。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 15 } ]
+        },
+        {
+          "id": "seal_box",
+          "label": "拆掉闲置木箱并填土隔绝毒气",
+          "resultText": "毒气被隔开了。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 3 } ],
+          "disabledHint": "需要食物 ≥ 3",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -5 },
+            { "op": "FoodDelta", "amount": -3 }
           ]
         }
       ]
@@ -64,6 +411,7 @@
       "body": "小孩偷走了 1 份食物，偷偷溜走了。庇护所里的人责怪你斤斤计较，对你产生了一些怨言。",
       "trigger": "BeforeDepart",
       "priority": 95,
+      "enabled": false,
       "requiredDayMin": 4,
       "requiredDayMax": 4,
       "requiredSurvivorIds": ["child"],
@@ -84,40 +432,120 @@
       ]
     },
     {
-      "id": "politician_knock_day3",
-      "title": "门外的交换",
-      "body": "有一位风尘仆仆但依旧难掩贵气和高傲的男士前来敲门。他带着一些食物作为交换条件，希望可以进入庇护所得到你的帮助。",
+      "id": "doctor_bigu_day4",
+      "title": "辟谷丹的研究",
+      "body": "“医生”认为庇护所里的幸存者太依赖“英雄”获得食物了。于是她用战斗中发现的《东方神话》药典，开始了新型药剂—“辟谷丹”的研究，她问你借一些资源用于开发。",
       "trigger": "AfterTriumph",
-      "priority": 10,
-      "requiredDayMin": 3,
-      "requiredDayMax": 3,
-      "requiredAbsentSurvivorIds": ["politician"],
+      "priority": 60,
+      "enabled": true,
+      "requiredDayMin": 4,
+      "requiredDayMax": 4,
+      "requiredSurvivorIds": ["doctor"],
       "options": [
         {
-          "id": "admit",
-          "label": "虽然有点被他的势气冒犯到，但让他进来",
-          "resultText": "他踏入庇护所，粮食堆上了货架。",
+          "id": "fund",
+          "label": "给他们自主的权力，给她资源让她开发吧",
+          "resultText": "她收下了资源，开始研究。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 2 } ],
+          "disabledHint": "需要食物 ≥ 2",
           "effects": [
-            { "op": "FoodDelta", "amount": 5 },
-            { "op": "TakeInSurvivor", "survivorDefId": "politician" }
+            { "op": "FoodDelta", "amount": -2 },
+            { "op": "CorruptionDelta", "amount": -15 },
+            { "op": "AddTag", "tagId": "Story.Doctor.BiguFunded" }
           ]
         },
         {
-          "id": "refuse",
-          "label": "他看起来不是什么好应付的，回绝他的交换请求",
-          "resultText": "你关上门。他在门外站了一会儿，转身消失在废墟里。",
+          "id": "stop",
+          "label": "让她就此停止吧",
+          "resultText": "她看起来不太高兴。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 10 } ]
+        },
+        {
+          "id": "experiment",
+          "label": "让她直接从幸存者身上实验",
+          "resultText": "试验改变了一名幸存者的状态，对方感到恐惧。",
+          "gates": [ { "op": "CorruptionAtLeast", "amount": 41 } ],
+          "disabledHint": "需要腐蚀度 > 40",
+          "successChance": 0.5,
+          "failureResultText": "这个药剂带走了一名幸存者的性命，其他人对此感到害怕。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 20 } ],
+          "failureEffects": [ { "op": "CorruptionDelta", "amount": 30 } ]
+        }
+      ]
+    },
+    {
+      "id": "daily_storm_day4",
+      "title": "雷雨静电外泄",
+      "body": "暴雨引发静电失控，粘液顺着墙体渗入庇护所，急需处理。",
+      "trigger": "AfterTriumph",
+      "priority": 25,
+      "enabled": true,
+      "requiredDayMin": 4,
+      "requiredDayMax": 4,
+      "options": [
+        {
+          "id": "keep_watch",
+          "label": "消耗物资守夜，整夜守墙疏导静电",
+          "resultText": "你守了一夜，静电被疏导开。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 2 } ],
+          "disabledHint": "需要食物 ≥ 2",
           "effects": [
-            { "op": "AddTag", "tagId": "Story.Politician.Refused" }
+            { "op": "CorruptionDelta", "amount": -5 },
+            { "op": "FoodDelta", "amount": -2 }
           ]
+        },
+        {
+          "id": "thief_dagger",
+          "label": "用小贼的匕首将粘液剥离",
+          "resultText": "匕首小巧很好用，你将粘液处理干净，但不慎沾了点到手指上。",
+          "gates": [ { "op": "HasSurvivor", "survivorDefId": "thief" } ],
+          "disabledHint": "需要小贼在庇护所",
+          "effects": [ { "op": "CorruptionDelta", "amount": 5 } ]
+        },
+        {
+          "id": "sword_scrape",
+          "label": "用剑将粘液剥离",
+          "resultText": "你用了很长时间将粘液处理干净，期间不慎沾了点到手指上。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 12 } ]
+        }
+      ]
+    },
+    {
+      "id": "soldier_day5",
+      "title": "出门转一圈",
+      "body": "根据寓言，明天灾变就要结束了。庇护所里的人们如往常一样崇拜又畏惧的看着你，而你却按耐不住内心的情绪、决定出门转一圈，看看即将重生的世界。",
+      "trigger": "AfterTriumph",
+      "priority": 80,
+      "enabled": true,
+      "requiredDayMin": 5,
+      "requiredDayMax": 5,
+      "corruptionMin": 61,
+      "requiredAbsentSurvivorIds": ["soldier"],
+      "options": [
+        {
+          "id": "go_out",
+          "label": "走吧！出去透透气",
+          "resultText": "你在草丛里遇到了一位奄奄一息的步兵，你将他带回了庇护所，一路沾上了些许粘液。",
+          "effects": [
+            { "op": "TakeInSurvivor", "survivorDefId": "soldier" },
+            { "op": "CorruptionDelta", "amount": 20 }
+          ]
+        },
+        {
+          "id": "stay_in",
+          "label": "冷静！耐心待在房间里",
+          "resultText": "你压下冲动，留在庇护所里。",
+          "effects": []
         }
       ]
     },
     {
       "id": "politician_knock_revisit",
       "title": "门外的交换（再访）",
-      "body": "[PLACEHOLDER] 那位风尘仆仆的男士再次出现在门外。他似乎还记得上次被拒，但手里仍带着一些食物。",
+      "body": "那位风尘仆仆的男士再次出现在门外。他似乎还记得上次被拒，但手里仍带着一些食物。",
       "trigger": "AfterTriumph",
       "priority": 15,
+      "enabled": true,
       "requiredDayMin": 4,
       "requiredDayMax": 6,
       "requiredAbsentSurvivorIds": ["politician"],
@@ -144,10 +572,11 @@
     {
       "id": "ruined_market",
       "title": "废弃超市",
-      "body": "小队在废墟中发现一家半塌的超市，货架上还留着不少余粮。",
+      "body": "（旧随机池，已降权停用）",
       "trigger": "AfterTriumph",
       "priority": 0,
       "weight": 1,
+      "enabled": false,
       "options": [
         {
           "id": "search_thorough",
@@ -162,9 +591,7 @@
           "id": "grab_and_go",
           "label": "快速拿一点就走",
           "resultText": "你只来得及抓走几包饼干。",
-          "effects": [
-            { "op": "FoodDelta", "amount": 1 }
-          ]
+          "effects": [ { "op": "FoodDelta", "amount": 1 } ]
         },
         {
           "id": "abandon",
@@ -177,23 +604,22 @@
     {
       "id": "night_unrest",
       "title": "夜里的骚动",
-      "body": "深夜，庇护所里传来争吵，一名幸存者主张冒险外出。",
+      "body": "（旧随机池，已降权停用）",
       "trigger": "AfterTriumph",
       "priority": 0,
       "weight": 1,
+      "enabled": false,
       "options": [
         {
           "id": "calm",
           "label": "安抚大家",
-          "resultText": "你把骚动平息下来，气氛重新安定。",
-          "effects": [
-            { "op": "CorruptionDelta", "amount": -1 }
-          ]
+          "resultText": "你把骚动平息下来。",
+          "effects": [ { "op": "CorruptionDelta", "amount": -1 } ]
         },
         {
           "id": "support_sortie",
           "label": "支持外出",
-          "resultText": "他们带回一些食物，代价是更多腐蚀。",
+          "resultText": "他们带回一些食物。",
           "effects": [
             { "op": "FoodDelta", "amount": 2 },
             { "op": "CorruptionDelta", "amount": 2 }
@@ -202,7 +628,7 @@
         {
           "id": "expel_leader",
           "label": "驱赶带头的人",
-          "resultText": "你让带头的人离开，庇护所安静了。",
+          "resultText": "你让带头的人离开。",
           "effects": [
             { "op": "CorruptionDelta", "amount": 1 },
             { "op": "ExpelSurvivor", "survivorDefId": "athlete" }

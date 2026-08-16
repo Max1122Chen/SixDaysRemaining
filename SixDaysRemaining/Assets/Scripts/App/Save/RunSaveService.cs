@@ -125,7 +125,8 @@ namespace SixDaysRemaining.App.Save
                     hunger = s.hunger,
                     status = (int)s.status,
                     hungryDayCount = s.hungryDayCount,
-                    hungryToDyingDays = s.hungryToDyingDays
+                    hungryToDyingDays = s.hungryToDyingDays,
+                    dyingGraceConsumed = s.dyingGraceConsumed
                 });
             }
 

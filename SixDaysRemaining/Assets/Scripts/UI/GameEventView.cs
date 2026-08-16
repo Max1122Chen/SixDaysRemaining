@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using SixDaysRemaining.App;
 using SixDaysRemaining.Events;
 using SixDaysRemaining.Gameplay;
+using SixDaysRemaining.Shelter;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,11 +10,12 @@ using UnityEngine.UI;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 通用事件 overlay + 日结摘要。
+    /// 通用事件 overlay + 日结摘要 + 满员置换。
     /// </summary>
     public class GameEventView : MonoBehaviour
     {
         private const int OptionCount = 3;
+        private const int MaxSwapButtons = 5;
 
         private AppFlowController flow;
 
@@ -41,7 +43,20 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private Button continueButton;
 
+        [SerializeField]
+        private GameObject swapGroup;
+
+        [SerializeField]
+        private TextMeshProUGUI swapBodyText;
+
+        [SerializeField]
+        private Button[] swapButtons = new Button[MaxSwapButtons];
+
+        [SerializeField]
+        private Button swapCancelButton;
+
         private GameEventOptionDef[] pendingOptions;
+        private readonly List<string> swapDefIds = new List<string>();
 
         public static GameEventView Build(Transform parent, AppFlowController flow)
         {
@@ -89,6 +104,41 @@ namespace SixDaysRemaining.UI
                 null,
                 22);
             view.resultContinueButton.gameObject.SetActive(false);
+
+            view.swapGroup = CreateFullChild(window.transform, "SwapGroup");
+            view.swapBodyText = UiFactory.CreateText(
+                view.swapGroup.transform,
+                "Txt_SwapBody",
+                "",
+                20,
+                new Vector2(0f, 160f),
+                new Vector2(760f, 80f),
+                TextAlignmentOptions.Center);
+            view.swapBodyText.raycastTarget = false;
+            view.swapButtons = new Button[MaxSwapButtons];
+            for (int i = 0; i < MaxSwapButtons; i++)
+            {
+                view.swapButtons[i] = UiFactory.CreateButton(
+                    view.swapGroup.transform,
+                    "Btn_Swap" + (i + 1),
+                    "",
+                    null,
+                    new Vector2(0f, 80f - i * 56f),
+                    new Vector2(420f, 48f),
+                    new Color(0.28f, 0.22f, 0.22f, 1f),
+                    18);
+            }
+
+            view.swapCancelButton = UiFactory.CreateButton(
+                view.swapGroup.transform,
+                "Btn_SwapCancel",
+                "取消",
+                null,
+                new Vector2(0f, -220f),
+                new Vector2(240f, 52f),
+                new Color(0.2f, 0.24f, 0.3f, 1f),
+                20);
+            view.swapGroup.SetActive(false);
 
             view.dayEndGroup = CreateFullChild(window.transform, "DayEndGroup");
             BuildArtPlaceholder(view.dayEndGroup.transform, "DayEndArt", "一日结束", new Vector2(-215f, -10f), new Vector2(390f, 450f));
@@ -138,6 +188,25 @@ namespace SixDaysRemaining.UI
                 }
             }
 
+            if (swapButtons != null)
+            {
+                for (int i = 0; i < swapButtons.Length; i++)
+                {
+                    int index = i;
+                    if (swapButtons[i] != null)
+                    {
+                        swapButtons[i].onClick.RemoveAllListeners();
+                        swapButtons[i].onClick.AddListener(() => OnSwapClicked(index));
+                    }
+                }
+            }
+
+            if (swapCancelButton != null)
+            {
+                swapCancelButton.onClick.RemoveAllListeners();
+                swapCancelButton.onClick.AddListener(OnSwapCancelClicked);
+            }
+
             if (continueButton != null)
             {
                 continueButton.onClick.RemoveAllListeners();
@@ -162,6 +231,12 @@ namespace SixDaysRemaining.UI
                 resultContinueButton.gameObject.SetActive(false);
             }
 
+            GameEventQuery query = null;
+            if (flow != null && flow.Game != null && flow.Game.Events != null && def != null)
+            {
+                query = flow.Game.Events.BuildQuery(def.Trigger);
+            }
+
             for (int i = 0; i < optionButtons.Length; i++)
             {
                 bool visible = pendingOptions != null && i < pendingOptions.Length && pendingOptions[i] != null;
@@ -171,15 +246,83 @@ namespace SixDaysRemaining.UI
                     continue;
                 }
 
+                GameEventOptionDef option = pendingOptions[i];
+                string failHint;
+                bool enabled = OptionGates.Passes(option, query, out failHint);
+                optionButtons[i].interactable = enabled;
+
                 TextMeshProUGUI label = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>(true);
                 if (label != null)
                 {
-                    label.text = pendingOptions[i].Label;
+                    if (enabled)
+                    {
+                        label.text = option.Label;
+                        label.color = Color.white;
+                    }
+                    else
+                    {
+                        string hint = !string.IsNullOrEmpty(option.DisabledHint)
+                            ? option.DisabledHint
+                            : (failHint ?? "条件未满足");
+                        label.text = option.Label + "（" + hint + "）";
+                        label.color = new Color(0.55f, 0.55f, 0.58f, 1f);
+                    }
                 }
+            }
+
+            if (swapGroup != null)
+            {
+                swapGroup.SetActive(false);
             }
 
             eventGroup.SetActive(true);
             dayEndGroup.SetActive(false);
+        }
+
+        public void ShowTakeInSwap(IReadOnlyList<Survivor> alive)
+        {
+            titleText.text = "庇护所已满";
+            if (swapBodyText != null)
+            {
+                swapBodyText.text = "接纳新人前，请选择一位现有幸存者离开。取消则返回选项。";
+            }
+
+            swapDefIds.Clear();
+            for (int i = 0; i < swapButtons.Length; i++)
+            {
+                bool visible = alive != null && i < alive.Count && alive[i] != null;
+                swapButtons[i].gameObject.SetActive(visible);
+                if (!visible)
+                {
+                    continue;
+                }
+
+                Survivor s = alive[i];
+                swapDefIds.Add(s.defId);
+                TextMeshProUGUI label = swapButtons[i].GetComponentInChildren<TextMeshProUGUI>(true);
+                if (label != null)
+                {
+                    label.text = string.IsNullOrEmpty(s.name) ? s.defId : s.name;
+                    label.color = Color.white;
+                }
+
+                swapButtons[i].interactable = true;
+            }
+
+            if (eventGroup != null)
+            {
+                eventGroup.SetActive(false);
+            }
+
+            if (dayEndGroup != null)
+            {
+                dayEndGroup.SetActive(false);
+            }
+
+            if (swapGroup != null)
+            {
+                swapGroup.SetActive(true);
+            }
         }
 
         public void ShowResult(GameEventResult result, GameInstance gi)
@@ -197,6 +340,11 @@ namespace SixDaysRemaining.UI
                 }
             }
 
+            if (swapGroup != null)
+            {
+                swapGroup.SetActive(false);
+            }
+
             if (resultContinueButton != null)
             {
                 resultContinueButton.interactable = true;
@@ -209,14 +357,18 @@ namespace SixDaysRemaining.UI
 
         public void ShowDayEnd(GameInstance gi, IReadOnlyList<string> changes)
         {
-            string personnel = changes != null && changes.Count > 0
+            titleText.text = "第 " + gi.Gameplay.State.day + " 天结束";
+            string body = changes != null && changes.Count > 0
                 ? string.Join("\n", changes)
                 : "今日庇护所内无人员变动";
-
-            titleText.text = "第 " + gi.Gameplay.State.day + " 天结束";
             summaryText.text = "存粮：" + gi.Gameplay.State.foodStock
                 + "\n腐蚀度：" + gi.Gameplay.State.corruption
-                + "\n\n人员变动\n" + personnel;
+                + "\n\n今日记事\n" + body;
+
+            if (swapGroup != null)
+            {
+                swapGroup.SetActive(false);
+            }
 
             eventGroup.SetActive(false);
             dayEndGroup.SetActive(true);
@@ -229,7 +381,28 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
+            if (optionButtons != null && index < optionButtons.Length
+                && optionButtons[index] != null && !optionButtons[index].interactable)
+            {
+                return;
+            }
+
             flow.OnGameEventOptionChosen(index);
+        }
+
+        private void OnSwapClicked(int index)
+        {
+            if (flow == null || index < 0 || index >= swapDefIds.Count)
+            {
+                return;
+            }
+
+            flow.OnTakeInSwapChosen(swapDefIds[index]);
+        }
+
+        private void OnSwapCancelClicked()
+        {
+            flow?.OnTakeInSwapCancelled();
         }
 
         private void OnResultContinue()

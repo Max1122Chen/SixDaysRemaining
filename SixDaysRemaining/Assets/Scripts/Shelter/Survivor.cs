@@ -27,5 +27,12 @@ namespace SixDaysRemaining.Shelter
 
         /// <summary>从 Def 拷贝；饥饿→濒死所需天数。</summary>
         public int hungryToDyingDays = 1;
+
+        /// <summary>
+        /// 濒死且饱食度为 0 时，是否已熬过一次日结。
+        /// false：本次日结仅维持濒死；true：仍未进食则死亡。
+        /// 进食离开濒死后清零。
+        /// </summary>
+        public bool dyingGraceConsumed;
     }
 }

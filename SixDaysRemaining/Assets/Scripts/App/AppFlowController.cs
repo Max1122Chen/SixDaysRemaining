@@ -28,6 +28,7 @@ namespace SixDaysRemaining.Gameplay
         private CombatResult pendingResult;
         private EventChainPhase eventChainPhase;
         private bool eventsHooked;
+        private int pendingSwapOptionIndex = -1;
 
         public Action ShowStartScreen;
         public Action ShowStoryIntroScreen;
@@ -44,6 +45,7 @@ namespace SixDaysRemaining.Gameplay
         public Action<GameEventDef> ShowGameEventOverlay;
         public Action<GameEventResult> ShowGameEventResultOverlay;
         public Action<IReadOnlyList<string>> ShowDayEndOverlay;
+        public Action<IReadOnlyList<Survivor>> ShowTakeInSwapOverlay;
 
         public Action CloseOverlayCallback;
 
@@ -318,6 +320,63 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
+            string gateHint;
+            if (!gi.Events.CanChooseOption(optionIndex, out gateHint))
+            {
+                return;
+            }
+
+            string takeInDefId;
+            if (gi.Events.OptionContainsTakeIn(optionIndex, out takeInDefId)
+                && gi.Shelter != null
+                && !gi.Shelter.HasCapacity)
+            {
+                pendingSwapOptionIndex = optionIndex;
+                ShowTakeInSwapOverlay?.Invoke(BuildAliveSurvivorsForSwap(gi.Shelter));
+                return;
+            }
+
+            ResolveGameEventOption(optionIndex);
+        }
+
+        /// <summary>满员置换：驱逐选中幸存者后应用挂起的 TakeIn 选项。</summary>
+        public void OnTakeInSwapChosen(string expelDefId)
+        {
+            GameInstance gi = Game;
+            if (gi?.Shelter == null || gi.Events == null || pendingSwapOptionIndex < 0)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(expelDefId))
+            {
+                gi.Shelter.ExpelSurvivor(expelDefId);
+            }
+
+            int optionIndex = pendingSwapOptionIndex;
+            pendingSwapOptionIndex = -1;
+            ResolveGameEventOption(optionIndex);
+        }
+
+        /// <summary>满员置换取消：回到事件选项屏，不应用选项。</summary>
+        public void OnTakeInSwapCancelled()
+        {
+            pendingSwapOptionIndex = -1;
+            GameEventDef current = Game != null && Game.Events != null ? Game.Events.CurrentEvent : null;
+            if (current != null)
+            {
+                ShowGameEventOverlay?.Invoke(current);
+            }
+        }
+
+        private void ResolveGameEventOption(int optionIndex)
+        {
+            GameInstance gi = Game;
+            if (gi?.Events == null)
+            {
+                return;
+            }
+
             GameEventResult result = gi.Events.ApplyOption(optionIndex);
             if (result.EndedRun)
             {
@@ -331,6 +390,28 @@ namespace SixDaysRemaining.Gameplay
 
             ShowGameEventResultOverlay?.Invoke(result);
             RefreshHud?.Invoke();
+        }
+
+        private static List<Survivor> BuildAliveSurvivorsForSwap(ShelterManager shelter)
+        {
+            List<Survivor> list = new List<Survivor>();
+            if (shelter?.Survivors == null)
+            {
+                return list;
+            }
+
+            for (int i = 0; i < shelter.Survivors.Count; i++)
+            {
+                Survivor s = shelter.Survivors[i];
+                if (s == null || s.status == SurvivorStatus.Dead || s.status == SurvivorStatus.Left)
+                {
+                    continue;
+                }
+
+                list.Add(s);
+            }
+
+            return list;
         }
 
         public void OnEventResultContinue()
@@ -493,7 +574,10 @@ namespace SixDaysRemaining.Gameplay
             }
 
             TryWriteCheckpoint();
-            ShowDayEndOverlay?.Invoke(gi.Shelter.ConsumePersonnelChanges());
+            List<string> dayLines = new List<string>();
+            dayLines.AddRange(gi.Shelter.ConsumePersonnelChanges());
+            dayLines.AddRange(gi.Shelter.ConsumeBulletins());
+            ShowDayEndOverlay?.Invoke(dayLines);
             RefreshHud?.Invoke();
         }
 

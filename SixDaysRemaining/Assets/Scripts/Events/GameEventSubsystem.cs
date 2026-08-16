@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
+using UnityEngine;
 
 namespace SixDaysRemaining.Events
 {
@@ -14,6 +15,7 @@ namespace SixDaysRemaining.Events
 
         private readonly List<IGameEventProvider> providers = new List<IGameEventProvider>();
         private readonly List<GameEventDef> queue = new List<GameEventDef>();
+        private readonly List<bool> queueIsFollowUp = new List<bool>();
         private IEventLibrary library;
         private GameplaySubsystem gameplay;
         private ShelterManager shelter;
@@ -87,8 +89,7 @@ namespace SixDaysRemaining.Events
         public void SetEventsConsumedToday(int consumed)
         {
             eventsConsumedToday = consumed < 0 ? 0 : consumed;
-            queue.Clear();
-            queueIndex = -1;
+            ClearQueue();
             sequenceActive = false;
         }
 
@@ -97,8 +98,7 @@ namespace SixDaysRemaining.Events
         /// </summary>
         public void TryPrepareTrigger(GameEventTrigger trigger)
         {
-            queue.Clear();
-            queueIndex = -1;
+            ClearQueue();
             sequenceActive = true;
 
             if (library == null || RemainingDailyBudget <= 0)
@@ -120,6 +120,7 @@ namespace SixDaysRemaining.Events
                     }
 
                     queue.Add(def);
+                    queueIsFollowUp.Add(false);
                     if (queue.Count >= RemainingDailyBudget)
                     {
                         break;
@@ -143,10 +144,41 @@ namespace SixDaysRemaining.Events
             CurrentEventChanged?.Invoke(CurrentEvent);
         }
 
+        /// <summary>供 UI 灰显：选项门禁是否通过。</summary>
+        public bool CanChooseOption(int optionIndex, out string failHint)
+        {
+            failHint = null;
+            GameEventDef current = CurrentEvent;
+            if (current?.Options == null
+                || optionIndex < 0 || optionIndex >= current.Options.Length)
+            {
+                failHint = "无效选项";
+                return false;
+            }
+
+            return OptionGates.Passes(current.Options[optionIndex], BuildQuery(current.Trigger), out failHint);
+        }
+
+        /// <summary>选项效果是否含 TakeInSurvivor（满员置换用）。</summary>
+        public bool OptionContainsTakeIn(int optionIndex, out string takeInDefId)
+        {
+            takeInDefId = null;
+            GameEventDef current = CurrentEvent;
+            if (current?.Options == null
+                || optionIndex < 0 || optionIndex >= current.Options.Length)
+            {
+                return false;
+            }
+
+            GameEventOptionDef option = current.Options[optionIndex];
+            return EffectsContainTakeIn(option?.Effects, out takeInDefId)
+                || EffectsContainTakeIn(option?.FailureEffects, out takeInDefId);
+        }
+
         public GameEventResult ApplyOption(int optionIndex)
         {
-            GameEventDef current = CurrentEvent;
             GameEventResult result = default(GameEventResult);
+            GameEventDef current = CurrentEvent;
             if (current == null || current.Options == null
                 || optionIndex < 0 || optionIndex >= current.Options.Length
                 || gameplay == null)
@@ -157,13 +189,31 @@ namespace SixDaysRemaining.Events
             GameEventOptionDef option = current.Options[optionIndex];
             result.EventId = current.Id;
             result.OptionId = option != null ? option.Id : null;
-            result.ResultText = option != null ? option.ResultText : string.Empty;
 
-            if (option?.Effects != null)
+            string gateHint;
+            if (!OptionGates.Passes(option, BuildQuery(current.Trigger), out gateHint))
             {
-                for (int i = 0; i < option.Effects.Length; i++)
+                result.ResultText = !string.IsNullOrEmpty(option?.DisabledHint)
+                    ? option.DisabledHint
+                    : (gateHint ?? "条件未满足");
+                return result;
+            }
+
+            bool success = RollSuccess(option);
+            GameEventEffectFragment[] effects = success
+                ? option.Effects
+                : option.FailureEffects;
+            result.ResultText = success
+                ? (option.ResultText ?? string.Empty)
+                : (!string.IsNullOrEmpty(option.FailureResultText)
+                    ? option.FailureResultText
+                    : (option.ResultText ?? string.Empty));
+
+            if (effects != null)
+            {
+                for (int i = 0; i < effects.Length; i++)
                 {
-                    ApplyFragment(option.Effects[i], ref result);
+                    ApplyFragment(effects[i], ref result);
                     if (result.EndedRun)
                     {
                         break;
@@ -171,7 +221,16 @@ namespace SixDaysRemaining.Events
                 }
             }
 
-            eventsConsumedToday++;
+            if (success && !string.IsNullOrEmpty(option.FollowUpEventId) && !result.EndedRun)
+            {
+                InsertFollowUp(option.FollowUpEventId);
+            }
+
+            if (queueIndex >= 0 && queueIndex < queueIsFollowUp.Count && !queueIsFollowUp[queueIndex])
+            {
+                eventsConsumedToday++;
+            }
+
             EventResolved?.Invoke(result);
             return result;
         }
@@ -193,6 +252,99 @@ namespace SixDaysRemaining.Events
             CurrentEventChanged?.Invoke(CurrentEvent);
         }
 
+        private void InsertFollowUp(string eventId)
+        {
+            if (library?.All == null || string.IsNullOrWhiteSpace(eventId))
+            {
+                return;
+            }
+
+            GameEventDef followUp = FindById(eventId.Trim());
+            if (followUp == null)
+            {
+                Debug.LogError("[GameEventSubsystem] followUpEventId not found: " + eventId);
+                return;
+            }
+
+            int insertAt = queueIndex + 1;
+            if (insertAt < 0)
+            {
+                insertAt = 0;
+            }
+
+            if (insertAt > queue.Count)
+            {
+                insertAt = queue.Count;
+            }
+
+            queue.Insert(insertAt, followUp);
+            queueIsFollowUp.Insert(insertAt, true);
+        }
+
+        private GameEventDef FindById(string eventId)
+        {
+            IReadOnlyList<GameEventDef> all = library.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                if (all[i] != null && string.Equals(all[i].Id, eventId, StringComparison.Ordinal))
+                {
+                    return all[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static bool RollSuccess(GameEventOptionDef option)
+        {
+            if (option == null)
+            {
+                return true;
+            }
+
+            float chance = option.SuccessChance;
+            if (chance >= 1f)
+            {
+                return true;
+            }
+
+            if (chance <= 0f)
+            {
+                return false;
+            }
+
+            return UnityEngine.Random.value <= chance;
+        }
+
+        private static bool EffectsContainTakeIn(GameEventEffectFragment[] effects, out string takeInDefId)
+        {
+            takeInDefId = null;
+            if (effects == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < effects.Length; i++)
+            {
+                GameEventEffectFragment fx = effects[i];
+                if (fx != null && fx.Op == GameEventEffectOp.TakeInSurvivor
+                    && !string.IsNullOrEmpty(fx.SurvivorDefId))
+                {
+                    takeInDefId = fx.SurvivorDefId;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ClearQueue()
+        {
+            queue.Clear();
+            queueIsFollowUp.Clear();
+            queueIndex = -1;
+        }
+
         private void FinishSequence()
         {
             sequenceActive = false;
@@ -200,7 +352,7 @@ namespace SixDaysRemaining.Events
             EventSequenceFinished?.Invoke();
         }
 
-        private GameEventQuery BuildQuery(GameEventTrigger trigger)
+        public GameEventQuery BuildQuery(GameEventTrigger trigger)
         {
             List<string> owned = new List<string>();
             if (shelter != null)
@@ -224,7 +376,8 @@ namespace SixDaysRemaining.Events
                 Population = shelter != null ? shelter.Population : 0,
                 RemainingDailyBudget = RemainingDailyBudget,
                 OwnedSurvivorDefIds = owned.ToArray(),
-                ActiveTags = BuildActiveTags(gameplay)
+                ActiveTags = BuildActiveTags(gameplay),
+                FoodStock = gameplay != null && gameplay.State != null ? gameplay.State.foodStock : 0
             };
         }
 
@@ -235,7 +388,7 @@ namespace SixDaysRemaining.Events
                 return Array.Empty<string>();
             }
 
-            System.Collections.Generic.IReadOnlyDictionary<string, int> snapshot = gameplaySubsystem.GetTagSnapshot();
+            IReadOnlyDictionary<string, int> snapshot = gameplaySubsystem.GetTagSnapshot();
             if (snapshot == null || snapshot.Count == 0)
             {
                 return Array.Empty<string>();
@@ -243,7 +396,7 @@ namespace SixDaysRemaining.Events
 
             string[] tags = new string[snapshot.Count];
             int index = 0;
-            foreach (System.Collections.Generic.KeyValuePair<string, int> entry in snapshot)
+            foreach (KeyValuePair<string, int> entry in snapshot)
             {
                 if (entry.Value > 0)
                 {
@@ -291,6 +444,21 @@ namespace SixDaysRemaining.Events
                     if (shelter != null && !string.IsNullOrEmpty(fragment.SurvivorDefId))
                     {
                         shelter.ExpelSurvivor(fragment.SurvivorDefId);
+                    }
+                    break;
+                case GameEventEffectOp.KillSurvivor:
+                    if (shelter != null && !string.IsNullOrEmpty(fragment.SurvivorDefId))
+                    {
+                        int before = gameplay.State != null ? gameplay.State.corruption : 0;
+                        if (shelter.KillSurvivor(fragment.SurvivorDefId))
+                        {
+                            int after = gameplay.State != null ? gameplay.State.corruption : before;
+                            result.CorruptionDelta += after - before;
+                            if (gameplay.CurrentPhase == GameplayPhase.Ending)
+                            {
+                                result.EndedRun = true;
+                            }
+                        }
                     }
                     break;
                 case GameEventEffectOp.ForceEnding:

@@ -26,7 +26,7 @@ namespace SixDaysRemaining.Combat.Traits
         public TraitTrigger Trigger;
         public bool StartsOwned;
 
-        /// <summary>解锁所需幸存者 defId（如 nurse）；StartsOwned 时为空。</summary>
+        /// <summary>解锁所需幸存者 defId（如 doctor）；StartsOwned 时为空。</summary>
         public string UnlockSurvivorDefId;
 
         public EffectSpec[] Effects;
@@ -35,16 +35,16 @@ namespace SixDaysRemaining.Combat.Traits
     public static class TraitIds
     {
         public const int Hero = 1;
-        public const int Nurse = 2;
+        public const int Doctor = 2;
         public const int Thief = 3;
     }
 
     /// <summary>
-    /// 特质静态目录；槽位顺序固定为 英雄 / 护士 / 小贼。
+    /// 特质静态目录；槽位顺序固定为 英雄 / 医生 / 小贼。
     /// </summary>
     public static class TraitCatalog
     {
-        public const string UnlockNurseDefId = "nurse";
+        public const string UnlockDoctorDefId = "doctor";
         public const string UnlockThiefDefId = "thief";
 
         public static readonly SurvivorTrait Hero = Create(
@@ -58,14 +58,14 @@ namespace SixDaysRemaining.Combat.Traits
             Block(6f),
             Heal(10f));
 
-        public static readonly SurvivorTrait Nurse = Create(
-            TraitIds.Nurse,
-            "护士·治疗",
-            "护士",
+        public static readonly SurvivorTrait Doctor = Create(
+            TraitIds.Doctor,
+            "医生·治疗",
+            "医生",
             "每回合结束自动回复6点生命值。",
             TraitTrigger.RoundEnd,
             false,
-            UnlockNurseDefId,
+            UnlockDoctorDefId,
             Heal(6f));
 
         public static readonly SurvivorTrait Thief = Create(
@@ -81,7 +81,7 @@ namespace SixDaysRemaining.Combat.Traits
         public static readonly SurvivorTrait[] SlotDefs =
         {
             Hero,
-            Nurse,
+            Doctor,
             Thief
         };
 

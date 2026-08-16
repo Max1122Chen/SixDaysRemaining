@@ -22,7 +22,9 @@ namespace SixDaysRemaining.Shelter
         public const string Farmer = "farmer";
         public const string Athlete = "athlete";
         public const string Politician = "politician";
-        public const string Nurse = "nurse";
+        public const string Doctor = "doctor";
         public const string Thief = "thief";
+        public const string Wanderer = "wanderer";
+        public const string Soldier = "soldier";
     }
 }

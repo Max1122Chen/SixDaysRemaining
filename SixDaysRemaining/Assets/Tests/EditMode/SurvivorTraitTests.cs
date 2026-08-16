@@ -45,13 +45,13 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void GetOwnedTraits_NurseAndThief_UnlockByDefId()
+        public void GetOwnedTraits_DoctorAndThief_UnlockByDefId()
         {
             IReadOnlyList<SurvivorTrait> owned = TraitCatalog.GetOwnedTraits(
-                new[] { "child", TraitCatalog.UnlockNurseDefId, TraitCatalog.UnlockThiefDefId });
+                new[] { "child", TraitCatalog.UnlockDoctorDefId, TraitCatalog.UnlockThiefDefId });
             Assert.AreEqual(3, owned.Count);
             Assert.AreEqual(TraitIds.Hero, owned[0].Id);
-            Assert.AreEqual(TraitIds.Nurse, owned[1].Id);
+            Assert.AreEqual(TraitIds.Doctor, owned[1].Id);
             Assert.AreEqual(TraitIds.Thief, owned[2].Id);
         }
 
@@ -63,16 +63,16 @@ namespace SixDaysRemaining.Tests.EditMode
             ShelterManager shelter = new ShelterManager(gameplay.State);
             shelter.BindGameplay(gameplay);
             shelter.InitializeDefaultRoster(10);
-            shelter.TakeIn(SurvivorIds.Nurse);
+            shelter.TakeIn(SurvivorIds.Doctor);
             shelter.TakeIn(SurvivorIds.Thief);
 
             List<string> alive = shelter.GetAliveDefIds();
-            Assert.IsTrue(alive.Contains(SurvivorIds.Nurse));
+            Assert.IsTrue(alive.Contains(SurvivorIds.Doctor));
             Assert.IsTrue(alive.Contains(SurvivorIds.Thief));
 
-            shelter.ExpelSurvivor(SurvivorIds.Nurse);
+            shelter.ExpelSurvivor(SurvivorIds.Doctor);
             alive = shelter.GetAliveDefIds();
-            Assert.IsFalse(alive.Contains(SurvivorIds.Nurse));
+            Assert.IsFalse(alive.Contains(SurvivorIds.Doctor));
             Assert.IsTrue(alive.Contains(SurvivorIds.Thief));
 
             IReadOnlyList<SurvivorTrait> owned = TraitCatalog.GetOwnedTraits(alive);
@@ -100,7 +100,7 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void Nurse_RoundEnd_HealsPlayer()
+        public void Doctor_RoundEnd_HealsPlayer()
         {
             manager.StartBattleOnly(new CombatStartConfig
             {
@@ -108,7 +108,7 @@ namespace SixDaysRemaining.Tests.EditMode
                 EnemyMaxHp = 100f,
                 EncounterId = EncounterIds.Mob01,
                 DeckSeed = 1,
-                OwnedTraits = TraitCatalog.GetOwnedTraits(new[] { TraitCatalog.UnlockNurseDefId })
+                OwnedTraits = TraitCatalog.GetOwnedTraits(new[] { TraitCatalog.UnlockDoctorDefId })
             }, player, null, null);
 
             player.Attributes.HP = 40f;

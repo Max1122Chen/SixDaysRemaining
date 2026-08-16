@@ -215,7 +215,8 @@ namespace SixDaysRemaining.App
                         hunger = s.hunger,
                         status = (SurvivorStatus)s.status,
                         hungryDayCount = s.hungryDayCount,
-                        hungryToDyingDays = s.hungryToDyingDays < 1 ? 1 : s.hungryToDyingDays
+                        hungryToDyingDays = s.hungryToDyingDays < 1 ? 1 : s.hungryToDyingDays,
+                        dyingGraceConsumed = s.dyingGraceConsumed
                     });
                 }
             }

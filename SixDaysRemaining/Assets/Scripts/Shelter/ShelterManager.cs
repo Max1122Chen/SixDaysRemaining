@@ -13,12 +13,15 @@ namespace SixDaysRemaining.Shelter
         public const int DefaultHungryThreshold = 1;
         public const int DefaultHungerPerFoodUnit = 1;
         public const int DefaultDailyHungerDecay = 1;
+        public const int MaxPopulation = 5;
+        public const int CorruptionOnDeath = 8;
 
         private readonly List<Survivor> survivors = new List<Survivor>();
         private readonly List<string> personnelChanges = new List<string>();
         private readonly List<string> bulletins = new List<string>();
         private readonly GameState state;
         private readonly ShelterPassiveService passives;
+        private GameplaySubsystem gameplay;
 
         public int HungryThreshold { get; set; } = DefaultHungryThreshold;
         public int HungerPerFoodUnit { get; set; } = DefaultHungerPerFoodUnit;
@@ -85,9 +88,15 @@ namespace SixDaysRemaining.Shelter
             passives = new ShelterPassiveService(this);
         }
 
-        public void BindGameplay(GameplaySubsystem gameplay)
+        public void BindGameplay(GameplaySubsystem gameplaySubsystem)
         {
-            passives.BindGameplay(gameplay);
+            gameplay = gameplaySubsystem;
+            passives.BindGameplay(gameplaySubsystem);
+        }
+
+        public bool HasCapacity
+        {
+            get { return Population < MaxPopulation; }
         }
 
         /// <summary>
@@ -177,7 +186,7 @@ namespace SixDaysRemaining.Shelter
         }
 
         /// <summary>
-        /// 按身份 id 入住；未知 id 抛错；已存在同 defId 则忽略。
+        /// 按身份 id 入住；未知 id 抛错；已存在同 defId 则忽略。满员时抛 InvalidOperationException。
         /// </summary>
         public void TakeIn(string defId)
         {
@@ -189,6 +198,12 @@ namespace SixDaysRemaining.Shelter
             if (FindByDefId(defId) != null)
             {
                 return;
+            }
+
+            if (!HasCapacity)
+            {
+                throw new InvalidOperationException(
+                    "Shelter is full (" + MaxPopulation + "). Swap/expel someone before TakeIn.");
             }
 
             SurvivorDef def = ShelterContent.Survivors.Get(defId);
@@ -316,6 +331,14 @@ namespace SixDaysRemaining.Shelter
             return copy;
         }
 
+        public void AddBulletin(string message)
+        {
+            if (!string.IsNullOrEmpty(message))
+            {
+                bulletins.Add(message);
+            }
+        }
+
         /// <summary>
         /// 凯旋后入库：战斗收获折算进 foodStock。
         /// </summary>
@@ -374,9 +397,15 @@ namespace SixDaysRemaining.Shelter
 
                 if (wasDying && survivor.hunger == 0)
                 {
-                    survivor.status = SurvivorStatus.Dead;
-                    personnelChanges.Add(survivor.name + " 因饥饿离世");
-                    bulletins.Add(survivor.name + " 因饥饿离世");
+                    // 濒死需再撑过一次日结才死亡（接纳当天 / 刚进入濒死当天可抢救）
+                    if (!survivor.dyingGraceConsumed)
+                    {
+                        survivor.dyingGraceConsumed = true;
+                    }
+                    else
+                    {
+                        MarkDead(survivor, survivor.name + " 因饥饿离世");
+                    }
                 }
                 else
                 {
@@ -414,11 +443,13 @@ namespace SixDaysRemaining.Shelter
                 }
 
                 survivor.status = SurvivorStatus.Hungry;
+                survivor.dyingGraceConsumed = false;
                 return;
             }
 
             survivor.hungryDayCount = 0;
             survivor.status = SurvivorStatus.Healthy;
+            survivor.dyingGraceConsumed = false;
         }
 
         private void GrantPassivesFromDef(Survivor survivor)
@@ -448,6 +479,48 @@ namespace SixDaysRemaining.Shelter
             string message = "驱赶了 " + survivor.name;
             personnelChanges.Add(message);
             bulletins.Add(message);
+        }
+
+        /// <summary>
+        /// 标记死亡并触发腐蚀 +CorruptionOnDeath；已 Dead 则忽略。
+        /// </summary>
+        public bool KillSurvivor(string target)
+        {
+            Survivor survivor;
+            if (!TryResolveSurvivor(target, out survivor) || survivor.status == SurvivorStatus.Dead)
+            {
+                return false;
+            }
+
+            if (survivor.status == SurvivorStatus.Left)
+            {
+                return false;
+            }
+
+            MarkDead(survivor, survivor.name + " 死去了");
+            return true;
+        }
+
+        private void MarkDead(Survivor survivor, string message)
+        {
+            if (survivor == null || survivor.status == SurvivorStatus.Dead)
+            {
+                return;
+            }
+
+            survivor.status = SurvivorStatus.Dead;
+            passives.RevokeBySourceDefId(survivor.defId);
+            SyncPopulation();
+            if (!string.IsNullOrEmpty(message))
+            {
+                personnelChanges.Add(message);
+                bulletins.Add(message);
+            }
+
+            if (gameplay != null)
+            {
+                gameplay.ApplyCorruption(CorruptionOnDeath);
+            }
         }
 
         private void CleanupPassivesForAbsentSurvivors()
@@ -485,6 +558,7 @@ namespace SixDaysRemaining.Shelter
                 if (survivor.hungryDayCount >= survivor.hungryToDyingDays)
                 {
                     survivor.status = SurvivorStatus.Dying;
+                    survivor.dyingGraceConsumed = false;
                 }
                 else
                 {

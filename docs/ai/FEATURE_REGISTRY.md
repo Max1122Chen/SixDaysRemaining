@@ -29,10 +29,12 @@
 | `CORE-F07` | GameplayTag 业务迁移（storyFlags → Tag） | CORE | Done | `designs/CORE-F07-gameplay-tag-migration.md` | — | `main` | Max | Story Tag + requiredTags；删 storyFlags |
 | `SHLT-F03` | 幸存者被动 + 人设闭环 | SHLT | Done | `designs/SHLT-F03-survivor-passives-and-personas.md` | — | `main` | Max | Play：幼童 −8 / 政治家回访通过 |
 | `END-F01` | 结局钩子 + EndingEvaluator | CORE | Done | `designs/END-F01-ending-hooks.md` | — | `main` | Max | 政治家战败 E；Play 通过 |
-| `COMB-F10` | 特质卡系统（defId 解锁 + 三特质） | COMB | Review | `designs/COMB-F10-survivor-traits.md` | — | `main` | Max | 半开放：完整 Play 等人设 |
+| `COMB-F10` | 特质卡系统（defId 解锁 + 三特质） | COMB | Review | `designs/COMB-F10-survivor-traits.md` | — | `main` | Max | doctor/thief；Play 后 Done |
 | `CORE-F08` | Persist 底座（JSON 文件存档基建） | CORE | Done | `designs/CORE-F08-persist-foundation.md` | — | `main` | Max | meta/run 分文件 |
 | `META-F01` | 结局回顾（成就式 run summary） | META | Done | `designs/META-F01-ending-review.md` | — | `main` | Max | 终局解锁 + 回顾 |
 | `SAVE-F01` | 受限存档读档 | CORE | Done | `designs/SAVE-F01-run-save.md` | — | `main` | Max | 节点粗粒度；禁战斗存档 |
+| `EVT-F03` | 人物与随机事件 3.0 | EVT | Review | `designs/EVT-F03-persona-and-events-3.md` | — | `main` | Max | S0–S4 已实现；待 Play |
+| `SHLT-F04` | 庇护所 cap5 / 死亡+8 / 分配例外 | SHLT | Review | （并入 EVT-F03 design） | — | `main` | Max | cap5+死亡+8 已落地；分配例外 S5 |
 
 ## 域代码
 
@@ -45,8 +47,9 @@
 
 ## 近期执行顺序（2026-08-16）
 
-1. **COMB-F10** — Review（半开放；等人设后完整 Play）
-2. 内容/人设补齐；可选卡牌 2.0 数值同步
+1. **EVT-F03**（+ **SHLT-F04**）— Play 验收
+2. **COMB-F10** — 随 3.0 人设闭环后标 Done
+3. 可选：卡牌数值 2.0 同步
 
 ## 状态说明
 

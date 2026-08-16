@@ -20,6 +20,7 @@ namespace SixDaysRemaining.Events
         RemoveTag = 104,
         GrantPassive = 105,
         RevokePassive = 106,
+        KillSurvivor = 107,
         // Reserved (load hard-fails if present in JSON until implemented):
         OverrideHungerDecay = 102
     }
@@ -31,6 +32,7 @@ namespace SixDaysRemaining.Events
         public string Body;
         public GameEventTrigger Trigger;
         public int Priority;
+        public bool Enabled = true;
         public string[] RequiredSurvivorIds = Array.Empty<string>();
         public string[] RequiredAbsentSurvivorIds = Array.Empty<string>();
         public string[] RequiredTags = Array.Empty<string>();
@@ -50,7 +52,13 @@ namespace SixDaysRemaining.Events
         public string Id;
         public string Label;
         public string ResultText;
+        public string DisabledHint;
+        public float SuccessChance = 1f;
+        public string FailureResultText;
+        public string FollowUpEventId;
+        public OptionGateDef[] Gates = Array.Empty<OptionGateDef>();
         public GameEventEffectFragment[] Effects = Array.Empty<GameEventEffectFragment>();
+        public GameEventEffectFragment[] FailureEffects = Array.Empty<GameEventEffectFragment>();
     }
 
     public sealed class GameEventEffectFragment
@@ -82,5 +90,6 @@ namespace SixDaysRemaining.Events
         public int RemainingDailyBudget;
         public string[] OwnedSurvivorDefIds = Array.Empty<string>();
         public string[] ActiveTags = Array.Empty<string>();
+        public int FoodStock;
     }
 }

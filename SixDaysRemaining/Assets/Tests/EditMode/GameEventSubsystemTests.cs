@@ -554,5 +554,163 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(PassiveIds.ChildCorruptionDaily, shelter.Passives.ActivePassives[0].PassiveId);
             ShelterContent.ClearForTests();
         }
+
+        [Test]
+        public void EnabledFalse_IsNotCollected()
+        {
+            string json = @"{
+  ""events"": [
+    {
+      ""id"": ""off"",
+      ""title"": ""t"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""enabled"": false,
+      ""priority"": 99,
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    },
+    {
+      ""id"": ""on"",
+      ""title"": ""t"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""enabled"": true,
+      ""options"": [ { ""id"": ""o"", ""label"": ""L"", ""resultText"": ""r"", ""effects"": [] } ]
+    }
+  ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "enabled");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            Assert.AreEqual("on", events.CurrentEvent.Id);
+        }
+
+        [Test]
+        public void CanChooseOption_FoodGate()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""gated"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""gates"": [ { ""op"": ""FoodAtLeast"", ""amount"": 5 } ],
+      ""effects"": [ { ""op"": ""FoodDelta"", ""amount"": -5 } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "gate");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            gameplay.SetFood(2);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+
+            string hint;
+            Assert.IsFalse(events.CanChooseOption(0, out hint));
+            gameplay.SetFood(5);
+            Assert.IsTrue(events.CanChooseOption(0, out hint));
+        }
+
+        [Test]
+        public void ApplyOption_FollowUp_InsertsWithoutExtraBudgetOnParentOnly()
+        {
+            string json = @"{
+  ""events"": [
+    {
+      ""id"": ""parent"",
+      ""title"": ""t"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""options"": [ {
+        ""id"": ""o"",
+        ""label"": ""L"",
+        ""resultText"": ""r"",
+        ""followUpEventId"": ""child_fu"",
+        ""effects"": []
+      } ]
+    },
+    {
+      ""id"": ""child_fu"",
+      ""title"": ""fu"",
+      ""body"": ""b"",
+      ""trigger"": ""AfterTriumph"",
+      ""enabled"": false,
+      ""options"": [ {
+        ""id"": ""o"",
+        ""label"": ""L"",
+        ""resultText"": ""done"",
+        ""effects"": [ { ""op"": ""FoodDelta"", ""amount"": 1 } ]
+      } ]
+    }
+  ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "fu");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            gameplay.SetFood(10);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            Assert.AreEqual("parent", events.CurrentEvent.Id);
+
+            events.ApplyOption(0);
+            Assert.AreEqual(1, events.EventsConsumedToday);
+            events.ContinueAfterResult();
+            Assert.AreEqual("child_fu", events.CurrentEvent.Id);
+
+            events.ApplyOption(0);
+            Assert.AreEqual(1, events.EventsConsumedToday);
+            Assert.AreEqual(11, gameplay.State.foodStock);
+        }
+
+        [Test]
+        public void OptionContainsTakeIn_DetectsFragment()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""take"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [ { ""op"": ""TakeInSurvivor"", ""survivorDefId"": ""doctor"" } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "take");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+
+            string defId;
+            Assert.IsTrue(events.OptionContainsTakeIn(0, out defId));
+            Assert.AreEqual("doctor", defId);
+        }
     }
 }

@@ -28,14 +28,19 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void LoadFromStreamingAssets_HasFiveDefsAndTwoStarters()
+        public void LoadFromStreamingAssets_HasExpectedDefsAndTwoStarters()
         {
             ShelterContent.Ensure();
 
-            Assert.AreEqual(6, ShelterContent.Survivors.All.Count);
+            Assert.AreEqual(8, ShelterContent.Survivors.All.Count);
             Assert.AreEqual("幼童", ShelterContent.Survivors.Get(SurvivorIds.Child).DisplayName);
+            Assert.AreEqual("医生", ShelterContent.Survivors.Get(SurvivorIds.Doctor).DisplayName);
             Assert.AreEqual(2, ShelterContent.Survivors.Get(SurvivorIds.Athlete).HungryToDyingDays);
             Assert.AreEqual(3, ShelterContent.Survivors.Get(SurvivorIds.Politician).HungryToDyingDays);
+            SurvivorDef wanderer;
+            SurvivorDef soldier;
+            Assert.IsTrue(ShelterContent.Survivors.TryGet(SurvivorIds.Wanderer, out wanderer));
+            Assert.IsTrue(ShelterContent.Survivors.TryGet(SurvivorIds.Soldier, out soldier));
             Assert.AreEqual(2, ShelterContent.StarterIds.Length);
             Assert.AreEqual(SurvivorIds.Child, ShelterContent.StarterIds[0]);
             Assert.AreEqual(SurvivorIds.Farmer, ShelterContent.StarterIds[1]);

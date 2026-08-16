@@ -14,6 +14,11 @@ namespace SixDaysRemaining.Events
                 return false;
             }
 
+            if (!def.Enabled)
+            {
+                return false;
+            }
+
             if (!PassesSurvivorRequirements(def, query))
             {
                 return false;
@@ -30,6 +35,16 @@ namespace SixDaysRemaining.Events
             }
 
             if (!PassesTagRequirements(def, query))
+            {
+                return false;
+            }
+
+            if (!PassesCorruptionRange(def, query))
+            {
+                return false;
+            }
+
+            if (!PassesPopulationRange(def, query))
             {
                 return false;
             }
@@ -137,6 +152,36 @@ namespace SixDaysRemaining.Events
                 {
                     return false;
                 }
+            }
+
+            return true;
+        }
+
+        private static bool PassesCorruptionRange(GameEventDef def, GameEventQuery query)
+        {
+            if (def.CorruptionMin.HasValue && query.Corruption < def.CorruptionMin.Value)
+            {
+                return false;
+            }
+
+            if (def.CorruptionMax.HasValue && query.Corruption > def.CorruptionMax.Value)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool PassesPopulationRange(GameEventDef def, GameEventQuery query)
+        {
+            if (def.PopulationMin.HasValue && query.Population < def.PopulationMin.Value)
+            {
+                return false;
+            }
+
+            if (def.PopulationMax.HasValue && query.Population > def.PopulationMax.Value)
+            {
+                return false;
             }
 
             return true;
