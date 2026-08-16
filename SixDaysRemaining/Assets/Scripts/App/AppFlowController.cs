@@ -80,11 +80,13 @@ namespace SixDaysRemaining.Gameplay
         public void ShowShelter()
         {
             ShowShelterScreen?.Invoke();
+            RefreshHud?.Invoke();
         }
 
         public void ShowCombat()
         {
             ShowCombatScreen?.Invoke();
+            RefreshHud?.Invoke();
         }
 
         public void ShowEnding()

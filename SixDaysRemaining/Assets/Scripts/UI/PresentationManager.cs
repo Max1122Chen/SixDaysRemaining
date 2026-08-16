@@ -197,7 +197,7 @@ namespace SixDaysRemaining.UI
             if (hudView != null)
             {
                 hudView.gameObject.SetActive(true);
-                hudView.SetScreen("庇护所界面");
+                hudView.SetScreen("庇护所");
                 hudView.Refresh();
             }
 
@@ -214,7 +214,7 @@ namespace SixDaysRemaining.UI
             if (hudView != null)
             {
                 hudView.gameObject.SetActive(true);
-                hudView.SetScreen("战斗界面");
+                hudView.SetScreen("战斗");
                 hudView.Refresh();
             }
 

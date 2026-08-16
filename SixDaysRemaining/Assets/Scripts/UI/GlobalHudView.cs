@@ -13,7 +13,7 @@ namespace SixDaysRemaining.UI
     public class GlobalHudView : MonoBehaviour
     {
         [SerializeField]
-        private TextMeshProUGUI screenText;
+        private Image screenIcon;
 
         [SerializeField]
         private TextMeshProUGUI foodValueText;
@@ -23,6 +23,12 @@ namespace SixDaysRemaining.UI
 
         [SerializeField]
         private TextMeshProUGUI populationValueText;
+
+        [SerializeField]
+        private Sprite shelterIcon; 
+
+        [SerializeField]
+        private Sprite combatIcon;   
 
         private AppFlowController flow;
 
@@ -38,16 +44,9 @@ namespace SixDaysRemaining.UI
             go.GetComponent<Image>().raycastTarget = false;
 
             GlobalHudView view = go.AddComponent<GlobalHudView>();
-            view.screenText = UiFactory.CreateText(
-                go.transform,
-                "Txt_Screen",
-                "庇护所",
-                26,
-                new Vector2(-610f, 0f),
-                new Vector2(320f, 44f),
-                TextAlignmentOptions.Left,
-                Color.white);
-            view.screenText.raycastTarget = false;
+            view.screenIcon = BuildScreenIcon(go.transform, new Vector2(-610f, 0f));
+
+            view.LoadIcons();
 
             view.foodValueText = BuildChip(
                 go.transform,
@@ -71,16 +70,52 @@ namespace SixDaysRemaining.UI
             return view;
         }
 
+        private static Image BuildScreenIcon(Transform parent, Vector2 pos) {
+            // 使用 Image 替代 TextMeshProUGUI
+            Image icon = UiFactory.CreateImage(
+                parent,
+                "Img_Screen",
+                pos,
+                new Vector2(200f, 44f),  // 調整合適大小
+                Color.white);
+            icon.raycastTarget = false;
+            icon.preserveAspect = true;  // 保持圖片比例
+            return icon;
+        }
+
+        private void LoadIcons() {
+            shelterIcon = Resources.Load<Sprite>("UI/Icons/ShelterIcon");
+            combatIcon = Resources.Load<Sprite>("UI/Icons/CombatIcon");
+        }
+
         public void Wire(AppFlowController flow)
         {
             this.flow = flow;
         }
 
-        public void SetScreen(string screenName)
-        {
-            if (screenText != null)
-            {
-                screenText.text = screenName;
+        public void SetScreen(string screenName) {
+            if (screenIcon == null)
+                return;
+
+            switch (screenName) {
+                case "庇护所":
+                case "Shelter":
+                    screenIcon.sprite = shelterIcon;
+                    break;
+                case "战斗":
+                case "Combat":
+                    screenIcon.sprite = combatIcon;
+                    break;
+                default:
+                    // 默认显示庇护所图标
+                    screenIcon.sprite = shelterIcon;
+                    break;
+            }
+        }
+
+        public void SetScreenIcon(Sprite icon) {
+            if (screenIcon != null && icon != null) {
+                screenIcon.sprite = icon;
             }
         }
 

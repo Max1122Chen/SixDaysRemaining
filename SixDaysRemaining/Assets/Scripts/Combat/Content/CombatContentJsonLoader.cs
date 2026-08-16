@@ -146,6 +146,7 @@ namespace SixDaysRemaining.Combat.Content
             def.Id = dto.id;
             def.DisplayName = dto.displayName ?? "";
             def.Description = dto.description ?? "";
+            def.ArtKey = dto.artKey ?? "";
             def.CanBlacken = dto.canBlacken;
             def.Tags = ParseTags(dto.tags, path, dto.id);
             def.Effects = ParseEffects(dto.effects, path, dto.id);

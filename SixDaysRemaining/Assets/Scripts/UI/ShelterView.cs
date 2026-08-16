@@ -41,17 +41,8 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private TextMeshProUGUI dayText;
 
-        [SerializeField]
+        [SerializeField] 
         private TextMeshProUGUI phaseText;
-
-        [SerializeField]
-        private TextMeshProUGUI foodValueText;
-
-        [SerializeField]
-        private TextMeshProUGUI corruptionValueText;
-
-        [SerializeField]
-        private TextMeshProUGUI populationValueText;
 
         [SerializeField]
         private RectTransform residentRow;
@@ -121,9 +112,6 @@ namespace SixDaysRemaining.UI
             {
                 SetText(dayText, "庇护所");
                 SetText(phaseText, "尚未开始新局");
-                SetText(foodValueText, "存粮  -");
-                SetText(corruptionValueText, "腐蚀度  -");
-                SetText(populationValueText, "人口  -");
                 UpdateFog(0f);
                 ClearResidentCards();
                 HideDetail();
@@ -133,10 +121,7 @@ namespace SixDaysRemaining.UI
             GameState state = gi.Gameplay.State;
             SetText(dayText, "庇护所 · 第 " + state.day + " 天");
             SetText(phaseText, PhaseLabel(state.currentPhase));
-            SetText(foodValueText, "存粮  " + state.foodStock);
-            SetText(corruptionValueText, "腐蚀度  " + state.corruption + " / 100");
-            SetText(populationValueText, "人口  " + gi.Shelter.Population + " / 5");
-            SetText(propsStateText, "暂无道具数据");
+          
 
             UpdateFog(state.corruption);
             RebuildResidentCards(gi.Shelter, state.foodStock, state.corruption >= 40);
@@ -426,28 +411,6 @@ namespace SixDaysRemaining.UI
         {
             dayText = UiFactory.CreateText(transform, "Txt_Day", "庇护所 · 第 1 天", 38, new Vector2(0f, 420f), new Vector2(620f, 56f), TextAlignmentOptions.Center, Color.white);
             dayText.raycastTarget = false;
-
-            Image statsPanel = UiFactory.CreateImage(transform, "Panel_Stats", new Vector2(-700f, 40f), new Vector2(340f, 400f), new Color(0.11f, 0.13f, 0.17f, 0.96f));
-            statsPanel.raycastTarget = false;
-            TextMeshProUGUI statsTitle = UiFactory.CreateText(statsPanel.transform, "Txt_StatsTitle", "庇护所状态", 24, new Vector2(0f, 160f), new Vector2(300f, 40f), TextAlignmentOptions.Center, new Color(0.92f, 0.93f, 0.95f, 1f));
-            statsTitle.raycastTarget = false;
-            foodValueText = UiFactory.CreateText(statsPanel.transform, "Txt_Food", "", 22, new Vector2(0f, 96f), new Vector2(300f, 36f), TextAlignmentOptions.Center, new Color(0.85f, 0.93f, 0.80f, 1f));
-            foodValueText.raycastTarget = false;
-            corruptionValueText = UiFactory.CreateText(statsPanel.transform, "Txt_Corruption", "", 22, new Vector2(0f, 48f), new Vector2(300f, 36f), TextAlignmentOptions.Center, new Color(0.94f, 0.70f, 0.62f, 1f));
-            corruptionValueText.raycastTarget = false;
-            populationValueText = UiFactory.CreateText(statsPanel.transform, "Txt_Population", "", 22, new Vector2(0f, 0f), new Vector2(300f, 36f), TextAlignmentOptions.Center, new Color(0.78f, 0.84f, 0.96f, 1f));
-            populationValueText.raycastTarget = false;
-            phaseText = UiFactory.CreateText(statsPanel.transform, "Txt_Phase", "", 20, new Vector2(0f, -60f), new Vector2(300f, 32f), TextAlignmentOptions.Center, new Color(0.92f, 0.93f, 0.95f, 1f));
-            phaseText.raycastTarget = false;
-            TextMeshProUGUI allocationTitle = UiFactory.CreateText(statsPanel.transform, "Txt_Allocation", "每日分配", 20, new Vector2(0f, -124f), new Vector2(300f, 32f), TextAlignmentOptions.Center, new Color(0.82f, 0.86f, 0.92f, 1f));
-            allocationTitle.raycastTarget = false;
-
-            Image propsPanel = UiFactory.CreateImage(transform, "Panel_Props", new Vector2(-700f, -240f), new Vector2(340f, 170f), new Color(0.11f, 0.13f, 0.17f, 0.96f));
-            propsPanel.raycastTarget = false;
-            TextMeshProUGUI propsTitle = UiFactory.CreateText(propsPanel.transform, "Txt_PropsTitle", "道具", 24, new Vector2(0f, 52f), new Vector2(300f, 40f), TextAlignmentOptions.Center, new Color(0.92f, 0.93f, 0.95f, 1f));
-            propsTitle.raycastTarget = false;
-            propsStateText = UiFactory.CreateText(propsPanel.transform, "Txt_PropsState", "", 18, new Vector2(0f, -12f), new Vector2(300f, 80f), TextAlignmentOptions.Center, new Color(0.62f, 0.66f, 0.72f, 1f));
-            propsStateText.raycastTarget = false;
 
             residentRow = CreateEmptyRect(transform, "Row_Residents");
 

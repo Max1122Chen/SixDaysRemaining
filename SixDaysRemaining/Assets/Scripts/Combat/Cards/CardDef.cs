@@ -45,6 +45,8 @@ namespace SixDaysRemaining.Combat.Cards
         public string DisplayName;
         /// <summary>说明/预兆文案；意图展示与卡面描述优先用此字段。</summary>
         public string Description;
+        /// <summary>美术资源名；为空时默认使用 Id 作为 Resources/Cards/ 下的文件名。</summary>
+        public string ArtKey;
         public CardTag Tags;
         public bool CanBlacken = true;
         public EffectSpec[] Effects;

@@ -99,6 +99,7 @@ namespace SixDaysRemaining.UI
             costText.text = "0";
             baseColor = TintFor(card.Def);
             Background.color = baseColor;
+            ApplyCardArt();
         }
 
         public void SetCorruptedVisual(bool on)
@@ -124,6 +125,40 @@ namespace SixDaysRemaining.UI
             }
 
             Background.color = baseColor;
+        }
+
+        /// <summary>
+        /// 若美术图已按 Resources/Cards/{ArtKey 或 CardDef.Id}.png 的规则导入，则替换占位底色；
+        /// 未导入时继续使用原来的颜色卡面，避免美术未到位时报错。
+        /// </summary>
+        private void ApplyCardArt()
+        {
+            Sprite art = null;
+            if (Card != null && Card.Def != null)
+            {
+                string artKey = string.IsNullOrEmpty(Card.Def.ArtKey)
+                    ? Card.Def.Id.ToString()
+                    : Card.Def.ArtKey;
+                art = Resources.Load<Sprite>("Cards/" + artKey);
+            }
+
+            // 临时占位回退：当前 star_moon 1..8 是同一张图，任意卡先统一显示第一张。
+            // 正式美术按 Id/ArtKey 命名后，这段回退自然不会再命中。
+            if (art == null)
+            {
+                art = Resources.Load<Sprite>("Cards/star_moon 1");
+            }
+
+            if (art != null)
+            {
+                Background.sprite = art;
+                Background.color = Color.white;
+            }
+            else
+            {
+                Background.sprite = null;
+                Background.color = baseColor;
+            }
         }
 
         public void SetHighlighted(bool on)
