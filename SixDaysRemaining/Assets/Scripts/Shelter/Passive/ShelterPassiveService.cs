@@ -124,17 +124,47 @@ namespace SixDaysRemaining.Shelter
                     continue;
                 }
 
-                if (ApplyEffect(def))
+                if (string.Equals(def.Id, PassiveIds.ChildCorruptionDaily, StringComparison.Ordinal))
+                {
+                    fused = ApplyChildCorruptionDaily(def) || fused;
+                    continue;
+                }
+
+                if (ApplyEffect(def, def.EffectAmount))
                 {
                     fused = true;
                 }
+            }
 
-                if (string.Equals(def.Id, PassiveIds.ChildCorruptionDaily, StringComparison.Ordinal)
-                    && shelter != null)
+            return fused;
+        }
+
+        private bool ApplyChildCorruptionDaily(PassiveDef def)
+        {
+            if (gameplay.HasTagExact(GameplayTags.ChildPassiveOffOnce))
+            {
+                gameplay.RemoveTag(GameplayTags.ChildPassiveOffOnce);
+                if (shelter != null)
                 {
-                    shelter.AddBulletin(
-                        "幼童在角落玩石头，庇护所里的气氛缓和了一些。（腐蚀度-8）");
+                    shelter.AddBulletin("幼童今天闷闷不乐，常驻安心感没有生效。");
                 }
+
+                gameplay.RemoveTag(GameplayTags.ChildPlayBoostOnce);
+                return false;
+            }
+
+            int amount = def.EffectAmount;
+            if (gameplay.HasTagExact(GameplayTags.ChildPlayBoostOnce))
+            {
+                amount = -12;
+                gameplay.RemoveTag(GameplayTags.ChildPlayBoostOnce);
+            }
+
+            bool fused = ApplyEffect(def, amount);
+            if (shelter != null)
+            {
+                shelter.AddBulletin(
+                    "幼童在角落玩石头，庇护所里的气氛缓和了一些。（腐蚀度" + amount + "）");
             }
 
             return fused;
@@ -151,12 +181,12 @@ namespace SixDaysRemaining.Shelter
             return shelter != null && shelter.IsSurvivorPresent(ownerId);
         }
 
-        private bool ApplyEffect(PassiveDef def)
+        private bool ApplyEffect(PassiveDef def, int amount)
         {
             switch (def.EffectType)
             {
                 case PassiveEffectType.CorruptionDelta:
-                    return gameplay.ApplyCorruption(def.EffectAmount);
+                    return gameplay.ApplyCorruption(amount);
                 default:
                     throw new InvalidOperationException("Unhandled passive effect: " + def.EffectType);
             }

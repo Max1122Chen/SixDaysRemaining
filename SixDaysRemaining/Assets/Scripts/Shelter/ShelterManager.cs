@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SixDaysRemaining.Gameplay;
+using UnityEngine;
 
 namespace SixDaysRemaining.Shelter
 {
@@ -247,6 +248,55 @@ namespace SixDaysRemaining.Shelter
             return survivor != null && IsAlive(survivor);
         }
 
+        public bool IsBiguExempt(Survivor survivor)
+        {
+            return survivor != null
+                && string.Equals(survivor.defId, SurvivorIds.Doctor, StringComparison.Ordinal)
+                && gameplay != null
+                && gameplay.HasTagExact(GameplayTags.DoctorBiguActive);
+        }
+
+        /// <summary>将存活幸存者设为正常并保证最低饱食度（实验成功等）。</summary>
+        public bool SetSurvivorHealthy(Survivor survivor, int minHunger = 2)
+        {
+            if (survivor == null || !IsAlive(survivor))
+            {
+                return false;
+            }
+
+            if (survivor.hunger < minHunger)
+            {
+                survivor.hunger = minHunger;
+            }
+
+            survivor.status = SurvivorStatus.Healthy;
+            survivor.hungryDayCount = 0;
+            survivor.dyingGraceConsumed = false;
+            SyncPopulation();
+            return true;
+        }
+
+        public bool TryPickRandomAlive(out Survivor survivor)
+        {
+            survivor = null;
+            List<Survivor> alive = new List<Survivor>();
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                if (IsAlive(survivors[i]))
+                {
+                    alive.Add(survivors[i]);
+                }
+            }
+
+            if (alive.Count == 0)
+            {
+                return false;
+            }
+
+            survivor = alive[Random.Range(0, alive.Count)];
+            return survivor != null;
+        }
+
         public bool TryResolveSurvivor(string target, out Survivor survivor)
         {
             survivor = null;
@@ -367,6 +417,11 @@ namespace SixDaysRemaining.Shelter
                 return false;
             }
 
+            if (IsBiguExempt(survivor))
+            {
+                return false;
+            }
+
             state.foodStock -= amount;
             survivor.hunger += amount * HungerPerFoodUnit;
             UpdateSurvivorStatus(survivor);
@@ -380,11 +435,22 @@ namespace SixDaysRemaining.Shelter
         /// </summary>
         public bool ProcessEndOfDay()
         {
+            TryActivateDoctorBigu();
+
             for (int i = 0; i < survivors.Count; i++)
             {
                 Survivor survivor = survivors[i];
                 if (!IsAlive(survivor))
                 {
+                    continue;
+                }
+
+                if (IsBiguExempt(survivor))
+                {
+                    survivor.hunger = Math.Max(survivor.hunger, HungryThreshold + 1);
+                    survivor.status = SurvivorStatus.Healthy;
+                    survivor.hungryDayCount = 0;
+                    survivor.dyingGraceConsumed = false;
                     continue;
                 }
 
@@ -397,7 +463,6 @@ namespace SixDaysRemaining.Shelter
 
                 if (wasDying && survivor.hunger == 0)
                 {
-                    // 濒死需再撑过一次日结才死亡（接纳当天 / 刚进入濒死当天可抢救）
                     if (!survivor.dyingGraceConsumed)
                     {
                         survivor.dyingGraceConsumed = true;
@@ -417,6 +482,24 @@ namespace SixDaysRemaining.Shelter
             bool fused = passives.TickEndOfDay();
             CleanupPassivesForAbsentSurvivors();
             return fused;
+        }
+
+        private void TryActivateDoctorBigu()
+        {
+            if (gameplay == null
+                || !gameplay.HasTagExact(GameplayTags.DoctorBiguFunded)
+                || gameplay.HasTagExact(GameplayTags.DoctorBiguActive))
+            {
+                return;
+            }
+
+            gameplay.AddTag(GameplayTags.DoctorBiguActive);
+            Survivor doctor = FindByDefId(SurvivorIds.Doctor);
+            if (doctor != null && IsAlive(doctor))
+            {
+                SetSurvivorHealthy(doctor, HungryThreshold + 1);
+                AddBulletin("医生服下辟谷丹，状态恢复正常，不再需要分配食物。");
+            }
         }
 
         /// <summary>

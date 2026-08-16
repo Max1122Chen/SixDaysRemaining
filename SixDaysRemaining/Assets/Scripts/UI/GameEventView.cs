@@ -55,6 +55,18 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private Button swapCancelButton;
 
+        [SerializeField]
+        private GameObject savePromptGroup;
+
+        [SerializeField]
+        private TextMeshProUGUI savePromptBodyText;
+
+        [SerializeField]
+        private Button savePromptYesButton;
+
+        [SerializeField]
+        private Button savePromptNoButton;
+
         private GameEventOptionDef[] pendingOptions;
         private readonly List<string> swapDefIds = new List<string>();
 
@@ -140,6 +152,36 @@ namespace SixDaysRemaining.UI
                 20);
             view.swapGroup.SetActive(false);
 
+            view.savePromptGroup = CreateFullChild(window.transform, "SavePromptGroup");
+            view.savePromptBodyText = UiFactory.CreateText(
+                view.savePromptGroup.transform,
+                "Txt_SavePrompt",
+                "第四天随机事件危险系数高，开放存档。您是否存档？",
+                22,
+                new Vector2(0f, 40f),
+                new Vector2(700f, 120f),
+                TextAlignmentOptions.Center);
+            view.savePromptBodyText.raycastTarget = false;
+            view.savePromptYesButton = UiFactory.CreateButton(
+                view.savePromptGroup.transform,
+                "Btn_SaveYes",
+                "是",
+                null,
+                new Vector2(-140f, -80f),
+                new Vector2(200f, 52f),
+                new Color(0.28f, 0.50f, 0.40f, 1f),
+                22);
+            view.savePromptNoButton = UiFactory.CreateButton(
+                view.savePromptGroup.transform,
+                "Btn_SaveNo",
+                "否",
+                null,
+                new Vector2(140f, -80f),
+                new Vector2(200f, 52f),
+                new Color(0.2f, 0.24f, 0.3f, 1f),
+                22);
+            view.savePromptGroup.SetActive(false);
+
             view.dayEndGroup = CreateFullChild(window.transform, "DayEndGroup");
             BuildArtPlaceholder(view.dayEndGroup.transform, "DayEndArt", "一日结束", new Vector2(-215f, -10f), new Vector2(390f, 450f));
             view.summaryText = UiFactory.CreateText(view.dayEndGroup.transform, "Txt_Summary", "", 22, new Vector2(240f, 60f), new Vector2(410f, 320f), TextAlignmentOptions.Top);
@@ -205,6 +247,18 @@ namespace SixDaysRemaining.UI
             {
                 swapCancelButton.onClick.RemoveAllListeners();
                 swapCancelButton.onClick.AddListener(OnSwapCancelClicked);
+            }
+
+            if (savePromptYesButton != null)
+            {
+                savePromptYesButton.onClick.RemoveAllListeners();
+                savePromptYesButton.onClick.AddListener(() => flow?.OnDay4SavePromptAccepted());
+            }
+
+            if (savePromptNoButton != null)
+            {
+                savePromptNoButton.onClick.RemoveAllListeners();
+                savePromptNoButton.onClick.AddListener(() => flow?.OnDay4SavePromptDeclined());
             }
 
             if (continueButton != null)
@@ -275,8 +329,42 @@ namespace SixDaysRemaining.UI
                 swapGroup.SetActive(false);
             }
 
+            if (savePromptGroup != null)
+            {
+                savePromptGroup.SetActive(false);
+            }
+
             eventGroup.SetActive(true);
             dayEndGroup.SetActive(false);
+        }
+
+        public void ShowSavePrompt()
+        {
+            titleText.text = "存档提示";
+            if (savePromptBodyText != null)
+            {
+                savePromptBodyText.text = "第四天随机事件危险系数高，开放存档。您是否存档？";
+            }
+
+            if (eventGroup != null)
+            {
+                eventGroup.SetActive(false);
+            }
+
+            if (dayEndGroup != null)
+            {
+                dayEndGroup.SetActive(false);
+            }
+
+            if (swapGroup != null)
+            {
+                swapGroup.SetActive(false);
+            }
+
+            if (savePromptGroup != null)
+            {
+                savePromptGroup.SetActive(true);
+            }
         }
 
         public void ShowTakeInSwap(IReadOnlyList<Survivor> alive)
@@ -319,6 +407,11 @@ namespace SixDaysRemaining.UI
                 dayEndGroup.SetActive(false);
             }
 
+            if (savePromptGroup != null)
+            {
+                savePromptGroup.SetActive(false);
+            }
+
             if (swapGroup != null)
             {
                 swapGroup.SetActive(true);
@@ -345,6 +438,11 @@ namespace SixDaysRemaining.UI
                 swapGroup.SetActive(false);
             }
 
+            if (savePromptGroup != null)
+            {
+                savePromptGroup.SetActive(false);
+            }
+
             if (resultContinueButton != null)
             {
                 resultContinueButton.interactable = true;
@@ -368,6 +466,11 @@ namespace SixDaysRemaining.UI
             if (swapGroup != null)
             {
                 swapGroup.SetActive(false);
+            }
+
+            if (savePromptGroup != null)
+            {
+                savePromptGroup.SetActive(false);
             }
 
             eventGroup.SetActive(false);

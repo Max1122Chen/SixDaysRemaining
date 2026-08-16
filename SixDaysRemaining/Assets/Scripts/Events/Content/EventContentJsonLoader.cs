@@ -24,7 +24,9 @@ namespace SixDaysRemaining.Events.Content
             "RemoveTag",
             "GrantPassive",
             "RevokePassive",
-            "KillSurvivor"
+            "KillSurvivor",
+            "SetRandomSurvivorHealthy",
+            "KillRandomSurvivor"
         };
 
         private static readonly HashSet<string> RetiredOps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

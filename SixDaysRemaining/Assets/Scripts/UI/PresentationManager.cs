@@ -110,6 +110,7 @@ namespace SixDaysRemaining.UI
             flow.ShowGameEventResultOverlay = ShowGameEventResult;
             flow.ShowDayEndOverlay = ShowDayEnd;
             flow.ShowTakeInSwapOverlay = ShowTakeInSwap;
+            flow.ShowDay4SavePromptOverlay = ShowDay4SavePrompt;
         }
 
         public void WireViews()
@@ -294,6 +295,18 @@ namespace SixDaysRemaining.UI
 
             ShowOverlay(view.gameObject);
             view.ShowTakeInSwap(alive);
+        }
+
+        private void ShowDay4SavePrompt()
+        {
+            GameEventView view = EnsureGameEventView();
+            if (view == null)
+            {
+                return;
+            }
+
+            ShowOverlay(view.gameObject);
+            view.ShowSavePrompt();
         }
 
         private void ShowGameEventResult(GameEventResult result)

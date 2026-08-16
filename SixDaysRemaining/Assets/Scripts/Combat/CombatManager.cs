@@ -40,6 +40,8 @@ namespace SixDaysRemaining.Combat
         public IReadOnlyList<SurvivorTrait> OwnedTraits;
         /// <summary>无 RunCorruption 的 Edit Mode 战斗用初始腐蚀。</summary>
         public int InitialRunCorruption;
+        /// <summary>&lt;0 表示满血开局；≥0 为指定开局 HP（会夹到 MaxHP）。</summary>
+        public float PlayerStartHp = -1f;
     }
 
     /// <summary>
@@ -478,7 +480,8 @@ namespace SixDaysRemaining.Combat
             result = default(CombatResult);
 
             float enemyHp = config.EnemyMaxHp > 0f ? config.EnemyMaxHp : activeEncounter.MaxHp;
-            player.InitCombatant(config.PlayerMaxHp);
+            float startHp = config.PlayerStartHp;
+            player.InitCombatant(config.PlayerMaxHp, startHp);
 
             IReadOnlyList<CardDef> starter = config.StarterCards ?? CombatContent.CreateDefaultStarterDefs();
             player.SetupDeck(starter, config.DeckSeed);

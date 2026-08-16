@@ -147,8 +147,11 @@
         {
           "id": "slime_seal",
           "label": "外放体内粘液带走魔物封住缺口",
-          "resultText": "缺口封住了，粘液也更深地缠上了你。",
-          "effects": [ { "op": "CorruptionDelta", "amount": 15 } ]
+          "resultText": "缺口封住了，粘液也更深地缠上了你。次日战斗你会更虚弱。",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": 15 },
+            { "op": "AddTag", "tagId": "State.Combat.TempPlayerHp.Once" }
+          ]
         }
       ]
     },
@@ -240,7 +243,8 @@
           "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
           "effects": [
             { "op": "CorruptionDelta", "amount": -20 },
-            { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" }
+            { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" },
+            { "op": "AddTag", "tagId": "Story.Child.PlayBoost.Once" }
           ]
         },
         {
@@ -248,7 +252,7 @@
           "label": "婉拒，优先外出搜集物资",
           "resultText": "他似乎生闷气了，桌上没有出现可爱的石头，人也不知道躲到哪里去了……",
           "effects": [
-            { "op": "RevokePassive", "passiveId": "passive.child.corruption_daily" },
+            { "op": "AddTag", "tagId": "Story.Child.PassiveOff.Once" },
             { "op": "AddTag", "tagId": "Story.ChildStone.Declined.Day3" }
           ]
         }
@@ -468,8 +472,14 @@
           "disabledHint": "需要腐蚀度 > 40",
           "successChance": 0.5,
           "failureResultText": "这个药剂带走了一名幸存者的性命，其他人对此感到害怕。",
-          "effects": [ { "op": "CorruptionDelta", "amount": 20 } ],
-          "failureEffects": [ { "op": "CorruptionDelta", "amount": 30 } ]
+          "effects": [
+            { "op": "SetRandomSurvivorHealthy" },
+            { "op": "CorruptionDelta", "amount": 20 }
+          ],
+          "failureEffects": [
+            { "op": "KillRandomSurvivor" },
+            { "op": "CorruptionDelta", "amount": 30 }
+          ]
         }
       ]
     },
@@ -507,6 +517,66 @@
           "label": "用剑将粘液剥离",
           "resultText": "你用了很长时间将粘液处理干净，期间不慎沾了点到手指上。",
           "effects": [ { "op": "CorruptionDelta", "amount": 12 } ]
+        }
+      ]
+    },
+    {
+      "id": "daily_cockroach_day5",
+      "title": "存粮木桶",
+      "body": "存粮木桶再次爬满腐蚀变异蟑螂，必须处理。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 5,
+      "requiredDayMax": 5,
+      "corruptionMax": 50,
+      "options": [
+        {
+          "id": "clean_alone",
+          "label": "通宵独自清理变异虫群",
+          "resultText": "你清干净了木桶，粘液也沾上了身体。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 10 } ]
+        },
+        {
+          "id": "herb_seal",
+          "label": "制作驱虫草药封堵木桶缝隙",
+          "resultText": "虫群退去，木桶暂时安全了。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 1 } ],
+          "disabledHint": "需要食物 ≥ 1",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -2 },
+            { "op": "FoodDelta", "amount": -1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "daily_toilet_day5",
+      "title": "马桶淤泥",
+      "body": "幸存者再次投诉马桶底部堆满霉菌淤泥，刺鼻气味弥漫房间。",
+      "trigger": "AfterTriumph",
+      "priority": 20,
+      "enabled": true,
+      "requiredDayMin": 5,
+      "requiredDayMax": 5,
+      "corruptionMin": 51,
+      "options": [
+        {
+          "id": "clean_hand",
+          "label": "亲手清理霉菌污秽",
+          "resultText": "毒素侵入体内，气味散去一些。",
+          "effects": [ { "op": "CorruptionDelta", "amount": 10 } ]
+        },
+        {
+          "id": "seal_box",
+          "label": "拆掉闲置木箱并填土隔绝毒气",
+          "resultText": "毒气被隔开了。",
+          "gates": [ { "op": "FoodAtLeast", "amount": 2 } ],
+          "disabledHint": "需要食物 ≥ 2",
+          "effects": [
+            { "op": "CorruptionDelta", "amount": -5 },
+            { "op": "FoodDelta", "amount": -2 }
+          ]
         }
       ]
     },

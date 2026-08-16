@@ -21,6 +21,8 @@ namespace SixDaysRemaining.Events
         GrantPassive = 105,
         RevokePassive = 106,
         KillSurvivor = 107,
+        SetRandomSurvivorHealthy = 108,
+        KillRandomSurvivor = 109,
         // Reserved (load hard-fails if present in JSON until implemented):
         OverrideHungerDecay = 102
     }
@@ -79,6 +81,7 @@ namespace SixDaysRemaining.Events
         public int FoodDelta;
         public int CorruptionDelta;
         public bool EndedRun;
+        public string AffectedSurvivorName;
     }
 
     public sealed class GameEventQuery

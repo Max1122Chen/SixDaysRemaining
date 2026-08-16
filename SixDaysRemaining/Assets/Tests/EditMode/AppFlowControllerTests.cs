@@ -1,6 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using SixDaysRemaining.App;
+using SixDaysRemaining.Events;
 using SixDaysRemaining.Gameplay;
 using UnityEngine;
 
@@ -8,6 +9,57 @@ namespace SixDaysRemaining.Tests.EditMode
 {
     public class AppFlowControllerTests
     {
+        [Test]
+        public void AfterTriumph_Day4_ShowsSavePromptOnce_ThenContinues()
+        {
+            GameObject giGo = new GameObject("GameInstanceDay4Save");
+            GameObject flowGo = new GameObject("AppFlowDay4Save");
+            try
+            {
+                GameInstance gi = giGo.AddComponent<GameInstance>();
+                gi.StartNewGame(1);
+                gi.Gameplay.State.day = 4;
+                gi.Events.SetProviders(new IGameEventProvider[0]);
+
+                AppFlowController flow = flowGo.AddComponent<AppFlowController>();
+                flow.BindGame(gi);
+
+                int promptCalls = 0;
+                flow.ShowDay4SavePromptOverlay = () => promptCalls++;
+                flow.CloseOverlayCallback = () => { };
+                flow.ShowShelterScreen = () => { };
+
+                System.Type flowType = typeof(AppFlowController);
+                FieldInfo phaseField = flowType.GetField(
+                    "eventChainPhase",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                Assert.IsNotNull(phaseField);
+                phaseField.SetValue(flow, System.Enum.ToObject(phaseField.FieldType, 1));
+
+                MethodInfo finishMethod = flowType.GetMethod(
+                    "HandleEventSequenceFinished",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                Assert.IsNotNull(finishMethod);
+                finishMethod.Invoke(flow, null);
+
+                Assert.AreEqual(1, promptCalls);
+                Assert.IsTrue(gi.Gameplay.HasTagExact(GameplayTags.Day4SavePrompted));
+                Assert.AreEqual(System.Enum.ToObject(phaseField.FieldType, 4), phaseField.GetValue(flow));
+
+                flow.OnDay4SavePromptDeclined();
+                Assert.AreEqual(System.Enum.ToObject(phaseField.FieldType, 0), phaseField.GetValue(flow));
+
+                phaseField.SetValue(flow, System.Enum.ToObject(phaseField.FieldType, 1));
+                finishMethod.Invoke(flow, null);
+                Assert.AreEqual(1, promptCalls);
+            }
+            finally
+            {
+                Object.DestroyImmediate(flowGo);
+                Object.DestroyImmediate(giGo);
+            }
+        }
+
         [Test]
         public void OnDayEndContinue_BlockedExpeditionDay_AdvancesDayAndClearsTag()
         {

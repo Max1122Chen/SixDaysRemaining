@@ -38,6 +38,22 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void StartCombat_PlayerStartHp_OverridesFullHp()
+        {
+            Start(new CombatStartConfig
+            {
+                PlayerMaxHp = 50f,
+                PlayerStartHp = 45f,
+                EncounterId = EncounterIds.Mob01,
+                DeckSeed = 1,
+                UseRoundRewards = false
+            });
+
+            Assert.AreEqual(50f, player.Attributes.MaxHP);
+            Assert.AreEqual(45f, player.Attributes.HP);
+        }
+
+        [Test]
         public void RoundSlots_ResolvePlayerThenEnemy()
         {
             Start(new CombatStartConfig

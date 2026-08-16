@@ -10,7 +10,16 @@ namespace SixDaysRemaining.Gameplay
 
         public const string ChildStoneDeclinedDay2 = "Story.ChildStone.Declined.Day2";
         public const string ChildStoneDeclinedDay3 = "Story.ChildStone.Declined.Day3";
+        public const string ChildPlayBoostOnce = "Story.Child.PlayBoost.Once";
+        public const string ChildPassiveOffOnce = "Story.Child.PassiveOff.Once";
 
         public const string PoliticianRefused = "Story.Politician.Refused";
+
+        public const string DoctorBiguFunded = "Story.Doctor.BiguFunded";
+        public const string DoctorBiguActive = "Story.Doctor.BiguActive";
+
+        public const string TempPlayerHpOnce = "State.Combat.TempPlayerHp.Once";
+
+        public const string Day4SavePrompted = "Story.Save.Day4Prompted";
     }
 }

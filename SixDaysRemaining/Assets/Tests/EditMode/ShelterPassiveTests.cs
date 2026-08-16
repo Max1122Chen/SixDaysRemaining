@@ -112,6 +112,38 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(12, gameplay.State.corruption);
         }
 
+        [Test]
+        public void ChildPlayBoostOnce_AppliesMinusTwelveThenClears()
+        {
+            shelter.InitializeDefaultRoster(10);
+            KeepChildAlive(shelter);
+            gameplay.State.corruption = 40;
+            gameplay.AddTag(GameplayTags.ChildPlayBoostOnce);
+
+            shelter.ProcessEndOfDay();
+
+            Assert.AreEqual(28, gameplay.State.corruption);
+            Assert.IsFalse(gameplay.HasTagExact(GameplayTags.ChildPlayBoostOnce));
+            Assert.AreEqual(1, shelter.Passives.ActivePassives.Count);
+        }
+
+        [Test]
+        public void ChildPassiveOffOnce_SkipsTickThenClears_DoesNotRevoke()
+        {
+            shelter.InitializeDefaultRoster(10);
+            KeepChildAlive(shelter);
+            gameplay.State.corruption = 40;
+            gameplay.AddTag(GameplayTags.ChildPassiveOffOnce);
+            gameplay.AddTag(GameplayTags.ChildPlayBoostOnce);
+
+            shelter.ProcessEndOfDay();
+
+            Assert.AreEqual(40, gameplay.State.corruption);
+            Assert.IsFalse(gameplay.HasTagExact(GameplayTags.ChildPassiveOffOnce));
+            Assert.IsFalse(gameplay.HasTagExact(GameplayTags.ChildPlayBoostOnce));
+            Assert.AreEqual(1, shelter.Passives.ActivePassives.Count);
+        }
+
         private static void KeepChildAlive(ShelterManager shelterManager)
         {
             Survivor child = null;

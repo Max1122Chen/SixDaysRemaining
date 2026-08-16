@@ -242,5 +242,77 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(GameplayPhase.ExpeditionPrep, gameplay.CurrentPhase);
             Assert.AreEqual(13, gameplay.State.foodStock);
         }
+
+        [Test]
+        public void DoctorBigu_ActivatesOnEndOfDay_ThenSkipsAllocAndHunger()
+        {
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager dayShelter = new ShelterManager(gameplay.State);
+            dayShelter.BindGameplay(gameplay);
+            dayShelter.InitializeDefaultRoster(10);
+            dayShelter.TakeIn(SurvivorIds.Doctor);
+
+            Survivor doctor = null;
+            for (int i = 0; i < dayShelter.Survivors.Count; i++)
+            {
+                if (dayShelter.Survivors[i].defId == SurvivorIds.Doctor)
+                {
+                    doctor = dayShelter.Survivors[i];
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(doctor);
+            doctor.hunger = 1;
+            doctor.status = SurvivorStatus.Hungry;
+            gameplay.AddTag(GameplayTags.DoctorBiguFunded);
+
+            dayShelter.ProcessEndOfDay();
+
+            Assert.IsTrue(gameplay.HasTagExact(GameplayTags.DoctorBiguActive));
+            Assert.IsTrue(dayShelter.IsBiguExempt(doctor));
+            Assert.AreEqual(SurvivorStatus.Healthy, doctor.status);
+            Assert.Greater(doctor.hunger, dayShelter.HungryThreshold);
+
+            int stockBefore = gameplay.State.foodStock;
+            Assert.IsFalse(dayShelter.AllocateFood(doctor, 1));
+            Assert.AreEqual(stockBefore, gameplay.State.foodStock);
+
+            int hungerAfterActivate = doctor.hunger;
+            dayShelter.ProcessEndOfDay();
+            Assert.AreEqual(hungerAfterActivate, doctor.hunger);
+            Assert.AreEqual(SurvivorStatus.Healthy, doctor.status);
+        }
+
+        [Test]
+        public void SetSurvivorHealthy_AndTryPickRandomAlive()
+        {
+            Survivor a = new Survivor
+            {
+                defId = "a",
+                name = "A",
+                hunger = 0,
+                status = SurvivorStatus.Dying
+            };
+            Survivor b = new Survivor
+            {
+                defId = "b",
+                name = "B",
+                hunger = 3,
+                status = SurvivorStatus.Healthy
+            };
+            shelter.RegisterSurvivor(a);
+            shelter.RegisterSurvivor(b);
+
+            Assert.IsTrue(shelter.SetSurvivorHealthy(a));
+            Assert.AreEqual(SurvivorStatus.Healthy, a.status);
+            Assert.GreaterOrEqual(a.hunger, 2);
+
+            Survivor picked;
+            Assert.IsTrue(shelter.TryPickRandomAlive(out picked));
+            Assert.IsNotNull(picked);
+            Assert.AreNotEqual(SurvivorStatus.Dead, picked.status);
+        }
     }
 }

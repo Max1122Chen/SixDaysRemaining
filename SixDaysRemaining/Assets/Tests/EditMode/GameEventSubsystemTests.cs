@@ -712,5 +712,125 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.IsTrue(events.OptionContainsTakeIn(0, out defId));
             Assert.AreEqual("doctor", defId);
         }
+
+        [Test]
+        public void ApplyOption_SetRandomSurvivorHealthy_AppendsTargetName()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""heal"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""healed"",
+      ""effects"": [ { ""op"": ""SetRandomSurvivorHealthy"" } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "heal");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            Survivor only = new Survivor
+            {
+                defId = "patient",
+                name = "Patient",
+                hunger = 0,
+                status = SurvivorStatus.Dying,
+                hungryToDyingDays = 2
+            };
+            shelter.RegisterSurvivor(only);
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            GameEventResult result = events.ApplyOption(0);
+
+            Assert.AreEqual(SurvivorStatus.Healthy, only.status);
+            Assert.AreEqual("Patient", result.AffectedSurvivorName);
+            StringAssert.Contains("对象：Patient", result.ResultText);
+        }
+
+        [Test]
+        public void ApplyOption_KillRandomSurvivor_AddsDeathCorruption()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""kill"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""killed"",
+      ""effects"": [ { ""op"": ""KillRandomSurvivor"" } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "kill");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            shelter.BindGameplay(gameplay);
+            Survivor only = new Survivor
+            {
+                defId = "only",
+                name = "Only",
+                hunger = 3,
+                status = SurvivorStatus.Healthy,
+                hungryToDyingDays = 2
+            };
+            shelter.RegisterSurvivor(only);
+            gameplay.State.corruption = 10;
+
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            GameEventResult result = events.ApplyOption(0);
+
+            Assert.AreEqual(SurvivorStatus.Dead, only.status);
+            Assert.AreEqual(10 + ShelterManager.CorruptionOnDeath, gameplay.State.corruption);
+            Assert.AreEqual(ShelterManager.CorruptionOnDeath, result.CorruptionDelta);
+            StringAssert.Contains("对象：Only", result.ResultText);
+        }
+
+        [Test]
+        public void ApplyOption_AddTag_TempPlayerHpOnce()
+        {
+            string json = @"{
+  ""events"": [ {
+    ""id"": ""slime"",
+    ""title"": ""t"",
+    ""body"": ""b"",
+    ""trigger"": ""AfterTriumph"",
+    ""options"": [ {
+      ""id"": ""o"",
+      ""label"": ""L"",
+      ""resultText"": ""r"",
+      ""effects"": [ { ""op"": ""AddTag"", ""tagId"": ""State.Combat.TempPlayerHp.Once"" } ]
+    } ]
+  } ]
+}";
+            IReadOnlyList<GameEventDef> library = EventContentJsonLoader.LoadFromJsonText(json, "slime");
+            GameplaySubsystem gameplay = new GameplaySubsystem();
+            gameplay.StartNewRun(1);
+            ShelterManager shelter = new ShelterManager(gameplay.State);
+            GameEventSubsystem events = new GameEventSubsystem();
+            events.Bind(gameplay, shelter, EventContent.FromLibrary(library));
+            events.SetProviders(new IGameEventProvider[] { new RandomPoolProvider(1) });
+            events.ResetDailyBudget();
+            events.TryPrepareTrigger(GameEventTrigger.AfterTriumph);
+            events.ApplyOption(0);
+
+            Assert.IsTrue(gameplay.HasTagExact(GameplayTags.TempPlayerHpOnce));
+        }
     }
 }

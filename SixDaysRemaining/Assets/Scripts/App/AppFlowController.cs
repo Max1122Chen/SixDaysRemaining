@@ -21,7 +21,8 @@ namespace SixDaysRemaining.Gameplay
             None = 0,
             AfterTriumph = 1,
             BeforeDayEnd = 2,
-            BeforeDepart = 3
+            BeforeDepart = 3,
+            Day4SavePrompt = 4
         }
 
         private GameInstance gameInstance;
@@ -46,6 +47,7 @@ namespace SixDaysRemaining.Gameplay
         public Action<GameEventResult> ShowGameEventResultOverlay;
         public Action<IReadOnlyList<string>> ShowDayEndOverlay;
         public Action<IReadOnlyList<Survivor>> ShowTakeInSwapOverlay;
+        public Action ShowDay4SavePromptOverlay;
 
         public Action CloseOverlayCallback;
 
@@ -212,6 +214,13 @@ namespace SixDaysRemaining.Gameplay
             if (gi.Shelter != null)
             {
                 config.OwnedTraits = TraitCatalog.GetOwnedTraits(gi.Shelter.GetAliveDefIds());
+            }
+
+            if (gi.Gameplay.HasTagExact(GameplayTags.TempPlayerHpOnce))
+            {
+                config.PlayerMaxHp = 50f;
+                config.PlayerStartHp = 45f;
+                gi.Gameplay.RemoveTag(GameplayTags.TempPlayerHpOnce);
             }
 
             gi.Combat.PlayerInvincible = debug != null && debug.playerInvincible;
@@ -537,8 +546,15 @@ namespace SixDaysRemaining.Gameplay
             switch (eventChainPhase)
             {
                 case EventChainPhase.AfterTriumph:
+                    if (TryBeginDay4SavePrompt())
+                    {
+                        break;
+                    }
+
                     eventChainPhase = EventChainPhase.BeforeDayEnd;
                     Game.Events.TryPrepareTrigger(GameEventTrigger.BeforeDayEnd);
+                    break;
+                case EventChainPhase.Day4SavePrompt:
                     break;
                 case EventChainPhase.BeforeDayEnd:
                     eventChainPhase = EventChainPhase.None;
@@ -553,6 +569,52 @@ namespace SixDaysRemaining.Gameplay
                 default:
                     break;
             }
+        }
+
+        public void OnDay4SavePromptAccepted()
+        {
+            if (eventChainPhase != EventChainPhase.Day4SavePrompt)
+            {
+                return;
+            }
+
+            TryWriteCheckpoint();
+            ContinueAfterDay4SavePrompt();
+        }
+
+        public void OnDay4SavePromptDeclined()
+        {
+            if (eventChainPhase != EventChainPhase.Day4SavePrompt)
+            {
+                return;
+            }
+
+            ContinueAfterDay4SavePrompt();
+        }
+
+        private bool TryBeginDay4SavePrompt()
+        {
+            GameInstance gi = Game;
+            if (gi?.Gameplay?.State == null || gi.Gameplay.State.day != 4)
+            {
+                return false;
+            }
+
+            if (gi.Gameplay.HasTagExact(GameplayTags.Day4SavePrompted))
+            {
+                return false;
+            }
+
+            gi.Gameplay.AddTag(GameplayTags.Day4SavePrompted);
+            eventChainPhase = EventChainPhase.Day4SavePrompt;
+            ShowDay4SavePromptOverlay?.Invoke();
+            return true;
+        }
+
+        private void ContinueAfterDay4SavePrompt()
+        {
+            eventChainPhase = EventChainPhase.BeforeDayEnd;
+            Game.Events?.TryPrepareTrigger(GameEventTrigger.BeforeDayEnd);
         }
 
         private void PresentDayEnd()

@@ -221,6 +221,12 @@ namespace SixDaysRemaining.Events
                 }
             }
 
+            if (!string.IsNullOrEmpty(result.AffectedSurvivorName)
+                && !string.IsNullOrEmpty(result.ResultText))
+            {
+                result.ResultText = result.ResultText + "\n（对象：" + result.AffectedSurvivorName + "）";
+            }
+
             if (success && !string.IsNullOrEmpty(option.FollowUpEventId) && !result.EndedRun)
             {
                 InsertFollowUp(option.FollowUpEventId);
@@ -457,6 +463,36 @@ namespace SixDaysRemaining.Events
                             if (gameplay.CurrentPhase == GameplayPhase.Ending)
                             {
                                 result.EndedRun = true;
+                            }
+                        }
+                    }
+                    break;
+                case GameEventEffectOp.SetRandomSurvivorHealthy:
+                    if (shelter != null)
+                    {
+                        Survivor target;
+                        if (shelter.TryPickRandomAlive(out target) && shelter.SetSurvivorHealthy(target))
+                        {
+                            result.AffectedSurvivorName = target.name;
+                        }
+                    }
+                    break;
+                case GameEventEffectOp.KillRandomSurvivor:
+                    if (shelter != null)
+                    {
+                        Survivor target;
+                        if (shelter.TryPickRandomAlive(out target))
+                        {
+                            result.AffectedSurvivorName = target.name;
+                            int before = gameplay.State != null ? gameplay.State.corruption : 0;
+                            if (shelter.KillSurvivor(target.defId))
+                            {
+                                int after = gameplay.State != null ? gameplay.State.corruption : before;
+                                result.CorruptionDelta += after - before;
+                                if (gameplay.CurrentPhase == GameplayPhase.Ending)
+                                {
+                                    result.EndedRun = true;
+                                }
                             }
                         }
                     }

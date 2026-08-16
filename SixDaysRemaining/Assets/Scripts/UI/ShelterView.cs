@@ -228,9 +228,20 @@ namespace SixDaysRemaining.UI
 
             detailGroup.SetActive(true);
             SetText(detailNameText, selected.name);
-            SetText(detailStatusText, "身份：" + selected.name + "\n状态：" + StatusName(selected.status));
+            string statusLine = "身份：" + selected.name + "\n状态：" + StatusName(selected.status);
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            if (gi != null && gi.Shelter != null && gi.Shelter.IsBiguExempt(selected))
+            {
+                statusLine += "\n（辟谷丹：不接受分配）";
+                SetText(detailMessageText, "每日留言：\n我吃了最近研究的辟谷丹，不需要食物。");
+            }
+            else
+            {
+                SetText(detailMessageText, "每日留言：\n暂无每日留言数据");
+            }
+
+            SetText(detailStatusText, statusLine);
             SetText(detailTraitsText, "特质：\n" + BuildTraitText(selected));
-            SetText(detailMessageText, "每日留言：\n暂无每日留言数据");
         }
 
         private void RebuildResidentCards(ShelterManager shelter, int foodStock, bool corrupted)
@@ -290,7 +301,23 @@ namespace SixDaysRemaining.UI
                 new Vector2(132f, 40f),
                 new Color(0.28f, 0.50f, 0.40f, 1f),
                 18);
-            feed.interactable = foodStock >= 1;
+
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            bool bigu = gi != null && gi.Shelter != null && gi.Shelter.IsBiguExempt(survivor);
+            if (bigu)
+            {
+                TextMeshProUGUI feedLabel = feed.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (feedLabel != null)
+                {
+                    feedLabel.text = "辟谷中";
+                }
+
+                feed.interactable = false;
+            }
+            else
+            {
+                feed.interactable = foodStock >= 1;
+            }
         }
 
         private void ClearResidentCards()
