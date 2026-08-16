@@ -29,7 +29,7 @@
 | `CORE-F07` | GameplayTag 业务迁移（storyFlags → Tag） | CORE | Done | `designs/CORE-F07-gameplay-tag-migration.md` | — | `main` | Max | Story Tag + requiredTags；删 storyFlags |
 | `SHLT-F03` | 幸存者被动 + 人设闭环 | SHLT | Done | `designs/SHLT-F03-survivor-passives-and-personas.md` | — | `main` | Max | Play：幼童 −8 / 政治家回访通过 |
 | `END-F01` | 结局钩子 + EndingEvaluator | CORE | Done | `designs/END-F01-ending-hooks.md` | — | `main` | Max | 政治家战败 E；Play 通过 |
-| `COMB-F10` | 特质卡系统（defId 解锁 + 战斗集成） | COMB | Discuss | — | — | `feat/combat` | Max | 承接 `TraitCatalog`；需 design |
+| `COMB-F10` | 特质卡系统（defId 解锁 + 三特质） | COMB | Review | `designs/COMB-F10-survivor-traits.md` | — | `main` | Max | 半开放：完整 Play 等人设 |
 | `META-F01` | 结局回顾（成就式 run summary） | META | Planned | — | — | `main` | Max | 轻量 metadata；不依赖 mid-run 存档 |
 | `SAVE-F01` | 受限存档读档 | CORE | Planned | — | — | `main` | Max | 等 Tag/defId/Ending 模型稳定后 |
 
@@ -44,8 +44,9 @@
 
 ## 近期执行顺序（2026-08-16）
 
-1. **COMB-F10** — 特质卡（`feat/combat` 讨论 / design）
-2. **META-F01** → **SAVE-F01**
+1. **META-F01** — 结局回顾（讨论 / design）
+2. **SAVE-F01** — 存档（Tag/Ending 稳定后）
+3. **COMB-F10** — Review（半开放；等人设后完整 Play）
 
 ## 状态说明
 

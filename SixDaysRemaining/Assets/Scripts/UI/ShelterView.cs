@@ -519,7 +519,7 @@ namespace SixDaysRemaining.UI
                     continue;
                 }
 
-                if (TraitCatalog.IsOwnedByNames(trait, new[] { survivor.name }))
+                if (TraitCatalog.IsProvidedBySurvivorDef(trait, survivor.defId))
                 {
                     lines.Add(trait.Title + "：" + trait.Description);
                 }

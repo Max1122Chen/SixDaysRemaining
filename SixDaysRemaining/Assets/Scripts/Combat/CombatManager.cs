@@ -330,8 +330,9 @@ namespace SixDaysRemaining.Combat
             enemy.SetBlock(0f);
             enemy.AdvanceRoundPlan();
             ClearRoundSlots();
-            session.Player.OnPlayerTurnStart();
+            // 特质先于抽牌：小贼偷牌时手牌可能仍有空位。
             TriggerTraits(TraitTrigger.PlayerTurnStart);
+            session.Player.OnPlayerTurnStart();
             playerTurn = true;
         }
 
@@ -350,8 +351,8 @@ namespace SixDaysRemaining.Combat
             session.Player.SetBlock(0f);
             // 旧单行动路径不再使用；五槽流程请用 BeginRound。
             playerTurn = true;
-            session.Player.OnPlayerTurnStart();
             TriggerTraits(TraitTrigger.PlayerTurnStart);
+            session.Player.OnPlayerTurnStart();
         }
 
         public bool Flee()
@@ -491,9 +492,10 @@ namespace SixDaysRemaining.Combat
             session = new CombatSession(player, enemies);
 
             playerTurn = true;
-            player.OnPlayerTurnStart();
             player.Invincible = playerInvincible;
+            // SetupDeck 已抽满手；首回合偷牌常因满手不入，意图仍会清空。
             TriggerTraits(TraitTrigger.PlayerTurnStart);
+            player.OnPlayerTurnStart();
         }
 
         private CombatResolveContext CreateContext()
@@ -542,6 +544,7 @@ namespace SixDaysRemaining.Combat
                     && trait.Id == TraitIds.Thief
                     && session.Enemies.Count > 0)
                 {
+                    // 先偷空意图；手牌满时 AddToHand 失败，意图仍已移除。
                     CardInstance stolen = session.Enemies[0].StealRandomAction(rng);
                     if (stolen != null)
                     {

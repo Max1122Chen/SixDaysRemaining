@@ -5,7 +5,7 @@ using SixDaysRemaining.Combat.Cards;
 namespace SixDaysRemaining.Combat.Traits
 {
     /// <summary>
-    /// 特质触发方式：手动一次 / 玩家回合开始 / 敌方回合结束。
+    /// 特质触发方式：手动一次 / 玩家回合开始 / 回合结束。
     /// </summary>
     public enum TraitTrigger
     {
@@ -15,7 +15,7 @@ namespace SixDaysRemaining.Combat.Traits
     }
 
     /// <summary>
-    /// 幸存者特质卡定义，对应卡牌表 07/08/09。
+    /// 幸存者特质定义（战斗槽位能力，非牌库 CardDef）。
     /// </summary>
     public class SurvivorTrait
     {
@@ -25,7 +25,10 @@ namespace SixDaysRemaining.Combat.Traits
         public string Description;
         public TraitTrigger Trigger;
         public bool StartsOwned;
-        public string[] UnlockNameFragments;
+
+        /// <summary>解锁所需幸存者 defId（如 nurse）；StartsOwned 时为空。</summary>
+        public string UnlockSurvivorDefId;
+
         public EffectSpec[] Effects;
     }
 
@@ -37,10 +40,13 @@ namespace SixDaysRemaining.Combat.Traits
     }
 
     /// <summary>
-    /// 特质卡静态目录；槽位顺序固定为 英雄 / 护士 / 小贼。
+    /// 特质静态目录；槽位顺序固定为 英雄 / 护士 / 小贼。
     /// </summary>
     public static class TraitCatalog
     {
+        public const string UnlockNurseDefId = "nurse";
+        public const string UnlockThiefDefId = "thief";
+
         public static readonly SurvivorTrait Hero = Create(
             TraitIds.Hero,
             "英雄·希望之光",
@@ -59,7 +65,7 @@ namespace SixDaysRemaining.Combat.Traits
             "每回合结束自动回复6点生命值。",
             TraitTrigger.RoundEnd,
             false,
-            new[] { "护士", "Nurse" },
+            UnlockNurseDefId,
             Heal(6f));
 
         public static readonly SurvivorTrait Thief = Create(
@@ -69,7 +75,7 @@ namespace SixDaysRemaining.Combat.Traits
             "每回合开始时，造成3点伤害并随机偷走敌人的一个行动，放入我方手牌。",
             TraitTrigger.PlayerTurnStart,
             false,
-            new[] { "小贼", "Thief" },
+            UnlockThiefDefId,
             Damage(3f));
 
         public static readonly SurvivorTrait[] SlotDefs =
@@ -86,13 +92,16 @@ namespace SixDaysRemaining.Combat.Traits
             return owned;
         }
 
-        public static IReadOnlyList<SurvivorTrait> GetOwnedTraits(IReadOnlyList<string> survivorNames)
+        /// <summary>
+        /// 按庇护所存活幸存者的 defId 解析本场拥有的特质。
+        /// </summary>
+        public static IReadOnlyList<SurvivorTrait> GetOwnedTraits(IReadOnlyList<string> aliveSurvivorDefIds)
         {
             List<SurvivorTrait> owned = new List<SurvivorTrait>(SlotDefs.Length);
             for (int i = 0; i < SlotDefs.Length; i++)
             {
                 SurvivorTrait trait = SlotDefs[i];
-                if (trait != null && IsOwnedByNames(trait, survivorNames))
+                if (trait != null && IsOwnedByDefIds(trait, aliveSurvivorDefIds))
                 {
                     owned.Add(trait);
                 }
@@ -101,7 +110,7 @@ namespace SixDaysRemaining.Combat.Traits
             return owned;
         }
 
-        public static bool IsOwnedByNames(SurvivorTrait trait, IReadOnlyList<string> survivorNames)
+        public static bool IsOwnedByDefIds(SurvivorTrait trait, IReadOnlyList<string> aliveSurvivorDefIds)
         {
             if (trait == null)
             {
@@ -113,29 +122,31 @@ namespace SixDaysRemaining.Combat.Traits
                 return true;
             }
 
-            if (survivorNames == null || trait.UnlockNameFragments == null)
+            if (string.IsNullOrEmpty(trait.UnlockSurvivorDefId) || aliveSurvivorDefIds == null)
             {
                 return false;
             }
 
-            for (int i = 0; i < survivorNames.Count; i++)
+            for (int i = 0; i < aliveSurvivorDefIds.Count; i++)
             {
-                string name = survivorNames[i];
-                if (string.IsNullOrEmpty(name))
+                if (string.Equals(aliveSurvivorDefIds[i], trait.UnlockSurvivorDefId, StringComparison.Ordinal))
                 {
-                    continue;
-                }
-
-                for (int j = 0; j < trait.UnlockNameFragments.Length; j++)
-                {
-                    if (name.IndexOf(trait.UnlockNameFragments[j], StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>单人详情：该身份是否提供此特质（不含英雄全局槽）。</summary>
+        public static bool IsProvidedBySurvivorDef(SurvivorTrait trait, string survivorDefId)
+        {
+            if (trait == null || trait.StartsOwned || string.IsNullOrEmpty(survivorDefId))
+            {
+                return false;
+            }
+
+            return string.Equals(trait.UnlockSurvivorDefId, survivorDefId, StringComparison.Ordinal);
         }
 
         private static SurvivorTrait Create(
@@ -145,7 +156,7 @@ namespace SixDaysRemaining.Combat.Traits
             string description,
             TraitTrigger trigger,
             bool startsOwned,
-            string[] unlockNameFragments,
+            string unlockSurvivorDefId,
             params EffectSpec[] effects)
         {
             return new SurvivorTrait
@@ -156,7 +167,7 @@ namespace SixDaysRemaining.Combat.Traits
                 Description = description,
                 Trigger = trigger,
                 StartsOwned = startsOwned,
-                UnlockNameFragments = unlockNameFragments,
+                UnlockSurvivorDefId = unlockSurvivorDefId,
                 Effects = effects ?? new EffectSpec[0]
             };
         }

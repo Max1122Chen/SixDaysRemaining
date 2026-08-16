@@ -67,19 +67,14 @@ namespace SixDaysRemaining.UI
         public void Refresh(ShelterManager shelter, PlayerCombatComponent player, bool playerTurn)
         {
             EnsureSlots();
-            List<string> names = new List<string>();
-            if (shelter != null && shelter.Survivors != null)
-            {
-                for (int i = 0; i < shelter.Survivors.Count; i++)
-                {
-                    names.Add(shelter.Survivors[i].name);
-                }
-            }
+            List<string> aliveDefIds = shelter != null
+                ? shelter.GetAliveDefIds()
+                : new List<string>();
 
             for (int i = 0; i < slots.Length && i < TraitCatalog.SlotDefs.Length; i++)
             {
                 SurvivorTrait trait = TraitCatalog.SlotDefs[i];
-                bool owned = trait != null && TraitCatalog.IsOwnedByNames(trait, names);
+                bool owned = trait != null && TraitCatalog.IsOwnedByDefIds(trait, aliveDefIds);
                 bool used = player != null && trait != null && player.IsTraitUsed(trait.Id);
                 slots[i].SetTrait(trait, owned, used, playerTurn);
             }

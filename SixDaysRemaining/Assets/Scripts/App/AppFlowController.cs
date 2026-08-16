@@ -174,13 +174,7 @@ namespace SixDaysRemaining.Gameplay
             config.RunCorruption = new GameplayCorruptionBridge(gi.Gameplay);
             if (gi.Shelter != null)
             {
-                List<string> names = new List<string>();
-                for (int i = 0; i < gi.Shelter.Survivors.Count; i++)
-                {
-                    names.Add(gi.Shelter.Survivors[i].name);
-                }
-
-                config.OwnedTraits = TraitCatalog.GetOwnedTraits(names);
+                config.OwnedTraits = TraitCatalog.GetOwnedTraits(gi.Shelter.GetAliveDefIds());
             }
 
             gi.Combat.PlayerInvincible = debug != null && debug.playerInvincible;

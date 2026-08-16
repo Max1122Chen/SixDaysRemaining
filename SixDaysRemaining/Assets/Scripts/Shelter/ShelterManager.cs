@@ -61,6 +61,24 @@ namespace SixDaysRemaining.Shelter
             }
         }
 
+        /// <summary>
+        /// 存活（非 Dead/Left）幸存者的 defId 列表，供特质解锁等消费。
+        /// </summary>
+        public List<string> GetAliveDefIds()
+        {
+            List<string> ids = new List<string>();
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                Survivor s = survivors[i];
+                if (s != null && IsAlive(s) && !string.IsNullOrEmpty(s.defId))
+                {
+                    ids.Add(s.defId);
+                }
+            }
+
+            return ids;
+        }
+
         public ShelterManager(GameState gameState)
         {
             state = gameState;

@@ -36,8 +36,9 @@
 - UI：伙伴主界面/HUD + UI-F01
 
 下一里程碑：
-- `COMB-F10`：特质卡（`feat/combat`）
-- `META-F01` → `SAVE-F01`
+- `META-F01`：结局回顾（讨论 / design）
+- `SAVE-F01`：存档
+- `COMB-F10`：半开放 Review（人设齐后完整 Play）
 
 ## 4) 协作约定
 

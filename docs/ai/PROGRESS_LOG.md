@@ -2,6 +2,19 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（COMB-F10 实现）
+
+- 范围：三特质收口（英雄/护士/小贼）；defId 解锁
+- 分支：`feat/combat`（已 ff merge `main`）
+- 已完成：
+  - `UnlockSurvivorDefId`；退役名字子串
+  - Shelter `GetAliveDefIds`；AppFlow / TraitBar / Shelter 详情同源
+  - PlayerTurnStart 特质先于抽牌；满手偷牌不入、意图仍清
+  - EditMode：`SurvivorTraitTests`
+- 状态：**Review（半开放）** — 完整 Play 等人设/入住线齐
+- 附带：卡牌数值表 `docs/designs/六日英雄，卡牌2.0.xlsx`（后续调数值）
+- 下一步：合 `main`；讨论 META-F01
+
 ## 2026-08-16（END-F01 实现）
 
 - 范围：战斗结束结局钩子（政治家战败 → Ending.E）
