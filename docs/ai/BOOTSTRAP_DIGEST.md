@@ -14,9 +14,10 @@
 
 ## 当前快照（2026-08-16）
 
-- `main`：Persist/Meta/Save Done；事件 3.0 深度 + COMB-F10 为 **Review（半开放，他人验收）**；**COMB-F11** 卡牌数值 2.0 进行中/刚同步。
-- 内容编辑：`StreamingAssets/Shelter/`、`StreamingAssets/Events/`、`StreamingAssets/Combat/`（改完需重启 Play）。
-- **下一批：** COMB-F11 收口；半开放 feat 由他人 Play 后标 Done。
+- 真相分支：**本地 `main`**（已含全部已实现 feat；历史 `feat/*` 无未合入提交）。
+- 内容：事件 3.0 + 卡牌 2.0 已进 StreamingAssets；多 feat **Review（半开放）** 待他人 Play。
+- 总览：根目录 `README.md`（实现对齐摘要）。
+- **下一批：** 半开放 Play 签字；可选 TECH 导出 / TD 清理。
 
 ## 不可协商的协作规则
 

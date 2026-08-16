@@ -2,6 +2,13 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（内容对齐盘点 + README）
+
+- 对照 `docs/designs/` 产品源与 `FEATURE_REGISTRY` / StreamingAssets
+- 结论：first-playable 主内容已落地；半开放批次待他人 Play；明确 Out 见 README
+- 分支：本地 `feat/*` ahead-of-main = 0；工作均在 `main`（相对 origin 可能 ahead）
+- 更新：根 `README.md`、`PROJECT_CONTEXT.md`、`BOOTSTRAP_DIGEST.md`
+
 ## 2026-08-16（COMB-F11 卡牌数值 2.0 + 半开放移交）
 
 - 验收：EVT-F03 / SHLT-F04–F05 / EVT-F04 / SAVE-F02 / COMB-F10 标 **Review（半开放）**，Play 交给他人
