@@ -2,6 +2,16 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（END-F01 实现）
+
+- 范围：战斗结束结局钩子（政治家战败 → Ending.E）
+- 已完成：
+  - `EndingEvaluator.TryResolveCombatEnd`（App 程序集）
+  - `AppFlowController.OnCombatFinished`：腐蚀 G 之后、结算前强制终局
+  - EditMode：`EndingEvaluatorTests`
+  - Play：ForceEnding 正确触发结局 E
+- 下一步：COMB-F10 特质卡于 `feat/combat` 讨论
+
 ## 2026-08-16（SHLT-F03 收口）
 
 - 范围：Play 验收 + EditMode 回归修测

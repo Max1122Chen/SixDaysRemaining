@@ -232,6 +232,13 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
+            string forcedEndingId;
+            if (EndingEvaluator.TryResolveCombatEnd(result, gi != null ? gi.Shelter : null, out forcedEndingId))
+            {
+                ForceEndingFlow(forcedEndingId);
+                return;
+            }
+
             if (gi != null && gi.Gameplay != null && gi.Gameplay.CurrentPhase == GameplayPhase.Combat)
             {
                 gi.Gameplay.AdvancePhase();

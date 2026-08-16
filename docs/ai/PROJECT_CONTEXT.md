@@ -36,8 +36,7 @@
 - UI：伙伴主界面/HUD + UI-F01
 
 下一里程碑：
-- `END-F01`：政治家战败 → `Ending.E`
-- `COMB-F10`：特质卡
+- `COMB-F10`：特质卡（`feat/combat`）
 - `META-F01` → `SAVE-F01`
 
 ## 4) 协作约定

@@ -28,8 +28,8 @@
 | `EVT-F02` | 幸存者特殊事件（SurvivorEventProvider） | EVT | Done | `designs/EVT-F02-survivor-events.md` | — | `main` | Max | 幼童线 Play 通过；政治家 D3 待复验 |
 | `CORE-F07` | GameplayTag 业务迁移（storyFlags → Tag） | CORE | Done | `designs/CORE-F07-gameplay-tag-migration.md` | — | `main` | Max | Story Tag + requiredTags；删 storyFlags |
 | `SHLT-F03` | 幸存者被动 + 人设闭环 | SHLT | Done | `designs/SHLT-F03-survivor-passives-and-personas.md` | — | `main` | Max | Play：幼童 −8 / 政治家回访通过 |
-| `END-F01` | 结局钩子 + EndingEvaluator | CORE | Planned | — | — | `main` | Max | 政治家战败 E；依赖 SHLT-F03 endingId |
-| `COMB-F10` | 特质卡系统（defId 解锁 + 战斗集成） | COMB | Planned | — | — | `main` | Max | 承接 `TraitCatalog`；需 design |
+| `END-F01` | 结局钩子 + EndingEvaluator | CORE | Done | `designs/END-F01-ending-hooks.md` | — | `main` | Max | 政治家战败 E；Play 通过 |
+| `COMB-F10` | 特质卡系统（defId 解锁 + 战斗集成） | COMB | Discuss | — | — | `feat/combat` | Max | 承接 `TraitCatalog`；需 design |
 | `META-F01` | 结局回顾（成就式 run summary） | META | Planned | — | — | `main` | Max | 轻量 metadata；不依赖 mid-run 存档 |
 | `SAVE-F01` | 受限存档读档 | CORE | Planned | — | — | `main` | Max | 等 Tag/defId/Ending 模型稳定后 |
 
@@ -44,9 +44,8 @@
 
 ## 近期执行顺序（2026-08-16）
 
-1. **END-F01** — 政治家战败 → `Ending.E`（`main`）
-2. **COMB-F10** — 特质卡
-3. **META-F01** → **SAVE-F01**
+1. **COMB-F10** — 特质卡（`feat/combat` 讨论 / design）
+2. **META-F01** → **SAVE-F01**
 
 ## 状态说明
 
