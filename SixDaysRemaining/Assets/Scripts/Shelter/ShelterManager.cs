@@ -293,7 +293,7 @@ namespace SixDaysRemaining.Shelter
                 return false;
             }
 
-            survivor = alive[Random.Range(0, alive.Count)];
+            survivor = alive[UnityEngine.Random.Range(0, alive.Count)];
             return survivor != null;
         }
 
