@@ -4,9 +4,8 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | **SHLT-F03** Play 手测 | Review | Max | 幼童 −8 / 政治家回访 / Ending 文案 |
-| P1 | **END-F01** 结局钩子 | Planned | Max | design：战败 → Ending.E |
-| P2 | **COMB-F10** 特质卡系统 | Planned | Max | 人设基础稳定后 design |
+| P0 | **END-F01** 结局钩子 | Planned | Max | design → 政治家战败 → Ending.E |
+| P1 | **COMB-F10** 特质卡系统 | Planned | Max | 人设/结局基础稳定后 design |
 | P2 | **META-F01** 结局回顾 | Planned | Max | run summary UI；不绑 mid-run 存档 |
 | P2 | **SAVE-F01** 存档 | Planned | Max | endingId + Tag + Passive 稳定后再做 |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
@@ -16,7 +15,7 @@
 
 | ID | 状态 | 备注 |
 |----|------|------|
-| `SHLT-F03` | Done | Passive + endingId + 政治家拒收/回访；待 Play |
+| `SHLT-F03` | Done | Passive + endingId；Play 幼童 −8 / 政治家回访通过 |
 | `CORE-F06` / `CORE-F07` | Done | Tag 基础设施 + storyFlags 迁移 |
 | `feat/events` → `main` | Done | EVT-F01 / F02 |
 | `CORE-F04` / `CORE-F05` / `COMB-F09` | Done | — |

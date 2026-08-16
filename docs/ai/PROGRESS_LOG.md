@@ -2,6 +2,16 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（SHLT-F03 收口）
+
+- 范围：Play 验收 + EditMode 回归修测
+- 已完成：
+  - Play：幼童日结腐蚀 −8、政治家拒收/回访正常
+  - 修 `DebugCommandRegistryTests`：`combat.skip` / `combat.sweep` 须 `StartNewGame` 过 RunActive 门禁
+  - 修 `ShelterPassiveTests`：补 `using Combat.Cards`（`CorruptedRules`）
+  - Registry / ACTIVE_WORK：SHLT-F03 Done；下一刀 END-F01
+- 下一步：END-F01（政治家战败 → Ending.E）于 `main`
+
 ## 2026-08-13（SHLT-F03 实现）
 
 - 范围：幸存者被动 + endingId + 人设 content（幼童/政治家）

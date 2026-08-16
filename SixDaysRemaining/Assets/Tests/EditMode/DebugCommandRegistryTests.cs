@@ -116,14 +116,13 @@ namespace SixDaysRemaining.Tests.EditMode
             GameObject go = new GameObject("DebugSkipTest");
             try
             {
-                GameplaySubsystem gameplay = new GameplaySubsystem();
-                gameplay.StartNewRun(1);
                 GameInstance gi = go.AddComponent<GameInstance>();
+                gi.StartNewGame(1);
                 DebugCommandRegistry registry = new DebugCommandRegistry();
 
                 string result = registry.Execute(new DebugCommandContext
                 {
-                    Gameplay = gameplay,
+                    Gameplay = gi.Gameplay,
                     GameInstance = gi
                 }, "combat.skip on");
 
@@ -143,18 +142,19 @@ namespace SixDaysRemaining.Tests.EditMode
             try
             {
                 GameInstance gi = go.AddComponent<GameInstance>();
-                CombatManager combat = new CombatManager();
+                gi.StartNewGame(1);
                 DebugCommandRegistry registry = new DebugCommandRegistry();
 
                 string result = registry.Execute(new DebugCommandContext
                 {
-                    Combat = combat,
+                    Combat = gi.Combat,
+                    Gameplay = gi.Gameplay,
                     GameInstance = gi
                 }, "combat.sweep on");
 
                 Assert.AreEqual("扫荡：开", result);
                 Assert.IsTrue(gi.DebugSettings.combatSweep);
-                Assert.IsTrue(combat.CombatSweep);
+                Assert.IsTrue(gi.Combat.CombatSweep);
             }
             finally
             {

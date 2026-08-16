@@ -4,9 +4,9 @@
 
 - **ID:** `SHLT-F03`
 - **类型:** `Feature`
-- **状态:** `Done`（实现于 `main`；待 Play 手测）
+- **状态:** `Done`（Play：幼童 −8 / 政治家回访已验；EditMode 全绿）
 - **负责人:** `Max`
-- **最后更新：** `2026-08-13`
+- **最后更新：** `2026-08-16`
 - **分支：** `main`
 - **产品源：** `docs/designs/人物模板2.0.pdf`、`EVT-F02` 幼童/政治家样例映射
 - **相关：** `SHLT-F02`、`EVT-F01`/`EVT-F02`、`CORE-F06`/`CORE-F07`、`END-F01`（依赖）、`COMB-F10`（后置）、`[Feature Registry](../FEATURE_REGISTRY.md)`
@@ -120,10 +120,11 @@ public bool ForceEnding(string endingId); // 写 phase=Ending + endingId；Endin
 
 ### Play（手测）
 
-- [ ] 开局幼童：日结腐蚀 −8
-- [ ] 幼童 D2/D3/D4 不退化
-- [ ] 政治家拒收 → D4+ 回访
-- [ ] 腐蚀熔断 / 第六天 → Ending 文案与 id 一致
+- [x] 开局幼童：日结腐蚀 −8
+- [x] 政治家拒收 → D4+ 回访
+- [x] EditMode 全绿（含 combat.skip / sweep 门禁用例修复）
+- [ ] 幼童 D2/D3/D4 回归（先前 EVT-F02 已验；本批未重跑）
+- [ ] 腐蚀熔断 / 第六天 → Ending 文案与 id 一致（本批未重跑）
 
 ---
 
@@ -133,3 +134,4 @@ public bool ForceEnding(string endingId); // 写 phase=Ending + endingId；Endin
 |------|------|
 | 2026-08-12 | 初稿 |
 | 2026-08-13 | 拍板 + 全量实现（endingId only；JumpToEnding 硬切） |
+| 2026-08-16 | Play：幼童 −8、政治家回访通过；EditMode 修 skip/sweep 测试门禁 |

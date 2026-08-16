@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using SixDaysRemaining.Combat.Cards;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
 using SixDaysRemaining.Shelter.Content;
