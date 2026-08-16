@@ -36,8 +36,10 @@ namespace SixDaysRemaining.Gameplay
         public Action ShowEndingScreen;
         public Action ShowSettingsOverlay;
         public Action ShowCreditsOverlay;
+        public Action ShowMetaReviewOverlay;
         public Action RefreshHud;
         public Action RefreshDebugPresentation;
+        public Action RefreshStartScreen;
         public Action<CombatResult> ShowSettlementOverlay;
         public Action<GameEventDef> ShowGameEventOverlay;
         public Action<GameEventResult> ShowGameEventResultOverlay;
@@ -96,6 +98,11 @@ namespace SixDaysRemaining.Gameplay
             ShowCreditsOverlay?.Invoke();
         }
 
+        public void ShowMetaReview()
+        {
+            ShowMetaReviewOverlay?.Invoke();
+        }
+
         public void CloseOverlay()
         {
             CloseOverlayCallback?.Invoke();
@@ -108,8 +115,36 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnStartGame()
         {
-            Game.StartNewGame(GameInstance.DefaultNewGameSeed);
-            ShowStoryIntro();
+            GameInstance gi = Game;
+            if (gi != null && gi.RunSave != null && gi.RunSave.HasContinueableSave())
+            {
+                OnContinueGame();
+                return;
+            }
+
+            OnNewGame();
+        }
+
+        public void OnContinueGame()
+        {
+            GameInstance gi = Game;
+            if (gi == null)
+            {
+                return;
+            }
+
+            string error;
+            if (!gi.ContinueFromSave(out error))
+            {
+                Debug.LogWarning("[AppFlow] Continue failed: " + error);
+                RefreshStartScreen?.Invoke();
+                return;
+            }
+
+            eventChainPhase = EventChainPhase.None;
+            ShowShelter();
+            TryWriteCheckpoint();
+            RefreshHud?.Invoke();
         }
 
         public void OnNewGame()
@@ -211,6 +246,13 @@ namespace SixDaysRemaining.Gameplay
                 gi.Gameplay.ForceEnding(endingId);
             }
 
+            if (gi != null)
+            {
+                gi.UnlockMetaEnding(endingId);
+                string clearError;
+                gi.RunSave?.Clear(out clearError);
+            }
+
             eventChainPhase = EventChainPhase.None;
             CloseOverlay();
             ShowEnding();
@@ -244,13 +286,7 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnRunEndedByCorruption()
         {
-            GameInstance gi = Game;
-            if (gi?.Gameplay != null)
-            {
-                gi.Gameplay.ForceEnding(EndingIds.G);
-            }
-
-            ShowEnding();
+            ForceEndingFlow(EndingIds.G);
         }
 
         public void OnSettlementContinue()
@@ -264,8 +300,7 @@ namespace SixDaysRemaining.Gameplay
             gi.Shelter.DepositFood(pendingResult.FoodGained);
             if (gi.Gameplay.ApplyCorruption(pendingResult.CorruptionDelta))
             {
-                CloseOverlay();
-                ShowEnding();
+                ForceEndingFlow(gi.Gameplay.State != null ? gi.Gameplay.State.endingId : EndingIds.G);
                 return;
             }
 
@@ -287,8 +322,10 @@ namespace SixDaysRemaining.Gameplay
             if (result.EndedRun)
             {
                 eventChainPhase = EventChainPhase.None;
-                CloseOverlay();
-                ShowEnding();
+                string endingId = gi.Gameplay != null && gi.Gameplay.State != null
+                    ? gi.Gameplay.State.endingId
+                    : EndingIds.MaxDay;
+                ForceEndingFlow(string.IsNullOrEmpty(endingId) ? EndingIds.MaxDay : endingId);
                 return;
             }
 
@@ -325,7 +362,8 @@ namespace SixDaysRemaining.Gameplay
             CloseOverlay();
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
-                ShowEnding();
+                string endingId = gi.Gameplay.State != null ? gi.Gameplay.State.endingId : EndingIds.MaxDay;
+                ForceEndingFlow(string.IsNullOrEmpty(endingId) ? EndingIds.MaxDay : endingId);
                 return;
             }
 
@@ -352,6 +390,7 @@ namespace SixDaysRemaining.Gameplay
             Game.ReturnToMainMenu();
             CloseOverlay();
             ShowStart();
+            RefreshStartScreen?.Invoke();
         }
 
         public void OnQuit()
@@ -427,6 +466,7 @@ namespace SixDaysRemaining.Gameplay
                 case EventChainPhase.BeforeDepart:
                     eventChainPhase = EventChainPhase.None;
                     CloseOverlay();
+                    TryWriteCheckpoint();
                     RefreshHud?.Invoke();
                     break;
                 default:
@@ -447,13 +487,34 @@ namespace SixDaysRemaining.Gameplay
             gi.Shelter.ProcessEndOfDay();
             if (gi.Gameplay != null && gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
-                CloseOverlay();
-                ShowEnding();
+                string endingId = gi.Gameplay.State != null ? gi.Gameplay.State.endingId : EndingIds.G;
+                ForceEndingFlow(string.IsNullOrEmpty(endingId) ? EndingIds.G : endingId);
                 return;
             }
 
+            TryWriteCheckpoint();
             ShowDayEndOverlay?.Invoke(gi.Shelter.ConsumePersonnelChanges());
             RefreshHud?.Invoke();
+        }
+
+        private void TryWriteCheckpoint()
+        {
+            GameInstance gi = Game;
+            if (gi == null)
+            {
+                return;
+            }
+
+            string error;
+            if (!gi.TryWriteRunCheckpoint(out error) && !string.IsNullOrEmpty(error))
+            {
+                // 非检查点相位时静默跳过；仅意外失败打日志。
+                if (error.IndexOf("phase not checkpoint", System.StringComparison.Ordinal) < 0
+                    && error.IndexOf("event sequence active", System.StringComparison.Ordinal) < 0)
+                {
+                    Debug.LogWarning("[AppFlow] Checkpoint write skipped: " + error);
+                }
+            }
         }
     }
 }

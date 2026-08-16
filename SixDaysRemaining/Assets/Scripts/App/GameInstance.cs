@@ -3,6 +3,9 @@ using SixDaysRemaining.Events;
 using SixDaysRemaining.Events.Content;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
+using SixDaysRemaining.App.Meta;
+using SixDaysRemaining.App.Save;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SixDaysRemaining.App
@@ -43,6 +46,29 @@ namespace SixDaysRemaining.App
         public CombatManager Combat { get; private set; }
 
         public GameEventSubsystem Events { get; private set; }
+
+        public MetaProfileService Meta
+        {
+            get
+            {
+                EnsureSubsystemsInitialized();
+                return meta;
+            }
+            private set { meta = value; }
+        }
+
+        public RunSaveService RunSave
+        {
+            get
+            {
+                EnsureSubsystemsInitialized();
+                return runSave;
+            }
+            private set { runSave = value; }
+        }
+
+        private MetaProfileService meta;
+        private RunSaveService runSave;
 
         public PlayerCombatComponent PlayerCombat
         {
@@ -93,6 +119,7 @@ namespace SixDaysRemaining.App
             DontDestroyOnLoad(gameObject);
 
             EnsureSubsystemsInitialized();
+            Meta.LoadOrCreate();
             Mode = AppMode.MainMenu;
         }
 
@@ -115,6 +142,8 @@ namespace SixDaysRemaining.App
         public void StartNewGame(int seed)
         {
             EnsureSubsystemsInitialized();
+            string clearError;
+            RunSave.Clear(out clearError);
             Mode = AppMode.InGame;
             Gameplay.StartNewRun(seed);
             ApplyDebugStartCorruption();
@@ -123,6 +152,119 @@ namespace SixDaysRemaining.App
             Shelter.InitializeDefaultRoster(StartingFoodStock);
             ApplyDebugShelterOverrides();
             BindEventsSubsystem(seed);
+        }
+
+        /// <summary>
+        /// 从粗粒度检查点继续（不走 starter roster）。
+        /// </summary>
+        public bool ContinueFromSave(out string error)
+        {
+            EnsureSubsystemsInitialized();
+            return RunSave.TryLoadAndApply(this, out error);
+        }
+
+        public void ApplyRunSave(RunSaveDto dto)
+        {
+            if (dto == null)
+            {
+                throw new System.ArgumentNullException("dto");
+            }
+
+            EnsureSubsystemsInitialized();
+            Gameplay.RestoreRunState(
+                dto.rngSeed,
+                dto.day,
+                dto.foodStock,
+                dto.corruption,
+                dto.population,
+                (GameplayPhase)dto.currentPhase,
+                dto.endingId);
+
+            Dictionary<string, int> tags = new Dictionary<string, int>();
+            if (dto.tags != null)
+            {
+                for (int i = 0; i < dto.tags.Length; i++)
+                {
+                    TagSaveDto tag = dto.tags[i];
+                    if (tag == null || string.IsNullOrWhiteSpace(tag.name) || tag.count <= 0)
+                    {
+                        continue;
+                    }
+
+                    tags[tag.name.Trim()] = tag.count;
+                }
+            }
+
+            Gameplay.ReplaceTags(tags);
+
+            List<Survivor> survivors = new List<Survivor>();
+            if (dto.survivors != null)
+            {
+                for (int i = 0; i < dto.survivors.Length; i++)
+                {
+                    SurvivorSaveDto s = dto.survivors[i];
+                    if (s == null || string.IsNullOrEmpty(s.defId))
+                    {
+                        continue;
+                    }
+
+                    survivors.Add(new Survivor
+                    {
+                        defId = s.defId,
+                        name = s.name,
+                        hunger = s.hunger,
+                        status = (SurvivorStatus)s.status,
+                        hungryDayCount = s.hungryDayCount,
+                        hungryToDyingDays = s.hungryToDyingDays < 1 ? 1 : s.hungryToDyingDays
+                    });
+                }
+            }
+
+            List<ActivePassive> passives = new List<ActivePassive>();
+            if (dto.passives != null)
+            {
+                for (int i = 0; i < dto.passives.Length; i++)
+                {
+                    PassiveSaveDto p = dto.passives[i];
+                    if (p == null || string.IsNullOrWhiteSpace(p.passiveId))
+                    {
+                        continue;
+                    }
+
+                    passives.Add(new ActivePassive
+                    {
+                        PassiveId = p.passiveId.Trim(),
+                        SourceDefId = p.sourceDefId,
+                        Stacks = p.stacks > 0 ? p.stacks : 1
+                    });
+                }
+            }
+
+            Shelter = new ShelterManager(Gameplay.State);
+            Shelter.BindGameplay(Gameplay);
+            Shelter.RestoreRoster(survivors, passives);
+            BindEventsSubsystem(dto.rngSeed);
+            if (Events != null)
+            {
+                Events.SetEventsConsumedToday(dto.eventsConsumedToday);
+            }
+
+            Mode = AppMode.InGame;
+        }
+
+        public bool TryWriteRunCheckpoint(out string error)
+        {
+            EnsureSubsystemsInitialized();
+            return RunSave.TryWriteCheckpoint(this, out error);
+        }
+
+        public void UnlockMetaEnding(string endingId)
+        {
+            EnsureSubsystemsInitialized();
+            if (Meta != null)
+            {
+                Meta.UnlockEnding(endingId);
+            }
         }
 
         private void BindEventsSubsystem(int seed)
@@ -190,6 +332,16 @@ namespace SixDaysRemaining.App
             if (Events == null)
             {
                 Events = new GameEventSubsystem();
+            }
+
+            if (meta == null)
+            {
+                meta = new MetaProfileService();
+            }
+
+            if (runSave == null)
+            {
+                runSave = new RunSaveService();
             }
         }
     }

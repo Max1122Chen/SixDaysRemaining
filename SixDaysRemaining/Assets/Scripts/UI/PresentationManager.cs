@@ -37,6 +37,9 @@ namespace SixDaysRemaining.UI
         private CreditsView creditsView;
 
         [SerializeField]
+        private MetaReviewView metaReviewView;
+
+        [SerializeField]
         private GlobalHudView hudView;
 
         [SerializeField]
@@ -73,6 +76,15 @@ namespace SixDaysRemaining.UI
             WireViews();
         }
 
+        public void BindMetaReview(MetaReviewView review)
+        {
+            metaReviewView = review;
+            if (metaReviewView != null && flow != null)
+            {
+                metaReviewView.Wire(flow);
+            }
+        }
+
         private void WirePresentationDelegates()
         {
             if (flow == null)
@@ -87,9 +99,11 @@ namespace SixDaysRemaining.UI
             flow.ShowEndingScreen = ShowEndingScreen;
             flow.ShowSettingsOverlay = ShowSettings;
             flow.ShowCreditsOverlay = ShowCredits;
+            flow.ShowMetaReviewOverlay = ShowMetaReview;
             flow.CloseOverlayCallback = CloseOverlay;
             flow.RefreshHud = RefreshHud;
             flow.RefreshDebugPresentation = RefreshDebugPresentation;
+            flow.RefreshStartScreen = RefreshStartScreen;
             flow.ShowSettlementOverlay = ShowSettlement;
             flow.ShowGameEventOverlay = ShowGameEvent;
             flow.ShowGameEventResultOverlay = ShowGameEventResult;
@@ -116,6 +130,7 @@ namespace SixDaysRemaining.UI
             if (endingView != null) endingView.Wire(flow);
             if (settingsView != null) settingsView.Wire(flow);
             if (creditsView != null) creditsView.Wire(flow);
+            if (metaReviewView != null) metaReviewView.Wire(flow);
 
             GameEventView events = EnsureGameEventView();
             if (events != null)
@@ -127,7 +142,38 @@ namespace SixDaysRemaining.UI
         private void ShowStartScreen()
         {
             SwitchScreen(startView != null ? startView.gameObject : null);
+            RefreshStartScreen();
             HideHud();
+        }
+
+        private void RefreshStartScreen()
+        {
+            if (startView != null)
+            {
+                startView.RefreshContinueState();
+            }
+        }
+
+        private void ShowMetaReview()
+        {
+            MetaReviewView review = EnsureMetaReviewView();
+            if (review != null)
+            {
+                review.Refresh();
+                ShowOverlay(review.gameObject);
+            }
+        }
+
+        private MetaReviewView EnsureMetaReviewView()
+        {
+            if (metaReviewView != null)
+            {
+                return metaReviewView;
+            }
+
+            Transform parent = startView != null ? startView.transform.parent : transform;
+            metaReviewView = MetaReviewView.Build(parent, flow);
+            return metaReviewView;
         }
 
         private void ShowStoryIntroScreen()

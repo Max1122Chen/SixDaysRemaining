@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using SixDaysRemaining.App;
+using SixDaysRemaining.App.Meta;
+using SixDaysRemaining.App.Persist;
+using SixDaysRemaining.App.Save;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
 using SixDaysRemaining.Gameplay;
@@ -129,6 +132,16 @@ namespace SixDaysRemaining.Debugging
             Register("combat.win", DebugCommandGate.InCombat, HandleCombatWin);
             Register("combat.lose", DebugCommandGate.InCombat, HandleCombatLose);
             Register("combat.effect apply", DebugCommandGate.InCombat, HandleCombatEffectApply);
+
+            Register("persist.path", DebugCommandGate.Always, HandlePersistPath);
+            Register("meta.list", DebugCommandGate.Always, HandleMetaList);
+            Register("meta.clear", DebugCommandGate.Always, HandleMetaClear);
+            Register("meta.ending unlock", DebugCommandGate.Always, HandleMetaEndingUnlock);
+            Register("meta.ending unlock all", DebugCommandGate.Always, HandleMetaEndingUnlockAll);
+            Register("save.status", DebugCommandGate.Always, HandleSaveStatus);
+            Register("save.write", DebugCommandGate.InShelter, HandleSaveWrite);
+            Register("save.load", DebugCommandGate.Always, HandleSaveLoad);
+            Register("save.clear", DebugCommandGate.Always, HandleSaveClear);
         }
 
         private string HandleHelp(DebugCommandContext context, string[] args)
@@ -137,7 +150,7 @@ namespace SixDaysRemaining.Debugging
             List<string> suggestions = GetSuggestions(context, prefix);
             if (DebugCommandGates.IsMainMenu(context))
             {
-                return "命令： debug.help";
+                return "命令： debug.help, persist.path, meta.*, save.status, save.load, save.clear";
             }
 
             return suggestions.Count > 0
@@ -526,6 +539,166 @@ namespace SixDaysRemaining.Debugging
 
             context.Flow.OnCombatFinished(context.Combat.Result);
             return "战斗已强制结算为 " + outcome;
+        }
+
+        private static string HandlePersistPath(DebugCommandContext context, string[] args)
+        {
+            return "root=" + PersistPaths.RootDirectory
+                + "\nmeta=" + PersistPaths.MetaProfilePath
+                + " exists=" + JsonFileStore.Exists(PersistPaths.MetaProfilePath)
+                + "\nrun=" + PersistPaths.RunSavePath
+                + " exists=" + JsonFileStore.Exists(PersistPaths.RunSavePath);
+        }
+
+        private static string HandleMetaList(DebugCommandContext context, string[] args)
+        {
+            MetaProfileService meta = EnsureMeta(context);
+            if (meta == null)
+            {
+                return "Meta 不可用。";
+            }
+
+            meta.LoadOrCreate();
+            IReadOnlyList<string> ids = meta.GetUnlockedEndingIds();
+            if (ids == null || ids.Count == 0)
+            {
+                return "已解锁结局：无";
+            }
+
+            return "已解锁结局：" + string.Join(", ", new List<string>(ids).ToArray());
+        }
+
+        private static string HandleMetaClear(DebugCommandContext context, string[] args)
+        {
+            MetaProfileService meta = EnsureMeta(context);
+            if (meta == null)
+            {
+                return "Meta 不可用。";
+            }
+
+            meta.ClearAll();
+            return "已清空 meta-profile（run 档未动）。";
+        }
+
+        private static string HandleMetaEndingUnlock(DebugCommandContext context, string[] args)
+        {
+            MetaProfileService meta = EnsureMeta(context);
+            if (meta == null)
+            {
+                return "Meta 不可用。";
+            }
+
+            if (args == null || args.Length == 0 || string.IsNullOrWhiteSpace(args[0]))
+            {
+                return "用法：meta.ending unlock <endingId>";
+            }
+
+            string id = args[0].Trim();
+            meta.LoadOrCreate();
+            bool added = meta.UnlockEnding(id);
+            return added ? "已解锁：" + id : "已存在：" + id;
+        }
+
+        private static string HandleMetaEndingUnlockAll(DebugCommandContext context, string[] args)
+        {
+            MetaProfileService meta = EnsureMeta(context);
+            if (meta == null)
+            {
+                return "Meta 不可用。";
+            }
+
+            meta.LoadOrCreate();
+            string[] known = MetaProfileService.KnownEndingIds();
+            int added = 0;
+            for (int i = 0; i < known.Length; i++)
+            {
+                if (meta.UnlockEnding(known[i]))
+                {
+                    added++;
+                }
+            }
+
+            return "unlock all 完成，新增 " + added + " 个。";
+        }
+
+        private static string HandleSaveStatus(DebugCommandContext context, string[] args)
+        {
+            RunSaveService save = EnsureRunSave(context);
+            if (save == null)
+            {
+                return "RunSave 不可用。";
+            }
+
+            string summary;
+            if (!save.TryGetStatusSummary(out summary))
+            {
+                return summary;
+            }
+
+            return summary + " continueable=" + save.HasContinueableSave();
+        }
+
+        private static string HandleSaveWrite(DebugCommandContext context, string[] args)
+        {
+            GameInstance gi = context != null ? context.GameInstance : null;
+            if (gi == null)
+            {
+                return "无 GameInstance。";
+            }
+
+            string error;
+            if (!gi.TryWriteRunCheckpoint(out error))
+            {
+                return "写档失败：" + error;
+            }
+
+            return "已写入检查点。";
+        }
+
+        private static string HandleSaveLoad(DebugCommandContext context, string[] args)
+        {
+            if (context?.Flow != null)
+            {
+                context.Flow.OnContinueGame();
+                return "已请求继续检查点。";
+            }
+
+            GameInstance gi = context != null ? context.GameInstance : null;
+            if (gi == null)
+            {
+                return "无 GameInstance。";
+            }
+
+            string error;
+            if (!gi.ContinueFromSave(out error))
+            {
+                return "读档失败：" + error;
+            }
+
+            return "已读档。";
+        }
+
+        private static string HandleSaveClear(DebugCommandContext context, string[] args)
+        {
+            RunSaveService save = EnsureRunSave(context);
+            if (save == null)
+            {
+                return "RunSave 不可用。";
+            }
+
+            string error;
+            save.Clear(out error);
+            return "已清空 run-save（meta 未动）。";
+        }
+
+        private static MetaProfileService EnsureMeta(DebugCommandContext context)
+        {
+            return context != null && context.GameInstance != null ? context.GameInstance.Meta : null;
+        }
+
+        private static RunSaveService EnsureRunSave(DebugCommandContext context)
+        {
+            return context != null && context.GameInstance != null ? context.GameInstance.RunSave : null;
         }
 
         private CommandEntry FindCommand(string input)

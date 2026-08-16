@@ -2,6 +2,33 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-16（Persist / META / SAVE 收口）
+
+- 范围：CORE-F08 + META-F01 + SAVE-F01
+- 验收：EditMode 全绿；Play 基本正常
+- 状态：**Done**
+- 下一步：COMB-F10 半开放等人设；可选卡牌数值 2.0
+
+## 2026-08-16（Persist / META / SAVE 实现）
+
+- 范围：CORE-F08 + META-F01 + SAVE-F01 一口气落地
+- 已完成：
+  - `App/Persist`：`JsonFileStore` / `PersistPaths`；`persist.path`
+  - `App/Meta`：结局解锁档案；终局写入；回顾 overlay；`meta.*`
+  - `App/Save`：粗粒度检查点；Prep/凯旋节点；菜单继续；`save.*`
+  - EditMode：`PersistMetaSaveTests`；修 `SurvivorTraitTests` `CardIds.JianYi`
+- 状态：→ 见上条收口 **Done**
+
+## 2026-08-16（Persist / META / SAVE 设计稿）
+
+- 范围：双层存档路线 design（待审批，未编码）
+- 已完成：
+  - 登记 `CORE-F08`；design：`CORE-F08-persist-foundation.md`
+  - `META-F01-ending-review.md`（方案 C；依赖 F08）
+  - `SAVE-F01-run-save.md`（边界稿；排 META 后）
+- 修订：Debug 命令（`persist.path` / `meta.*` / `save.*`）；SAVE 对齐策划「节点 + 粗粒度、禁战斗局内存档」
+- 下一步：你最终确认后按 F08 → META → SAVE 实现
+
 ## 2026-08-16（COMB-F10 实现）
 
 - 范围：三特质收口（英雄/护士/小贼）；defId 解锁

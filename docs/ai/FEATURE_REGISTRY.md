@@ -30,12 +30,13 @@
 | `SHLT-F03` | 幸存者被动 + 人设闭环 | SHLT | Done | `designs/SHLT-F03-survivor-passives-and-personas.md` | — | `main` | Max | Play：幼童 −8 / 政治家回访通过 |
 | `END-F01` | 结局钩子 + EndingEvaluator | CORE | Done | `designs/END-F01-ending-hooks.md` | — | `main` | Max | 政治家战败 E；Play 通过 |
 | `COMB-F10` | 特质卡系统（defId 解锁 + 三特质） | COMB | Review | `designs/COMB-F10-survivor-traits.md` | — | `main` | Max | 半开放：完整 Play 等人设 |
-| `META-F01` | 结局回顾（成就式 run summary） | META | Planned | — | — | `main` | Max | 轻量 metadata；不依赖 mid-run 存档 |
-| `SAVE-F01` | 受限存档读档 | CORE | Planned | — | — | `main` | Max | 等 Tag/defId/Ending 模型稳定后 |
+| `CORE-F08` | Persist 底座（JSON 文件存档基建） | CORE | Done | `designs/CORE-F08-persist-foundation.md` | — | `main` | Max | meta/run 分文件 |
+| `META-F01` | 结局回顾（成就式 run summary） | META | Done | `designs/META-F01-ending-review.md` | — | `main` | Max | 终局解锁 + 回顾 |
+| `SAVE-F01` | 受限存档读档 | CORE | Done | `designs/SAVE-F01-run-save.md` | — | `main` | Max | 节点粗粒度；禁战斗存档 |
 
 ## 域代码
 
-- `CORE` - 核心循环、GameState、阶段编排
+- `CORE` - 核心循环、GameState、阶段编排、Persist
 - `SHLT` - 庇护所、NPC、饱食度
 - `COMB` - 卡牌战斗
 - `UI` - 界面交互与呈现
@@ -44,9 +45,8 @@
 
 ## 近期执行顺序（2026-08-16）
 
-1. **META-F01** — 结局回顾（讨论 / design）
-2. **SAVE-F01** — 存档（Tag/Ending 稳定后）
-3. **COMB-F10** — Review（半开放；等人设后完整 Play）
+1. **COMB-F10** — Review（半开放；等人设后完整 Play）
+2. 内容/人设补齐；可选卡牌 2.0 数值同步
 
 ## 状态说明
 

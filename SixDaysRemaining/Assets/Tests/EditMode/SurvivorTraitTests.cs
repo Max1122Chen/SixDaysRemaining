@@ -182,7 +182,7 @@ namespace SixDaysRemaining.Tests.EditMode
             List<CardDef> defs = new List<CardDef>();
             for (int i = 0; i < 12; i++)
             {
-                defs.Add(CombatContent.Cards.Get(CardIds.Strike));
+                defs.Add(CombatContent.Cards.Get(CardIds.JianYi));
             }
 
             p.SetupDeck(defs, 1);

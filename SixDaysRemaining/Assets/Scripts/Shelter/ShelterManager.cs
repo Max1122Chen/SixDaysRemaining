@@ -129,6 +129,54 @@ namespace SixDaysRemaining.Shelter
         }
 
         /// <summary>
+        /// 读档：清空后写入幸存者与被动（不从 Def 再 Grant，避免与快照重复）。
+        /// </summary>
+        public void RestoreRoster(
+            IReadOnlyList<Survivor> restoredSurvivors,
+            IReadOnlyList<ActivePassive> restoredPassives)
+        {
+            survivors.Clear();
+            personnelChanges.Clear();
+            bulletins.Clear();
+            passives.Clear();
+
+            if (restoredSurvivors != null)
+            {
+                for (int i = 0; i < restoredSurvivors.Count; i++)
+                {
+                    Survivor survivor = restoredSurvivors[i];
+                    if (survivor == null)
+                    {
+                        continue;
+                    }
+
+                    if (survivor.hungryToDyingDays < 1)
+                    {
+                        survivor.hungryToDyingDays = 1;
+                    }
+
+                    survivors.Add(survivor);
+                }
+            }
+
+            if (restoredPassives != null)
+            {
+                for (int i = 0; i < restoredPassives.Count; i++)
+                {
+                    ActivePassive p = restoredPassives[i];
+                    if (p == null || string.IsNullOrWhiteSpace(p.PassiveId))
+                    {
+                        continue;
+                    }
+
+                    passives.GrantPassive(p.PassiveId, p.SourceDefId);
+                }
+            }
+
+            SyncPopulation();
+        }
+
+        /// <summary>
         /// 按身份 id 入住；未知 id 抛错；已存在同 defId 则忽略。
         /// </summary>
         public void TakeIn(string defId)

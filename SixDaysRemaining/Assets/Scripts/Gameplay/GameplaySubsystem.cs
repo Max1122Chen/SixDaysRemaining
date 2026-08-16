@@ -77,6 +77,54 @@ namespace SixDaysRemaining.Gameplay
         }
 
         /// <summary>
+        /// 读档：覆盖局内标量状态（不含 Tag；Tag 用 <see cref="ReplaceTags"/>）。
+        /// </summary>
+        public void RestoreRunState(
+            int rngSeed,
+            int day,
+            int foodStock,
+            int corruption,
+            int population,
+            GameplayPhase phase,
+            string endingId)
+        {
+            if (State == null)
+            {
+                State = new GameState();
+            }
+
+            State.rngSeed = rngSeed;
+            State.day = day;
+            State.foodStock = foodStock < 0 ? 0 : foodStock;
+            State.corruption = corruption < 0 ? 0 : corruption;
+            State.population = population < 0 ? 0 : population;
+            State.currentPhase = phase;
+            State.endingId = string.IsNullOrWhiteSpace(endingId) ? null : endingId.Trim();
+        }
+
+        /// <summary>
+        /// 读档：用快照替换全部 Tag。
+        /// </summary>
+        public void ReplaceTags(IReadOnlyDictionary<string, int> tags)
+        {
+            gameplayTags.Clear();
+            if (tags == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, int> entry in tags)
+            {
+                if (string.IsNullOrWhiteSpace(entry.Key) || entry.Value <= 0)
+                {
+                    continue;
+                }
+
+                gameplayTags.AddTag(GameplayTag.Parse(entry.Key.Trim()), entry.Value);
+            }
+        }
+
+        /// <summary>
         /// 写入腐蚀 delta；达到 100 时进入 Ending 并返回 true。
         /// </summary>
         public bool ApplyCorruption(int delta)

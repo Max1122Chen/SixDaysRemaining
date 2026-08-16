@@ -83,6 +83,15 @@ namespace SixDaysRemaining.Events
             eventsConsumedToday = 0;
         }
 
+        /// <summary>读档：恢复当日已消耗事件额度。</summary>
+        public void SetEventsConsumedToday(int consumed)
+        {
+            eventsConsumedToday = consumed < 0 ? 0 : consumed;
+            queue.Clear();
+            queueIndex = -1;
+            sequenceActive = false;
+        }
+
         /// <summary>
         /// 为指定时机组队。空队列也会立刻广播 EventSequenceFinished。
         /// </summary>

@@ -31,14 +31,14 @@
 
 已落地：
 - 可玩主线（Prep→战斗→凯旋→事件→日结→次日）
-- 战斗 F01–F09；庇护所 F02 + F03（被动 / endingId / 幼童−政治家人设；Play 已验）
-- EVT-F01/F02；CORE-F04–F07（含 Tag 单轨）
+- 战斗 F01–F09；庇护所 F02 + F03；特质 COMB-F10（半开放）
+- EVT / Tag / END-F01
+- Persist + Meta 回顾 + 单局粗检查点（CORE-F08 / META-F01 / SAVE-F01）
 - UI：伙伴主界面/HUD + UI-F01
 
 下一里程碑：
-- `META-F01`：结局回顾（讨论 / design）
-- `SAVE-F01`：存档
 - `COMB-F10`：半开放 Review（人设齐后完整 Play）
+- 可选：卡牌数值表 2.0 同步进 JSON
 
 ## 4) 协作约定
 

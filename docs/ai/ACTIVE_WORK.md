@@ -4,9 +4,7 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | **META-F01** 结局回顾 | Planned | Max | 在 `main` 讨论 scope / design |
-| P1 | **COMB-F10** 特质卡 | Review | Max | 半开放待验收（人设齐后完整 Play） |
-| P2 | **SAVE-F01** 存档 | Planned | Max | endingId + Tag + Passive 稳定后 |
+| P0 | **COMB-F10** 特质卡 | Review | Max | 半开放：人设/入住齐后完整 Play |
 | — | Excel→JSON 导出（TECH） | Deferred | Max | 可选 |
 | — | `TD-004` / `TD-005` / `TD-006` | Open | Max | 见 TECH_DEBT |
 
@@ -14,10 +12,10 @@
 
 | ID | 状态 | 备注 |
 |----|------|------|
+| `CORE-F08` / `META-F01` / `SAVE-F01` | Done | EditMode 全绿；Play 基本正常 |
+| `COMB-F10` | Review | 半开放待人设 |
 | `END-F01` | Done | 政治家战败 → Ending.E |
 | `SHLT-F03` | Done | Passive + endingId |
-| `CORE-F06` / `CORE-F07` | Done | Tag 单轨 |
-| `EVT-F01` / `EVT-F02` | Done | — |
 
 ## Feat 开发纪律（摘要）
 

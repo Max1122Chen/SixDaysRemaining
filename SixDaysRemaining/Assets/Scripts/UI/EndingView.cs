@@ -16,6 +16,9 @@ namespace SixDaysRemaining.UI
         private TextMeshProUGUI endingText;
 
         [SerializeField]
+        private TextMeshProUGUI summaryText;
+
+        [SerializeField]
         private Button menuButton;
 
         private AppFlowController flow;
@@ -26,6 +29,7 @@ namespace SixDaysRemaining.UI
             EndingView view = panel.AddComponent<EndingView>();
             UiFactory.CreateText(panel.transform, "Txt_Title", "终局", 56, new Vector2(0f, 200f), new Vector2(600f, 80f), TextAlignmentOptions.Center, Color.white);
             view.endingText = UiFactory.CreateText(panel.transform, "Txt_Ending", "", 24, new Vector2(0f, 80f), new Vector2(800f, 120f), TextAlignmentOptions.Top);
+            view.summaryText = UiFactory.CreateText(panel.transform, "Txt_Summary", "", 20, new Vector2(0f, -40f), new Vector2(800f, 60f), TextAlignmentOptions.Center);
             view.menuButton = UiFactory.CreateButton(panel.transform, "Btn_Menu", "返回主菜单", null, new Vector2(0f, -200f), new Vector2(220f, 56f), null, 22);
             view.Wire(flow);
             return view;
@@ -55,7 +59,24 @@ namespace SixDaysRemaining.UI
                 endingId = EndingIds.G;
             }
 
-            endingText.text = ResolveEndingText(endingId);
+            if (endingText != null)
+            {
+                endingText.text = ResolveEndingText(endingId);
+            }
+
+            if (summaryText != null)
+            {
+                if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)
+                {
+                    GameState state = gi.Gameplay.State;
+                    summaryText.text = "第 " + state.day + " 天 · 腐蚀 " + state.corruption
+                        + (string.IsNullOrEmpty(endingId) ? "" : " · " + endingId);
+                }
+                else
+                {
+                    summaryText.text = string.Empty;
+                }
+            }
         }
 
         public static string ResolveEndingText(string endingId)

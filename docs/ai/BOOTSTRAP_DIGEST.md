@@ -14,9 +14,9 @@
 
 ## 当前快照（2026-08-16）
 
-- `main`：含 END-F01 / SHLT-F03 / COMB-F10（半开放 Review）等。
+- `main`：含 Persist/Meta/Save（Done）、COMB-F10（半开放 Review）等。
 - 内容编辑：`StreamingAssets/Shelter/`、`StreamingAssets/Combat/`（改完需重启 Play）。
-- **下一批：** META-F01（结局回顾）→ SAVE-F01。
+- **下一批：** COMB-F10 完整 Play（等人设）；可选卡牌 2.0 数值。
 
 ## 不可协商的协作规则
 
