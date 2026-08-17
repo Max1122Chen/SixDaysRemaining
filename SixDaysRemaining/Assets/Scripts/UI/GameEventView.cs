@@ -83,7 +83,7 @@ namespace SixDaysRemaining.UI
             windowRt.anchoredPosition = new Vector2(0f, -20f);
             windowRt.sizeDelta = new Vector2(900f, 600f);
 
-            view.titleText = UiFactory.CreateText(window.transform, "Txt_Title", "", 34, new Vector2(0f, 250f), new Vector2(560f, 50f), TextAlignmentOptions.Center, Color.white);
+            view.titleText = UiFactory.CreateText(window.transform, "Txt_Title", "", 34, new Vector2(0f, 260f), new Vector2(560f, 50f), TextAlignmentOptions.Center, Color.white);
             view.titleText.raycastTarget = false;
 
             view.eventGroup = CreateFullChild(window.transform, "EventGroup");
@@ -279,7 +279,7 @@ namespace SixDaysRemaining.UI
             pendingOptions = def != null ? def.Options : null;
             titleText.text = def != null ? def.Title : "事件";
             bodyText.text = def != null ? def.Body : "";
-            SetBodySize(new Vector2(240f, 100f), new Vector2(410f, 150f));
+            SetBodySize(new Vector2(240f, 140f), new Vector2(410f, 150f));
             if (resultContinueButton != null)
             {
                 resultContinueButton.gameObject.SetActive(false);
