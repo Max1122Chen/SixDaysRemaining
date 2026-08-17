@@ -34,14 +34,7 @@ namespace SixDaysRemaining.UI
             fillRt.offsetMax = Vector2.zero;
             roundProgressFill = fill;
 
-            Color markerColor = new Color(0.36f, 0.40f, 0.47f, 1f);
-            for (int i = 0; i < 2; i++)
-            {
-                int round = i == 0 ? 3 : 5;
-                float x = -320f + 640f * (round / (float)CombatRewardTable.MaxProgressRounds);
-                Image marker = UiFactory.CreateImage(bar.transform, "Marker" + round, new Vector2(x, 0f), new Vector2(3f, 26f), markerColor);
-                marker.raycastTarget = false;
-            }
+            RebuildRoundMarkers();
 
             roundProgressText = UiFactory.CreateText(parent, "Txt_RoundProgress", "", 18, new Vector2(0f, 262f), new Vector2(760f, 30f));
             roundProgressText.raycastTarget = false;
@@ -79,7 +72,56 @@ namespace SixDaysRemaining.UI
             }
             else
             {
+                RebuildRoundMarkers();
                 UpdateRoundProgress();
+            }
+        }
+
+        private void RebuildRoundMarkers()
+        {
+            if (roundProgressFill == null)
+            {
+                return;
+            }
+
+            RectTransform bar = roundProgressFill.transform.parent as RectTransform;
+            if (bar == null)
+            {
+                return;
+            }
+
+            List<Transform> oldMarkers = new List<Transform>();
+            for (int i = 0; i < bar.childCount; i++)
+            {
+                Transform child = bar.GetChild(i);
+                if (child != null && child.name.StartsWith("Marker", StringComparison.Ordinal))
+                {
+                    oldMarkers.Add(child);
+                }
+            }
+
+            for (int i = 0; i < oldMarkers.Count; i++)
+            {
+                if (oldMarkers[i] != null)
+                {
+                    Destroy(oldMarkers[i].gameObject);
+                }
+            }
+
+            Color markerColor = new Color(0.36f, 0.40f, 0.47f, 1f);
+            float halfWidth = bar.rect.width * 0.5f;
+            int[] rounds = CombatRewardTable.MarkerRounds;
+            for (int i = 0; i < rounds.Length; i++)
+            {
+                float normalized = CombatRewardTable.Progress01(rounds[i]);
+                float x = -halfWidth + bar.rect.width * normalized;
+                Image marker = UiFactory.CreateImage(
+                    bar,
+                    "Marker" + rounds[i],
+                    new Vector2(x, 0f),
+                    new Vector2(3f, 26f),
+                    markerColor);
+                marker.raycastTarget = false;
             }
         }
 
@@ -693,17 +735,40 @@ namespace SixDaysRemaining.UI
             }
 
             GameInstance gi = flow != null ? flow.Game : null;
-            if (gi == null || gi.Combat == null || gi.Combat.IsFinished)
+            if (gi == null || gi.Combat == null)
             {
                 roundProgressText.text = "准备";
                 SetRoundProgress(0f);
+                if (totalRoundLabel != null)
+                {
+                    totalRoundLabel.text = "累计回合数0";
+                }
+
                 return;
             }
 
+            if (gi.Combat.IsFinished)
+            {
+                roundProgressText.text = "准备";
+                SetRoundProgress(0f);
+                if (totalRoundLabel != null)
+                {
+                    totalRoundLabel.text = "累计回合数" + Mathf.Max(0, gi.Combat.Result.TurnsElapsed);
+                }
+
+                return;
+            }
+
+            int currentRound = Mathf.Max(0, gi.Combat.CurrentRound);
             int round = Mathf.Max(1, gi.Combat.IsRoundActive
-                ? gi.Combat.CurrentRound
+                ? currentRound
                 : gi.Combat.NextRound);
             roundProgressText.text = "第" + round + "回合";
+            if (totalRoundLabel != null)
+            {
+                totalRoundLabel.text = "累计回合数" + currentRound;
+            }
+
             SetRoundProgress(CombatRewardTable.Progress01(round));
         }
 

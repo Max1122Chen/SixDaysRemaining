@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using SixDaysRemaining.Combat.Cards;
 using TMPro;
 using UnityEngine;
@@ -171,12 +172,17 @@ namespace SixDaysRemaining.UI
             Background.color = on ? hoverColor : baseColor;
         }
 
+        public void SetSlotSize(Vector2 size)
+        {
+            slotSize = size;
+        }
+
         public void AnimateToSlot(int slotIndex, Vector2 slotPos)
         {
             InSlot = true;
             raised = false;
             StopHandAnimations();
-            layoutAnim = StartCoroutine(UiAnim.MoveAndResize(Rect, slotPos, slotSize, 0.18f));
+            layoutAnim = StartCoroutine(MoveAndResizeCard(slotPos, slotSize, 0.18f));
             rotateAnim = StartCoroutine(UiAnim.Rotate(Rect, 0f, 0.18f));
         }
 
@@ -186,7 +192,7 @@ namespace SixDaysRemaining.UI
             restingPosition = handPos;
             StopHandAnimations();
             Vector2 target = raised ? handPos + HoverRaiseOffset : handPos;
-            layoutAnim = StartCoroutine(UiAnim.MoveAndResize(Rect, target, handSize, 0.18f));
+            layoutAnim = StartCoroutine(MoveAndResizeCard(target, handSize, 0.18f));
             rotateAnim = StartCoroutine(UiAnim.Rotate(Rect, handAngleDeg, 0.18f));
         }
 
@@ -195,8 +201,118 @@ namespace SixDaysRemaining.UI
             restingPosition = pos;
             StopHandAnimations();
             Rect.anchoredPosition = raised ? pos + HoverRaiseOffset : pos;
-            Rect.sizeDelta = size;
+            ApplyCardLayout(size);
             Rect.localRotation = Quaternion.Euler(0f, 0f, angleDeg);
+        }
+
+        private IEnumerator MoveAndResizeCard(Vector2 toPos, Vector2 toSize, float duration)
+        {
+            Vector2 fromPos = Rect.anchoredPosition;
+            Vector2 fromSize = Rect.sizeDelta;
+            float t = 0f;
+            while (t < duration)
+            {
+                if (Rect == null)
+                {
+                    yield break;
+                }
+
+                t += Time.unscaledDeltaTime;
+                float k = duration <= 0f
+                    ? 1f
+                    : Mathf.Clamp01(t / duration);
+                Vector2 size = Vector2.LerpUnclamped(fromSize, toSize, k);
+                Rect.anchoredPosition = Vector2.LerpUnclamped(fromPos, toPos, k);
+                ApplyCardLayout(size);
+                yield return null;
+            }
+
+            if (Rect == null)
+            {
+                yield break;
+            }
+
+            Rect.anchoredPosition = toPos;
+            ApplyCardLayout(toSize);
+        }
+
+        private void ApplyCardLayout(Vector2 size)
+        {
+            if (Rect == null)
+            {
+                return;
+            }
+
+            Rect.sizeDelta = size;
+
+            float scaleX = handSize.x > 0.0001f ? size.x / handSize.x : 1f;
+            float scaleY = handSize.y > 0.0001f ? size.y / handSize.y : 1f;
+            float textScale = Mathf.Min(scaleX, scaleY);
+
+            SetChildRect(shadow != null ? shadow.rectTransform : null,
+                new Vector2(-8f * scaleX, -8f * scaleY),
+                size);
+            SetChildRect(Background != null ? Background.rectTransform : null,
+                Vector2.zero,
+                size);
+            SetTextLayout(titleText, 0f, 48f, 32f, 20, size, scaleY, textScale);
+            SetTextLayout(descText, 0f, -10f, 96f, 12, size, scaleY, textScale);
+            SetTextLayout(costText, 0f, -76f, 24f, 18, size, scaleY, textScale);
+        }
+
+        private void SetTextLayout(
+            TextMeshProUGUI text,
+            float baseX,
+            float baseY,
+            float baseHeight,
+            int baseFontSize,
+            Vector2 cardSize,
+            float scaleY,
+            float textScale)
+        {
+            if (text == null || text.rectTransform == null)
+            {
+                return;
+            }
+
+            float scaleX = handSize.x > 0.0001f ? cardSize.x / handSize.x : 1f;
+            float originalInset = GetOriginalTextInset(text);
+            text.rectTransform.anchoredPosition = new Vector2(baseX * scaleX, baseY * scaleY);
+            text.rectTransform.sizeDelta = new Vector2(
+                Mathf.Max(1f, cardSize.x - originalInset * scaleX),
+                Mathf.Max(1f, baseHeight * scaleY));
+            text.fontSize = Mathf.Max(1, Mathf.RoundToInt(baseFontSize * textScale));
+        }
+
+        private float GetOriginalTextInset(TextMeshProUGUI text)
+        {
+            if (text == titleText)
+            {
+                return 16f;
+            }
+
+            if (text == descText)
+            {
+                return 20f;
+            }
+
+            if (text == costText)
+            {
+                return 16f;
+            }
+
+            return 0f;
+        }
+
+        private static void SetChildRect(RectTransform child, Vector2 pos, Vector2 size)
+        {
+            if (child == null)
+            {
+                return;
+            }
+
+            child.anchoredPosition = pos;
+            child.sizeDelta = size;
         }
 
         public void SetInteractable(bool on)

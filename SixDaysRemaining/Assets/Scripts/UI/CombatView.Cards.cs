@@ -217,6 +217,7 @@ namespace SixDaysRemaining.UI
                 int to = target.Index;
                 if (from == to)
                 {
+                    card.SetSlotSize(CurrentSlotSize(from));
                     card.AnimateToSlot(from, CurrentSlotPos(from));
                     return;
                 }
@@ -230,9 +231,11 @@ namespace SixDaysRemaining.UI
 
                 slotCards[to] = card;
                 slotCards[from] = other;
+                card.SetSlotSize(CurrentSlotSize(to));
                 card.AnimateToSlot(to, CurrentSlotPos(to));
                 if (other != null)
                 {
+                    other.SetSlotSize(CurrentSlotSize(from));
                     other.AnimateToSlot(from, CurrentSlotPos(from));
                 }
             }
@@ -249,13 +252,15 @@ namespace SixDaysRemaining.UI
             RemoveFromHandLists(card);
             slotCards[slotIndex] = card;
             card.InSlot = true;
+            Vector2 size = CurrentSlotSize(slotIndex);
+            card.SetSlotSize(size);
             if (animate)
             {
                 card.AnimateToSlot(slotIndex, CurrentSlotPos(slotIndex));
             }
             else
             {
-                card.SnapTo(CurrentSlotPos(slotIndex), CurrentSlotSize());
+                card.SnapTo(CurrentSlotPos(slotIndex), size);
             }
         }
 
@@ -370,7 +375,9 @@ namespace SixDaysRemaining.UI
                 int index = IndexOfSlot(card);
                 if (index >= 0)
                 {
-                    card.SnapTo(CurrentSlotPos(index), CurrentSlotSize());
+                    Vector2 size = CurrentSlotSize(index);
+                    card.SetSlotSize(size);
+                    card.SnapTo(CurrentSlotPos(index), size);
                 }
             }
             else if (card.Card != null && card.Card.IsCorruptedCompanion)

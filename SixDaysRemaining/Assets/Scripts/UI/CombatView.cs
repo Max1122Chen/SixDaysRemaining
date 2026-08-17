@@ -187,9 +187,25 @@ namespace SixDaysRemaining.UI
             return SlotPos(index);
         }
 
-        private Vector2 CurrentSlotSize()
+        private Vector2 CurrentSlotSize(int index = -1)
         {
-            return CardSize;
+            if (slots != null && slots.Length > 0)
+            {
+                if (index >= 0 && index < slots.Length && slots[index] != null && slots[index].Rect != null)
+                {
+                    return slots[index].Rect.rect.size;
+                }
+
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] != null && slots[i].Rect != null)
+                    {
+                        return slots[i].Rect.rect.size;
+                    }
+                }
+            }
+
+            return SlotSize;
         }
 
         private static Vector2 HandPos(int index, int count)
