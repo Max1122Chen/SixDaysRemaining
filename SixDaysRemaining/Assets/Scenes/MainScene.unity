@@ -2727,7 +2727,7 @@ MonoBehaviour:
   corruptionValueText: {fileID: 909130638}
   populationValueText: {fileID: 762526309}
   shelterIcon: {fileID: 21300000, guid: ddb8b68396fe6eb4e9ca5ffce46848f0, type: 3}
-  combatIcon: {fileID: 21300000, guid: 198f6c03700ec3342a9933e608bfe3cf, type: 3}
+  combatIcon: {fileID: 21300000, guid: 2f0835c08fbc87c4aaae4f58834a2f5b, type: 3}
 --- !u!114 &341293173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10849,7 +10849,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 154, y: -48}
+  m_AnchoredPosition: {x: 117, y: -48}
   m_SizeDelta: {x: 226.08, y: 93.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1371765499
@@ -14452,7 +14452,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1817586839
 RectTransform:
   m_ObjectHideFlags: 0

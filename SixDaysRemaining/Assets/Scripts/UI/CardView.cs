@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using SixDaysRemaining.Combat.Cards;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -26,15 +25,18 @@ namespace SixDaysRemaining.UI
         public bool Interactable { get; private set; } = true;
 
         private Image shadow;
-        private TextMeshProUGUI titleText;
-        private TextMeshProUGUI descText;
-        private TextMeshProUGUI costText;
+        private Image overlay;
         private Vector2 handSize;
         private Vector2 slotSize;
         private Vector2 grabOffset;
         private Color baseColor = new Color(0.30f, 0.34f, 0.42f, 1f);
         private Color hoverColor = new Color(0.42f, 0.55f, 0.72f, 1f);
         private bool dragging;
+        private bool highlighted;
+        private bool corrupted;
+        private bool hasArt;
+        private static readonly Color HoverOverlayColor = new Color(1f, 1f, 1f, 0.14f);
+        private static readonly Color CorruptedOverlayColor = new Color(0.60f, 0.08f, 0.12f, 0.32f);
         private const float HandHoverScale = 1.2f;
         private const float SlotHoverScale = 1.05f;
         private static readonly Vector2 HoverRaiseOffset = new Vector2(0f, 52f);
@@ -68,12 +70,9 @@ namespace SixDaysRemaining.UI
             view.Background = UiFactory.CreateImage(go.transform, "Bg", Vector2.zero, handSize, view.baseColor);
             view.Background.raycastTarget = true;
 
-            view.titleText = UiFactory.CreateText(go.transform, "Txt_Title", "", 20, new Vector2(0f, 48f), new Vector2(handSize.x - 16f, 32f));
-            view.titleText.raycastTarget = false;
-            view.descText = UiFactory.CreateText(go.transform, "Txt_Desc", "", 12, new Vector2(0f, -10f), new Vector2(handSize.x - 20f, 96f), TextAlignmentOptions.Top);
-            view.descText.raycastTarget = false;
-            view.costText = UiFactory.CreateText(go.transform, "Txt_Cost", "", 18, new Vector2(0f, -76f), new Vector2(handSize.x - 16f, 24f));
-            view.costText.raycastTarget = false;
+            // 美术图自带文字，卡面不再生成文本；覆盖层只用于悬停/腐化反馈，不污染美术颜色。
+            view.overlay = UiFactory.CreateImage(go.transform, "Overlay", Vector2.zero, handSize, Color.clear);
+            view.overlay.raycastTarget = false;
 
             view.SetCard(card);
             return view;
@@ -86,18 +85,11 @@ namespace SixDaysRemaining.UI
             {
                 baseColor = new Color(0.30f, 0.34f, 0.42f, 1f);
                 Background.color = baseColor;
-                titleText.text = "测试卡牌";
-                descText.text = "占位效果";
-                costText.text = "0";
+                hasArt = false;
+                UpdateOverlay();
                 return;
             }
 
-            string title = string.IsNullOrEmpty(card.Def.DisplayName)
-                ? card.Def.Id.ToString()
-                : card.Def.DisplayName;
-            titleText.text = title;
-            descText.text = CardText.DescribeDetail(card.Def);
-            costText.text = "0";
             baseColor = TintFor(card.Def);
             Background.color = baseColor;
             ApplyCardArt();
@@ -114,18 +106,20 @@ namespace SixDaysRemaining.UI
             {
                 baseColor = new Color(0.38f, 0.14f, 0.20f, 1f);
                 hoverColor = new Color(0.52f, 0.22f, 0.30f, 1f);
-                string title = string.IsNullOrEmpty(Card.Def.DisplayName)
-                    ? Card.Def.Id.ToString()
-                    : Card.Def.DisplayName;
-                titleText.text = "Corrupted · " + title;
+                corrupted = true;
+                if (!hasArt)
+                {
+                    Background.color = baseColor;
+                }
+
+                UpdateOverlay();
             }
             else
             {
                 hoverColor = new Color(0.42f, 0.55f, 0.72f, 1f);
+                corrupted = false;
                 SetCard(Card);
             }
-
-            Background.color = baseColor;
         }
 
         /// <summary>
@@ -150,7 +144,8 @@ namespace SixDaysRemaining.UI
                 art = Resources.Load<Sprite>("Cards/star_moon 1");
             }
 
-            if (art != null)
+            hasArt = art != null;
+            if (hasArt)
             {
                 Background.sprite = art;
                 Background.color = Color.white;
@@ -160,6 +155,8 @@ namespace SixDaysRemaining.UI
                 Background.sprite = null;
                 Background.color = baseColor;
             }
+
+            UpdateOverlay();
         }
 
         public void SetHighlighted(bool on)
@@ -169,7 +166,34 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            Background.color = on ? hoverColor : baseColor;
+            highlighted = on;
+            if (!hasArt)
+            {
+                Background.color = on ? hoverColor : baseColor;
+            }
+
+            UpdateOverlay();
+        }
+
+        private void UpdateOverlay()
+        {
+            if (overlay == null)
+            {
+                return;
+            }
+
+            if (corrupted)
+            {
+                overlay.color = CorruptedOverlayColor;
+            }
+            else if (highlighted)
+            {
+                overlay.color = HoverOverlayColor;
+            }
+            else
+            {
+                overlay.color = Color.clear;
+            }
         }
 
         public void SetSlotSize(Vector2 size)
@@ -247,7 +271,6 @@ namespace SixDaysRemaining.UI
 
             float scaleX = handSize.x > 0.0001f ? size.x / handSize.x : 1f;
             float scaleY = handSize.y > 0.0001f ? size.y / handSize.y : 1f;
-            float textScale = Mathf.Min(scaleX, scaleY);
 
             SetChildRect(shadow != null ? shadow.rectTransform : null,
                 new Vector2(-8f * scaleX, -8f * scaleY),
@@ -255,53 +278,9 @@ namespace SixDaysRemaining.UI
             SetChildRect(Background != null ? Background.rectTransform : null,
                 Vector2.zero,
                 size);
-            SetTextLayout(titleText, 0f, 48f, 32f, 20, size, scaleY, textScale);
-            SetTextLayout(descText, 0f, -10f, 96f, 12, size, scaleY, textScale);
-            SetTextLayout(costText, 0f, -76f, 24f, 18, size, scaleY, textScale);
-        }
-
-        private void SetTextLayout(
-            TextMeshProUGUI text,
-            float baseX,
-            float baseY,
-            float baseHeight,
-            int baseFontSize,
-            Vector2 cardSize,
-            float scaleY,
-            float textScale)
-        {
-            if (text == null || text.rectTransform == null)
-            {
-                return;
-            }
-
-            float scaleX = handSize.x > 0.0001f ? cardSize.x / handSize.x : 1f;
-            float originalInset = GetOriginalTextInset(text);
-            text.rectTransform.anchoredPosition = new Vector2(baseX * scaleX, baseY * scaleY);
-            text.rectTransform.sizeDelta = new Vector2(
-                Mathf.Max(1f, cardSize.x - originalInset * scaleX),
-                Mathf.Max(1f, baseHeight * scaleY));
-            text.fontSize = Mathf.Max(1, Mathf.RoundToInt(baseFontSize * textScale));
-        }
-
-        private float GetOriginalTextInset(TextMeshProUGUI text)
-        {
-            if (text == titleText)
-            {
-                return 16f;
-            }
-
-            if (text == descText)
-            {
-                return 20f;
-            }
-
-            if (text == costText)
-            {
-                return 16f;
-            }
-
-            return 0f;
+            SetChildRect(overlay != null ? overlay.rectTransform : null,
+                Vector2.zero,
+                size);
         }
 
         private static void SetChildRect(RectTransform child, Vector2 pos, Vector2 size)
