@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using SixDaysRemaining.App;
-using SixDaysRemaining.Combat.Traits;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
 using TMPro;
@@ -10,24 +9,110 @@ using UnityEngine.UI;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 庇护所界面：每日分配、住户卡片、住户详情、道具占位、腐蚀蒙版与弹幕公告。
-    /// 场景里的 ShelterPanel 会在运行时按此布局重建，后续可整体替换为 Prefab。
+    /// 庇护所界面，支持两种模式：
+    /// 1) 手动搭建模式（推荐）：在 Inspector 把 manualRoot 拖入场景中的内容根节点后启用。
+    ///    所有固定元素（任务栏、房间背景、座椅、信息面板、按钮等）都由你在场景里摆放，
+    ///    代码只负责刷新文字、切换房间、按序生成 NPC 角色、打开图鉴。
+    /// 2) 代码布局模式（兜底）：manualRoot 为空时，运行时自动重建整套 UI。
     /// </summary>
     public class ShelterView : MonoBehaviour
     {
+        private static readonly Color DoneColor = new Color(0.50f, 0.82f, 0.55f, 1f);
+        private static readonly Color LockedColor = new Color(0.42f, 0.44f, 0.48f, 1f);
+        private static readonly Color ActiveColor = new Color(1f, 0.92f, 0.72f, 1f);
+        private static readonly Color FeedGreen = new Color(0.28f, 0.50f, 0.40f, 1f);
+        private static readonly Color PressedGray = new Color(0.22f, 0.24f, 0.27f, 1f);
+        private static readonly Color DisabledGray = new Color(0.30f, 0.32f, 0.36f, 1f);
+
         private AppFlowController flow;
         private bool layoutBuilt;
         private string selectedDefId;
+        private int roomIndex = 1; // 默认居中：厕所(0) / 大厅(1) / 厨房(2)
+        private bool taskBarCollapsed;
 
-        // 保留场景旧序列化字段，避免 MainScene 反序列化告警；运行时会被重建布局覆盖。
+        // ================= 手动搭建模式 =================
+        // 把 ShelterPanel（或内容根节点）拖到这里即启用手动模式。
         [SerializeField]
-        private TextMeshProUGUI statusText;
+        private RectTransform manualRoot;
+
+        // 顶部
+        [SerializeField]
+        private TextMeshProUGUI dayText;
 
         [SerializeField]
-        private TextMeshProUGUI survivorText;
+        private TextMeshProUGUI phaseText;
 
+        [SerializeField]
+        private TextMeshProUGUI roomLabelText;
+
+        // 今日进度栏（数组按顺序：0 分配食物 / 1 外出战斗 / 2 处理每日事件）
+        [SerializeField]
+        private RectTransform taskBarRoot;
+
+        [SerializeField]
+        private TextMeshProUGUI[] taskNodeTexts = new TextMeshProUGUI[0];
+
+        [SerializeField]
+        private GameObject[] taskArrows = new GameObject[0];
+
+        /// <summary>收起任务栏时一起隐藏的额外元素（如“今日进度”标题）。</summary>
+        [SerializeField]
+        private GameObject[] taskExtraObjects = new GameObject[0];
+
+        [SerializeField]
+        private Button taskToggleButton;
+
+        // 房间容器（顺序：0 厕所 / 1 大厅 / 2 厨房；运行时只激活当前房间）
+        [SerializeField]
+        private RectTransform[] roomRoots = new RectTransform[0];
+
+        [SerializeField]
+        private Button leftArrowButton;
+
+        [SerializeField]
+        private Button rightArrowButton;
+
+        // 图鉴
+        [SerializeField]
+        private Button codexButton;
+
+        [SerializeField]
+        private ShelterCodexView codexView;
+
+        // 信息面板
+        [SerializeField]
+        private GameObject detailGroup;
+
+        [SerializeField]
+        private Image detailAvatarImage;
+
+        [SerializeField]
+        private TextMeshProUGUI detailIdentityText;
+
+        [SerializeField]
+        private TextMeshProUGUI detailNameText;
+
+        [SerializeField]
+        private TextMeshProUGUI detailAgeText;
+
+        [SerializeField]
+        private TextMeshProUGUI detailStatusText;
+
+        [SerializeField]
+        private TextMeshProUGUI detailFitnessText;
+
+        [SerializeField]
+        private TextMeshProUGUI detailQuoteText;
+
+        [SerializeField]
+        private Button feedButton;
+
+        // 操作按钮
         [SerializeField]
         private Button departButton;
+
+        [SerializeField]
+        private Button dayEndButton;
 
         [SerializeField]
         private Button settingsButton;
@@ -36,13 +121,21 @@ namespace SixDaysRemaining.UI
         private Button menuButton;
 
         [SerializeField]
-        private Button dayEndButton;
+        private Button closeDetailButton;
+
+        // 特效与公告
+        [SerializeField]
+        private Image fogOverlay;
 
         [SerializeField]
-        private TextMeshProUGUI dayText;
+        private RectTransform bannerRoot;
 
-        [SerializeField] 
-        private TextMeshProUGUI phaseText;
+        // ============ 旧场景序列化字段（保留兼容，手动模式可留空）============
+        [SerializeField]
+        private TextMeshProUGUI statusText;
+
+        [SerializeField]
+        private TextMeshProUGUI survivorText;
 
         [SerializeField]
         private RectTransform residentRow;
@@ -51,30 +144,27 @@ namespace SixDaysRemaining.UI
         private TextMeshProUGUI propsStateText;
 
         [SerializeField]
-        private GameObject detailGroup;
-
-        [SerializeField]
-        private TextMeshProUGUI detailNameText;
-
-        [SerializeField]
-        private TextMeshProUGUI detailStatusText;
-
-        [SerializeField]
         private TextMeshProUGUI detailTraitsText;
 
         [SerializeField]
         private TextMeshProUGUI detailMessageText;
 
-        [SerializeField]
-        private Button closeDetailButton;
+        // ============ 代码布局模式专用（manualRoot 为空时使用）============
+        private RectTransform roomSceneRoot;
+        private Image roomBgImage;
+        private TextMeshProUGUI roomTitleText;
+        private readonly List<TextMeshProUGUI> taskNodeLabels = new List<TextMeshProUGUI>();
+        private readonly List<GameObject> taskNodeObjects = new List<GameObject>();
+        private readonly List<GameObject> taskArrowObjects = new List<GameObject>();
+        private readonly List<GameObject> taskCollapsibleObjects = new List<GameObject>();
 
-        [SerializeField]
-        private Image fogOverlay;
+        // 手动模式：记录用户在场景里摆放的任务栏尺寸与 R 按钮位置，展开时恢复。
+        private Vector2 manualTaskBarSize;
+        private Vector2 manualTogglePos;
+        private bool manualTaskBarCaptured;
 
-        [SerializeField]
-        private RectTransform bannerRoot;
-
-        private readonly List<GameObject> residentCards = new List<GameObject>();
+        // 动态生成物（座位上生成的 NPC 节点等）
+        private readonly List<GameObject> roomObjects = new List<GameObject>();
 
         public static ShelterView Build(Transform parent, AppFlowController flow)
         {
@@ -96,11 +186,32 @@ namespace SixDaysRemaining.UI
             flow = appFlow;
             EnsureLayout();
 
-            WireButton(departButton, () => flow.OnDepart());
-            WireButton(dayEndButton, () => flow.BeginDayEnd());
+            WireButton(departButton, () =>
+            {
+                CloseCodex();
+                flow.OnDepart();
+            });
+            WireButton(dayEndButton, () =>
+            {
+                CloseCodex();
+                flow.BeginDayEnd();
+            });
             WireButton(settingsButton, () => flow.ShowSettings());
-            WireButton(menuButton, () => flow.OnBackToMenu());
+            WireButton(menuButton, () =>
+            {
+                CloseCodex();
+                flow.OnBackToMenu();
+            });
             WireButton(closeDetailButton, CloseDetail);
+            WireButton(leftArrowButton, () => SwitchRoom(-1));
+            WireButton(rightArrowButton, () => SwitchRoom(1));
+            WireButton(codexButton, OpenCodex);
+            WireButton(taskToggleButton, ToggleTaskBar);
+            WireButton(feedButton, OnFeedSelected);
+            if (codexView != null)
+            {
+                codexView.Wire(flow);
+            }
         }
 
         public void Refresh()
@@ -113,19 +224,17 @@ namespace SixDaysRemaining.UI
                 SetText(dayText, "庇护所");
                 SetText(phaseText, "尚未开始新局");
                 UpdateFog(0f);
-                ClearResidentCards();
                 HideDetail();
                 return;
             }
 
             GameState state = gi.Gameplay.State;
-            SetText(dayText, "庇护所 · 第 " + state.day + " 天");
+            SetText(dayText, "第 " + state.day + " 天");
             SetText(phaseText, PhaseLabel(state.currentPhase));
-          
-
+            UpdateTaskBar(state.currentPhase);
+            RebuildRoomScene(state);
+            RefreshDetail(gi.Shelter, state);
             UpdateFog(state.corruption);
-            RebuildResidentCards(gi.Shelter, state.foodStock, state.corruption >= 40);
-            RefreshDetail(gi.Shelter);
             ShowBulletins(gi.Shelter);
             RefreshExpeditionControls(gi, state);
         }
@@ -157,29 +266,532 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        private void OnFeed(Survivor survivor)
+        // ---------- 顶部任务栏 ----------
+
+        private void UpdateTaskBar(GameplayPhase phase)
         {
-            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
-            if (gi == null || gi.Shelter == null || survivor == null)
+            bool node0Done;
+            bool node1Done;
+            bool node2Done;
+            switch (phase)
+            {
+                case GameplayPhase.Combat:
+                    node0Done = true;
+                    node1Done = false;
+                    node2Done = false;
+                    break;
+                case GameplayPhase.TriumphReturn:
+                    node0Done = true;
+                    node1Done = true;
+                    node2Done = false;
+                    break;
+                case GameplayPhase.Ending:
+                    node0Done = true;
+                    node1Done = true;
+                    node2Done = true;
+                    break;
+                default:
+                    node0Done = false;
+                    node1Done = false;
+                    node2Done = false;
+                    break;
+            }
+
+            bool[] done = { node0Done, node1Done, node2Done };
+            string[] names = { "分配食物", "外出战斗", "处理每日事件" };
+            for (int i = 0; i < taskNodeLabels.Count && i < 3; i++)
+            {
+                bool locked = i > 0 && !done[i - 1];
+                TextMeshProUGUI label = taskNodeLabels[i];
+                label.text = done[i] ? names[i] + " √" : names[i];
+                if (done[i])
+                {
+                    label.color = DoneColor;
+                }
+                else if (locked)
+                {
+                    label.color = LockedColor;
+                }
+                else
+                {
+                    label.color = ActiveColor;
+                }
+            }
+
+            // 收起/展开逻辑依赖 TaskBar 根节点引用；节点文字/√ 的刷新不依赖它。
+            if (taskBarRoot == null)
             {
                 return;
             }
 
-            if (gi.Shelter.AllocateFood(survivor, 1))
+            bool collapsed = taskBarCollapsed;
+            for (int i = 0; i < taskNodeObjects.Count; i++)
             {
-                Refresh();
-                if (flow != null)
+                if (taskNodeObjects[i] != null)
                 {
-                    flow.RefreshGlobalHud();
+                    taskNodeObjects[i].SetActive(!collapsed);
+                }
+            }
+
+            for (int i = 0; i < taskArrowObjects.Count; i++)
+            {
+                if (taskArrowObjects[i] != null)
+                {
+                    taskArrowObjects[i].SetActive(!collapsed);
+                }
+            }
+
+            for (int i = 0; i < taskCollapsibleObjects.Count; i++)
+            {
+                if (taskCollapsibleObjects[i] != null)
+                {
+                    taskCollapsibleObjects[i].SetActive(!collapsed);
+                }
+            }
+
+            RectTransform barRt = taskBarRoot;
+            RectTransform toggleRt = taskToggleButton != null ? taskToggleButton.GetComponent<RectTransform>() : null;
+            if (collapsed)
+            {
+                barRt.sizeDelta = new Vector2(76f, 42f);
+                if (toggleRt != null)
+                {
+                    if (manualRoot != null)
+                    {
+                        // 把 R 按钮的锚点参考点移到小方块中心（与父节点 pivot 无关）。
+                        Vector2 anchor = (toggleRt.anchorMin + toggleRt.anchorMax) * 0.5f;
+                        toggleRt.anchoredPosition = new Vector2(
+                            (0.5f - anchor.x) * 76f,
+                            (0.5f - anchor.y) * 42f);
+                    }
+                    else
+                    {
+                        toggleRt.anchoredPosition = Vector2.zero;
+                    }
+                }
+            }
+            else
+            {
+                if (manualRoot != null && manualTaskBarCaptured)
+                {
+                    barRt.sizeDelta = manualTaskBarSize;
+                    if (toggleRt != null)
+                    {
+                        toggleRt.anchoredPosition = manualTogglePos;
+                    }
+                }
+                else
+                {
+                    barRt.sizeDelta = new Vector2(940f, 54f);
+                    if (toggleRt != null)
+                    {
+                        toggleRt.anchoredPosition = new Vector2(412f, 0f);
+                    }
                 }
             }
         }
 
-        private void OpenDetail(string defId)
+        private void ToggleTaskBar()
         {
-            selectedDefId = defId;
+            taskBarCollapsed = !taskBarCollapsed;
             GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
-            RefreshDetail(gi != null ? gi.Shelter : null);
+            if (gi != null && gi.Gameplay != null)
+            {
+                UpdateTaskBar(gi.Gameplay.CurrentPhase);
+            }
+        }
+
+        // ---------- 房间场景 ----------
+
+        private void SwitchRoom(int delta)
+        {
+            int next = roomIndex + delta;
+            if (next < 0 || next >= ShelterRooms.Count)
+            {
+                return;
+            }
+
+            roomIndex = next;
+            Refresh();
+        }
+
+        private void RebuildRoomScene(GameState state)
+        {
+            ClearRoomObjects();
+            UpdateRoomChrome();
+
+            List<Survivor> alive = CollectAliveSurvivors();
+            bool manual = manualRoot != null && roomRoots != null && roomRoots.Length > 0;
+            if (manual)
+            {
+                if (roomIndex >= roomRoots.Length)
+                {
+                    roomIndex = roomRoots.Length - 1;
+                }
+
+                RebuildManualRoom(state, alive);
+            }
+            else if (roomSceneRoot != null)
+            {
+                RebuildCodeRoom(state, alive);
+            }
+        }
+
+        private void UpdateRoomChrome()
+        {
+            ShelterRoomDef room = ShelterRooms.Get(roomIndex);
+            SetText(roomLabelText, room.DisplayName);
+            if (leftArrowButton != null)
+            {
+                leftArrowButton.gameObject.SetActive(roomIndex > 0);
+            }
+
+            if (rightArrowButton != null)
+            {
+                rightArrowButton.gameObject.SetActive(roomIndex < ShelterRooms.Count - 1);
+            }
+        }
+
+        private void RebuildManualRoom(GameState state, List<Survivor> alive)
+        {
+            ApplyRoomActive(roomIndex);
+            RectTransform current = roomRoots[roomIndex];
+            ShelterSeatSlot[] slots = CollectSeatSlots(current);
+            int count = Mathf.Min(alive.Count, slots.Length);
+            for (int i = 0; i < count; i++)
+            {
+                CreateNpcNodeOnSlot(alive[i], slots[i], state.day);
+            }
+        }
+
+        private void RebuildCodeRoom(GameState state, List<Survivor> alive)
+        {
+            ShelterRoomDef room = ShelterRooms.Get(roomIndex);
+            Sprite bg = ShelterRooms.LoadBackground(room);
+            if (roomBgImage != null)
+            {
+                roomBgImage.sprite = bg;
+                roomBgImage.color = bg != null ? Color.white : room.BackgroundColor;
+            }
+
+            if (roomTitleText != null)
+            {
+                roomTitleText.text = room.DisplayName;
+            }
+
+            for (int i = 0; i < ShelterRooms.SeatCount; i++)
+            {
+                CreateSeat(room.Seats[i], i);
+            }
+
+            for (int i = 0; i < alive.Count && i < ShelterRooms.SeatCount; i++)
+            {
+                CreateNpcNode(alive[i], room.Seats[i], state.day);
+            }
+        }
+
+        private void ApplyRoomActive(int index)
+        {
+            for (int i = 0; i < roomRoots.Length; i++)
+            {
+                if (roomRoots[i] != null)
+                {
+                    roomRoots[i].gameObject.SetActive(i == index);
+                }
+            }
+        }
+
+        private static ShelterSeatSlot[] CollectSeatSlots(RectTransform roomRoot)
+        {
+            if (roomRoot == null)
+            {
+                return new ShelterSeatSlot[0];
+            }
+
+            ShelterSeatSlot[] slots = roomRoot.GetComponentsInChildren<ShelterSeatSlot>(true);
+            System.Array.Sort(slots, delegate (ShelterSeatSlot a, ShelterSeatSlot b)
+            {
+                return a.SeatIndex.CompareTo(b.SeatIndex);
+            });
+            return slots;
+        }
+
+        private void CreateNpcNodeOnSlot(Survivor survivor, ShelterSeatSlot slot, int day)
+        {
+            CreateNpcNode(
+                survivor,
+                slot.transform,
+                Vector2.zero,
+                slot.NpcOffset,
+                slot.NameOffset,
+                slot.StatusOffset,
+                slot.IdentityOffset,
+                day);
+        }
+
+        private void CreateNpcNode(Survivor survivor, Vector2 seatPos, int day)
+        {
+            CreateNpcNode(
+                survivor,
+                roomSceneRoot,
+                seatPos,
+                new Vector2(0f, 78f),
+                new Vector2(0f, -56f),
+                new Vector2(0f, -84f),
+                new Vector2(0f, -106f),
+                day);
+        }
+
+        private void CreateNpcNode(
+            Survivor survivor,
+            Transform parent,
+            Vector2 anchorPos,
+            Vector2 portraitPos,
+            Vector2 namePos,
+            Vector2 statusPos,
+            Vector2 identityPos,
+            int day)
+        {
+            SurvivorDef def;
+            bool hasDef = ShelterContent.Survivors.TryGet(survivor.defId, out def);
+            Sprite portrait = ShelterPortraits.Load(def, survivor.status, day);
+
+            // 点击区域覆盖整个 NPC 块（立绘 + 名字 + 状态 + 身份），避免只能点中立绘。
+            float top = portraitPos.y + 66f;
+            float bottom = Mathf.Min(
+                portraitPos.y - 66f,
+                namePos.y - 13f,
+                statusPos.y - 11f,
+                identityPos.y - 10f);
+            float centerY = (top + bottom) * 0.5f;
+            float height = top - bottom;
+
+            GameObject nodeGo = new GameObject("NpcNode_" + survivor.defId);
+            nodeGo.transform.SetParent(parent, false);
+            RectTransform nodeRt = nodeGo.AddComponent<RectTransform>();
+            nodeRt.anchoredPosition = anchorPos + new Vector2(0f, centerY);
+            nodeRt.sizeDelta = new Vector2(170f, height);
+            Image nodeBg = nodeGo.AddComponent<Image>();
+            nodeBg.color = new Color(1f, 1f, 1f, 0.01f);
+            Button click = nodeGo.AddComponent<Button>();
+            click.targetGraphic = nodeBg;
+            click.onClick.AddListener(() => OnNpcClicked(survivor.defId));
+            roomObjects.Add(nodeGo);
+
+            Vector2 childPortrait = new Vector2(portraitPos.x, portraitPos.y - centerY);
+            Vector2 childName = new Vector2(namePos.x, namePos.y - centerY);
+            Vector2 childStatus = new Vector2(statusPos.x, statusPos.y - centerY);
+            Vector2 childIdentity = new Vector2(identityPos.x, identityPos.y - centerY);
+
+            Image portraitImage;
+            if (portrait != null)
+            {
+                portraitImage = UiFactory.CreateImage(nodeGo.transform, "Portrait_" + survivor.defId, childPortrait, new Vector2(104f, 132f), Color.white);
+                portraitImage.sprite = portrait;
+                portraitImage.preserveAspect = true;
+            }
+            else
+            {
+                portraitImage = UiFactory.CreateCircleImage(nodeGo.transform, "Portrait_" + survivor.defId, childPortrait, new Vector2(104f, 104f), StatusColor(survivor.status));
+            }
+
+            portraitImage.raycastTarget = false;
+
+            TextMeshProUGUI name = UiFactory.CreateText(nodeGo.transform, "Txt_NpcName_" + survivor.defId, survivor.name, 18, childName, new Vector2(170f, 26f), TextAlignmentOptions.Center, Color.white);
+            name.raycastTarget = false;
+
+            TextMeshProUGUI status = UiFactory.CreateText(nodeGo.transform, "Txt_NpcStatus_" + survivor.defId, StatusName(survivor.status), 15, childStatus, new Vector2(140f, 22f), TextAlignmentOptions.Center, StatusColor(survivor.status));
+            status.raycastTarget = false;
+
+            if (hasDef)
+            {
+                TextMeshProUGUI identity = UiFactory.CreateText(nodeGo.transform, "Txt_NpcIdentity_" + survivor.defId, def.DisplayName, 14, childIdentity, new Vector2(140f, 20f), TextAlignmentOptions.Center, new Color(0.62f, 0.66f, 0.72f, 1f));
+                identity.raycastTarget = false;
+            }
+        }
+
+        private List<Survivor> CollectAliveSurvivors()
+        {
+            List<Survivor> alive = new List<Survivor>();
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            if (gi != null && gi.Shelter != null)
+            {
+                IReadOnlyList<Survivor> roster = gi.Shelter.Survivors;
+                for (int i = 0; i < roster.Count; i++)
+                {
+                    Survivor s = roster[i];
+                    if (s.status != SurvivorStatus.Dead && s.status != SurvivorStatus.Left)
+                    {
+                        alive.Add(s);
+                    }
+                }
+            }
+
+            return alive;
+        }
+
+        private void CreateSeat(Vector2 pos, int index)
+        {
+            Image seat = UiFactory.CreateImage(roomSceneRoot, "Seat_" + index, pos, new Vector2(136f, 44f), new Color(0.33f, 0.27f, 0.21f, 1f));
+            seat.raycastTarget = false;
+            roomObjects.Add(seat.gameObject);
+
+            Image cushion = UiFactory.CreateImage(seat.transform, "Cushion", new Vector2(0f, 14f), new Vector2(112f, 18f), new Color(0.42f, 0.35f, 0.28f, 1f));
+            cushion.raycastTarget = false;
+        }
+
+        private void ClearRoomObjects()
+        {
+            for (int i = 0; i < roomObjects.Count; i++)
+            {
+                if (roomObjects[i] != null)
+                {
+                    roomObjects[i].SetActive(false);
+                    Destroy(roomObjects[i]);
+                }
+            }
+
+            roomObjects.Clear();
+        }
+
+        // ---------- NPC 信息面板 ----------
+
+        private void OnNpcClicked(string defId)
+        {
+            if (string.Equals(selectedDefId, defId, System.StringComparison.Ordinal))
+            {
+                selectedDefId = null;
+            }
+            else
+            {
+                selectedDefId = defId;
+            }
+
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            if (gi != null && gi.Shelter != null && gi.Gameplay != null)
+            {
+                RefreshDetail(gi.Shelter, gi.Gameplay.State);
+            }
+        }
+
+        private void RefreshDetail(ShelterManager shelter, GameState state)
+        {
+            if (detailGroup == null || shelter == null || state == null)
+            {
+                HideDetail();
+                return;
+            }
+
+            Survivor selected = FindAliveByDefId(shelter, selectedDefId);
+            if (selected == null)
+            {
+                HideDetail();
+                return;
+            }
+
+            SurvivorDef def;
+            ShelterContent.Survivors.TryGet(selected.defId, out def);
+            SurvivorProfile profile = ShelterProfiles.Resolve(def);
+
+            detailGroup.SetActive(true);
+            SetText(detailIdentityText, "身份：" + (def != null ? def.DisplayName : selected.name));
+            SetText(detailNameText, def != null ? def.DisplayName : selected.name);
+            SetText(detailAgeText, "年龄：" + (profile.Age > 0 ? profile.Age + " 岁" : "未知"));
+            SetText(detailStatusText, "生存状态：" + StatusName(selected.status) + "　饱食度 " + selected.hunger);
+            SetText(detailFitnessText, "身体素质：" + (string.IsNullOrEmpty(profile.Fitness) ? "未知" : profile.Fitness));
+            SetText(detailQuoteText, "语录：\n“" + (string.IsNullOrEmpty(profile.Quote) ? "（暂无语录）" : profile.Quote) + "”");
+
+            Sprite portrait = ShelterPortraits.Load(def, selected.status, state.day);
+            if (detailAvatarImage != null)
+            {
+                if (portrait != null)
+                {
+                    detailAvatarImage.sprite = portrait;
+                    detailAvatarImage.color = Color.white;
+                    detailAvatarImage.rectTransform.sizeDelta = new Vector2(104f, 132f);
+                }
+                else
+                {
+                    detailAvatarImage.sprite = UiFactory.CircleSprite;
+                    detailAvatarImage.color = StatusColor(selected.status);
+                    detailAvatarImage.rectTransform.sizeDelta = new Vector2(104f, 104f);
+                }
+            }
+
+            RefreshFeedButton(shelter, selected, state);
+        }
+
+        private void RefreshFeedButton(ShelterManager shelter, Survivor survivor, GameState state)
+        {
+            if (feedButton == null)
+            {
+                return;
+            }
+
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            bool bigu = gi != null && gi.Shelter != null && gi.Shelter.IsBiguExempt(survivor);
+            bool fedToday = shelter.IsFedToday(survivor);
+            bool inFeedPhase = state.currentPhase == GameplayPhase.ExpeditionPrep;
+
+            Image buttonBg = feedButton.GetComponent<Image>();
+            if (bigu)
+            {
+                SetButtonState(feedButton, buttonBg, "辟谷中", false, DisabledGray);
+            }
+            else if (fedToday)
+            {
+                SetButtonState(feedButton, buttonBg, "已分配食物", false, PressedGray);
+            }
+            else if (!inFeedPhase)
+            {
+                // 不在“出征准备·每日分配”阶段：按钮置灰但保持“分配食物”文案，方便区分原因。
+                SetButtonState(feedButton, buttonBg, "分配食物", false, DisabledGray);
+            }
+            else if (state.foodStock < 1)
+            {
+                SetButtonState(feedButton, buttonBg, "粮食不足", false, DisabledGray);
+            }
+            else
+            {
+                SetButtonState(feedButton, buttonBg, "分配食物", true, FeedGreen);
+            }
+        }
+
+        private static void SetButtonState(Button button, Image bg, string label, bool interactable, Color color)
+        {
+            button.interactable = interactable;
+            if (bg != null)
+            {
+                bg.color = color;
+            }
+
+            TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (text != null)
+            {
+                text.text = label;
+                text.color = interactable ? Color.white : new Color(0.55f, 0.58f, 0.63f, 1f);
+            }
+        }
+
+        private void OnFeedSelected()
+        {
+            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
+            if (gi == null || gi.Shelter == null || gi.Gameplay == null)
+            {
+                return;
+            }
+
+            Survivor selected = FindAliveByDefId(gi.Shelter, selectedDefId);
+            if (selected == null)
+            {
+                return;
+            }
+
+            if (gi.Shelter.AllocateFood(selected, 1))
+            {
+                Refresh();
+                flow.RefreshGlobalHud();
+            }
         }
 
         private void CloseDetail()
@@ -196,128 +808,46 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        private void RefreshDetail(ShelterManager shelter)
+        // ---------- 图鉴 ----------
+
+        private void OpenCodex()
         {
-            if (detailGroup == null || shelter == null)
+            EnsureCodexView();
+            if (codexView != null)
             {
-                HideDetail();
+                codexView.Open();
+            }
+        }
+
+        private void CloseCodex()
+        {
+            if (codexView != null)
+            {
+                codexView.Close();
+            }
+        }
+
+        private void EnsureCodexView()
+        {
+            if (codexView != null)
+            {
                 return;
             }
 
-            Survivor selected = FindAliveByDefId(shelter, selectedDefId);
-            if (selected == null)
+            codexView = FindObjectOfType<ShelterCodexView>(true);
+            if (codexView == null)
             {
-                HideDetail();
-                return;
+                Transform parent = transform.parent != null ? transform.parent : transform;
+                codexView = ShelterCodexView.Build(parent, flow);
             }
 
-            detailGroup.SetActive(true);
-            SetText(detailNameText, selected.name);
-            string statusLine = "身份：" + selected.name + "\n状态：" + StatusName(selected.status);
-            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
-            if (gi != null && gi.Shelter != null && gi.Shelter.IsBiguExempt(selected))
+            if (codexView != null)
             {
-                statusLine += "\n（辟谷丹：不接受分配）";
-                SetText(detailMessageText, "每日留言：\n我吃了最近研究的辟谷丹，不需要食物。");
-            }
-            else
-            {
-                SetText(detailMessageText, "每日留言：\n暂无每日留言数据");
-            }
-
-            SetText(detailStatusText, statusLine);
-            SetText(detailTraitsText, "特质：\n" + BuildTraitText(selected));
-        }
-
-        private void RebuildResidentCards(ShelterManager shelter, int foodStock, bool corrupted)
-        {
-            ClearResidentCards();
-
-            List<Survivor> alive = new List<Survivor>();
-            for (int i = 0; i < shelter.Survivors.Count; i++)
-            {
-                Survivor s = shelter.Survivors[i];
-                if (s.status != SurvivorStatus.Dead && s.status != SurvivorStatus.Left)
-                {
-                    alive.Add(s);
-                }
-            }
-
-            for (int i = 0; i < alive.Count; i++)
-            {
-                float x = (i - (alive.Count - 1) * 0.5f) * 230f;
-                CreateResidentCard(alive[i], new Vector2(x, 30f), foodStock, corrupted);
+                codexView.Wire(flow);
             }
         }
 
-        private void CreateResidentCard(Survivor survivor, Vector2 pos, int foodStock, bool corrupted)
-        {
-            Color cardColor = new Color(0.14f, 0.16f, 0.20f, 0.98f);
-            Image card = UiFactory.CreateImage(residentRow, "Card_" + survivor.defId, pos, new Vector2(200f, 270f), cardColor);
-            Button open = card.gameObject.AddComponent<Button>();
-            open.targetGraphic = card;
-            open.onClick.AddListener(() => OpenDetail(survivor.defId));
-            residentCards.Add(card.gameObject);
-
-            Color avatarColor = StatusColor(survivor.status);
-            if (corrupted)
-            {
-                avatarColor = Color.Lerp(avatarColor, new Color(0.55f, 0.20f, 0.66f, 1f), 0.55f);
-            }
-
-            Image avatar = UiFactory.CreateCircleImage(card.transform, "Avatar", new Vector2(0f, 74f), new Vector2(88f, 88f), avatarColor);
-            avatar.raycastTarget = false;
-
-            TextMeshProUGUI name = UiFactory.CreateText(card.transform, "Txt_Name", survivor.name, 26, new Vector2(0f, -6f), new Vector2(184f, 38f), TextAlignmentOptions.Center, Color.white);
-            name.raycastTarget = false;
-            TextMeshProUGUI identity = UiFactory.CreateText(card.transform, "Txt_Identity", "耐饿 " + survivor.hungryToDyingDays + " 天", 16, new Vector2(0f, -44f), new Vector2(184f, 24f), TextAlignmentOptions.Center, new Color(0.68f, 0.72f, 0.78f, 1f));
-            identity.raycastTarget = false;
-            TextMeshProUGUI status = UiFactory.CreateText(card.transform, "Txt_Status", StatusName(survivor.status), 22, new Vector2(0f, -78f), new Vector2(184f, 30f), TextAlignmentOptions.Center, StatusColor(survivor.status));
-            status.raycastTarget = false;
-            TextMeshProUGUI hunger = UiFactory.CreateText(card.transform, "Txt_Hunger", "饱食度 " + survivor.hunger, 16, new Vector2(0f, -112f), new Vector2(184f, 24f), TextAlignmentOptions.Center, new Color(0.88f, 0.88f, 0.88f, 1f));
-            hunger.raycastTarget = false;
-
-            Button feed = UiFactory.CreateButton(
-                card.transform,
-                "Btn_Feed_" + survivor.defId,
-                "喂食 +1",
-                () => OnFeed(survivor),
-                new Vector2(0f, -176f),
-                new Vector2(132f, 40f),
-                new Color(0.28f, 0.50f, 0.40f, 1f),
-                18);
-
-            GameInstance gi = flow != null ? flow.Game : GameInstance.Instance;
-            bool bigu = gi != null && gi.Shelter != null && gi.Shelter.IsBiguExempt(survivor);
-            if (bigu)
-            {
-                TextMeshProUGUI feedLabel = feed.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (feedLabel != null)
-                {
-                    feedLabel.text = "辟谷中";
-                }
-
-                feed.interactable = false;
-            }
-            else
-            {
-                feed.interactable = foodStock >= 1;
-            }
-        }
-
-        private void ClearResidentCards()
-        {
-            for (int i = 0; i < residentCards.Count; i++)
-            {
-                if (residentCards[i] != null)
-                {
-                    residentCards[i].SetActive(false);
-                    Destroy(residentCards[i]);
-                }
-            }
-
-            residentCards.Clear();
-        }
+        // ---------- 杂项（公告 / 腐蚀 / 工具） ----------
 
         private void ShowBulletins(ShelterManager shelter)
         {
@@ -375,6 +905,8 @@ namespace SixDaysRemaining.UI
             return null;
         }
 
+        // ---------- 布局 ----------
+
         private void EnsureLayout()
         {
             if (layoutBuilt)
@@ -387,9 +919,66 @@ namespace SixDaysRemaining.UI
                 UiFactory.Font = UiCjkFont.Load();
             }
 
+            if (manualRoot != null)
+            {
+                BindManualRefs();
+                layoutBuilt = true;
+                return;
+            }
+
             DestroyAllChildren();
             BuildLayout();
             layoutBuilt = true;
+        }
+
+        private void BindManualRefs()
+        {
+            taskNodeLabels.Clear();
+            taskNodeObjects.Clear();
+            taskArrowObjects.Clear();
+            taskCollapsibleObjects.Clear();
+            manualTaskBarCaptured = false;
+
+            if (taskNodeTexts != null)
+            {
+                for (int i = 0; i < taskNodeTexts.Length; i++)
+                {
+                    if (taskNodeTexts[i] != null)
+                    {
+                        taskNodeLabels.Add(taskNodeTexts[i]);
+                        taskNodeObjects.Add(taskNodeTexts[i].gameObject);
+                    }
+                }
+            }
+
+            if (taskArrows != null)
+            {
+                for (int i = 0; i < taskArrows.Length; i++)
+                {
+                    if (taskArrows[i] != null)
+                    {
+                        taskArrowObjects.Add(taskArrows[i]);
+                    }
+                }
+            }
+
+            if (taskExtraObjects != null)
+            {
+                for (int i = 0; i < taskExtraObjects.Length; i++)
+                {
+                    if (taskExtraObjects[i] != null)
+                    {
+                        taskCollapsibleObjects.Add(taskExtraObjects[i]);
+                    }
+                }
+            }
+
+            if (taskBarRoot != null && taskToggleButton != null)
+            {
+                manualTaskBarSize = taskBarRoot.sizeDelta;
+                manualTogglePos = taskToggleButton.GetComponent<RectTransform>().anchoredPosition;
+                manualTaskBarCaptured = true;
+            }
         }
 
         private void DestroyAllChildren()
@@ -409,34 +998,35 @@ namespace SixDaysRemaining.UI
 
         private void BuildLayout()
         {
-            dayText = UiFactory.CreateText(transform, "Txt_Day", "庇护所 · 第 1 天", 38, new Vector2(0f, 420f), new Vector2(620f, 56f), TextAlignmentOptions.Center, Color.white);
+            // 房间场景层最先创建，后续顶部 UI 会盖在其上。
+            roomSceneRoot = CreateRect(transform, "RoomScene", new Vector2(0f, -140f), new Vector2(1920f, 760f));
+            roomBgImage = UiFactory.CreateImage(roomSceneRoot, "Bg_Room", Vector2.zero, new Vector2(1920f, 760f), new Color(0.10f, 0.11f, 0.13f, 1f));
+            roomBgImage.raycastTarget = false;
+            roomTitleText = UiFactory.CreateText(roomSceneRoot, "Txt_RoomTitle", "大厅", 64, new Vector2(0f, 180f), new Vector2(500f, 90f), TextAlignmentOptions.Center, new Color(1f, 1f, 1f, 0.08f));
+            roomTitleText.raycastTarget = false;
+
+            dayText = UiFactory.CreateText(transform, "Txt_Day", "第 1 天", 36, new Vector2(0f, -110f), new Vector2(420f, 48f), TextAlignmentOptions.Center, Color.white);
             dayText.raycastTarget = false;
 
-            residentRow = CreateEmptyRect(transform, "Row_Residents");
+            roomLabelText = UiFactory.CreateText(transform, "Txt_RoomLabel", "大厅", 26, new Vector2(650f, -110f), new Vector2(240f, 40f), TextAlignmentOptions.Right, new Color(0.90f, 0.92f, 0.95f, 1f));
+            roomLabelText.raycastTarget = false;
 
-            departButton = UiFactory.CreateButton(transform, "Btn_Depart", "出发", null, new Vector2(0f, -420f), new Vector2(220f, 60f), null, 24);
-            dayEndButton = UiFactory.CreateButton(transform, "Btn_DayEnd", "结束今天", null, new Vector2(0f, -350f), new Vector2(220f, 48f), new Color(0.22f, 0.32f, 0.28f, 1f), 20);
-            settingsButton = UiFactory.CreateButton(transform, "Btn_Settings", "设置", null, new Vector2(-330f, -420f), new Vector2(150f, 48f), new Color(0.22f, 0.26f, 0.32f, 1f), 20);
-            menuButton = UiFactory.CreateButton(transform, "Btn_Menu", "返回主菜单", null, new Vector2(330f, -420f), new Vector2(190f, 48f), new Color(0.22f, 0.26f, 0.32f, 1f), 20);
+            phaseText = UiFactory.CreateText(transform, "Txt_Phase", "", 16, new Vector2(0f, -70f), new Vector2(420f, 26f), TextAlignmentOptions.Center, new Color(0.55f, 0.60f, 0.66f, 1f));
+            phaseText.raycastTarget = false;
 
-            detailGroup = UiFactory.CreatePanel(transform, "Panel_Detail", new Color(0.11f, 0.13f, 0.17f, 1f), false);
-            RectTransform detailRt = detailGroup.GetComponent<RectTransform>();
-            detailRt.anchorMin = new Vector2(0.5f, 0.5f);
-            detailRt.anchorMax = new Vector2(0.5f, 0.5f);
-            detailRt.anchoredPosition = new Vector2(680f, 30f);
-            detailRt.sizeDelta = new Vector2(460f, 470f);
+            BuildTaskBar();
 
-            TextMeshProUGUI detailTitle = UiFactory.CreateText(detailGroup.transform, "Txt_DetailTitle", "住户详情", 28, new Vector2(0f, 195f), new Vector2(420f, 44f), TextAlignmentOptions.Center, Color.white);
-            detailTitle.raycastTarget = false;
-            detailNameText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailName", "", 30, new Vector2(0f, 135f), new Vector2(420f, 44f), TextAlignmentOptions.Center, Color.white);
-            detailNameText.raycastTarget = false;
-            detailStatusText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailStatus", "", 22, new Vector2(0f, 78f), new Vector2(420f, 36f), TextAlignmentOptions.Center, new Color(0.90f, 0.92f, 0.95f, 1f));
-            detailStatusText.raycastTarget = false;
-            detailTraitsText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailTraits", "", 18, new Vector2(0f, -6f), new Vector2(420f, 150f), TextAlignmentOptions.TopLeft, new Color(0.86f, 0.88f, 0.92f, 1f));
-            detailTraitsText.raycastTarget = false;
-            detailMessageText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailMessage", "", 18, new Vector2(0f, -160f), new Vector2(420f, 110f), TextAlignmentOptions.TopLeft, new Color(0.86f, 0.88f, 0.92f, 1f));
-            detailMessageText.raycastTarget = false;
-            closeDetailButton = UiFactory.CreateButton(detailGroup.transform, "Btn_CloseDetail", "关闭", null, new Vector2(0f, -215f), new Vector2(180f, 46f), new Color(0.30f, 0.34f, 0.40f, 1f), 20);
+            codexButton = UiFactory.CreateButton(transform, "Btn_Codex", "图鉴", OpenCodex, new Vector2(810f, -120f), new Vector2(110f, 42f), new Color(0.24f, 0.27f, 0.33f, 1f), 20);
+
+            leftArrowButton = UiFactory.CreateButton(transform, "Btn_RoomLeft", "<", () => SwitchRoom(-1), new Vector2(-900f, -300f), new Vector2(56f, 64f), new Color(0.20f, 0.23f, 0.28f, 1f), 34);
+            rightArrowButton = UiFactory.CreateButton(transform, "Btn_RoomRight", ">", () => SwitchRoom(1), new Vector2(900f, -300f), new Vector2(56f, 64f), new Color(0.20f, 0.23f, 0.28f, 1f), 34);
+
+            departButton = UiFactory.CreateButton(transform, "Btn_Depart", "出发", null, new Vector2(0f, -520f), new Vector2(220f, 60f), null, 24);
+            dayEndButton = UiFactory.CreateButton(transform, "Btn_DayEnd", "结束今天", null, new Vector2(0f, -500f), new Vector2(220f, 40f), new Color(0.22f, 0.32f, 0.28f, 1f), 20);
+            settingsButton = UiFactory.CreateButton(transform, "Btn_Settings", "设置", null, new Vector2(-360f, -520f), new Vector2(150f, 48f), new Color(0.22f, 0.26f, 0.32f, 1f), 20);
+            menuButton = UiFactory.CreateButton(transform, "Btn_Menu", "返回主菜单", null, new Vector2(360f, -520f), new Vector2(190f, 48f), new Color(0.22f, 0.26f, 0.32f, 1f), 20);
+
+            BuildDetailPanel();
 
             GameObject fogGo = UiFactory.CreatePanel(transform, "FogOverlay", new Color(0.01f, 0.005f, 0.03f, 0f));
             fogOverlay = fogGo.GetComponent<Image>();
@@ -446,12 +1036,87 @@ namespace SixDaysRemaining.UI
             detailGroup.SetActive(false);
         }
 
+        private void BuildTaskBar()
+        {
+            taskBarRoot = CreateRect(transform, "TaskBar", new Vector2(0f, -172f), new Vector2(940f, 54f));
+            Image taskBarBg = taskBarRoot.gameObject.AddComponent<Image>();
+            taskBarBg.color = new Color(0.16f, 0.18f, 0.22f, 0.98f);
+            taskBarBg.raycastTarget = false;
+
+            taskNodeLabels.Clear();
+            taskNodeObjects.Clear();
+            taskArrowObjects.Clear();
+            taskCollapsibleObjects.Clear();
+
+            string[] names = { "分配食物", "外出战斗", "处理每日事件" };
+            float[] xs = { -320f, -75f, 170f };
+            for (int i = 0; i < names.Length; i++)
+            {
+                TextMeshProUGUI label = UiFactory.CreateText(taskBarRoot, "Txt_Task_" + i, names[i], 22, new Vector2(xs[i], 0f), new Vector2(210f, 32f), TextAlignmentOptions.Center, ActiveColor);
+                label.raycastTarget = false;
+                taskNodeLabels.Add(label);
+                taskNodeObjects.Add(label.gameObject);
+            }
+
+            float[] arrowXs = { -215f, 45f };
+            for (int i = 0; i < arrowXs.Length; i++)
+            {
+                TextMeshProUGUI arrow = UiFactory.CreateText(taskBarRoot, "Txt_TaskArrow_" + i, "→", 20, new Vector2(arrowXs[i], 0f), new Vector2(40f, 28f), TextAlignmentOptions.Center, new Color(0.55f, 0.60f, 0.66f, 1f));
+                arrow.raycastTarget = false;
+                taskArrowObjects.Add(arrow.gameObject);
+            }
+
+            taskToggleButton = UiFactory.CreateButton(taskBarRoot, "Btn_TaskToggle", "R", ToggleTaskBar, new Vector2(412f, 0f), new Vector2(44f, 44f), new Color(0.30f, 0.34f, 0.40f, 1f), 22);
+        }
+
+        private void BuildDetailPanel()
+        {
+            detailGroup = UiFactory.CreatePanel(transform, "Panel_Detail", new Color(0.11f, 0.13f, 0.17f, 1f), false);
+            RectTransform detailRt = detailGroup.GetComponent<RectTransform>();
+            detailRt.anchorMin = new Vector2(0.5f, 0.5f);
+            detailRt.anchorMax = new Vector2(0.5f, 0.5f);
+            detailRt.anchoredPosition = new Vector2(670f, -340f);
+            detailRt.sizeDelta = new Vector2(380f, 390f);
+
+            UiFactory.CreateText(detailGroup.transform, "Txt_DetailTitle", "人物信息", 28, new Vector2(0f, 168f), new Vector2(360f, 40f), TextAlignmentOptions.Center, Color.white);
+
+            Image frame = UiFactory.CreateImage(detailGroup.transform, "Frame_Avatar", new Vector2(0f, 108f), new Vector2(116f, 140f), new Color(0.28f, 0.32f, 0.38f, 1f));
+            frame.raycastTarget = false;
+            detailAvatarImage = UiFactory.CreateImage(frame.transform, "Avatar", Vector2.zero, new Vector2(104f, 128f), new Color(0.34f, 0.72f, 0.44f, 1f));
+            detailAvatarImage.raycastTarget = false;
+
+            detailIdentityText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailIdentity", "", 24, new Vector2(0f, 42f), new Vector2(360f, 34f), TextAlignmentOptions.Center, Color.white);
+            detailIdentityText.raycastTarget = false;
+            detailNameText = detailIdentityText;
+
+            detailAgeText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailAge", "", 19, new Vector2(0f, 2f), new Vector2(360f, 28f), TextAlignmentOptions.Center, new Color(0.88f, 0.90f, 0.93f, 1f));
+            detailAgeText.raycastTarget = false;
+            detailStatusText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailStatus", "", 19, new Vector2(0f, -30f), new Vector2(360f, 28f), TextAlignmentOptions.Center, new Color(0.88f, 0.90f, 0.93f, 1f));
+            detailStatusText.raycastTarget = false;
+            detailFitnessText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailFitness", "", 19, new Vector2(0f, -62f), new Vector2(360f, 28f), TextAlignmentOptions.Center, new Color(0.88f, 0.90f, 0.93f, 1f));
+            detailFitnessText.raycastTarget = false;
+            detailQuoteText = UiFactory.CreateText(detailGroup.transform, "Txt_DetailQuote", "", 17, new Vector2(0f, -108f), new Vector2(380f, 78f), TextAlignmentOptions.Top, new Color(0.80f, 0.84f, 0.90f, 1f));
+            detailQuoteText.raycastTarget = false;
+
+            feedButton = UiFactory.CreateButton(detailGroup.transform, "Btn_Feed", "分配食物", null, new Vector2(0f, -172f), new Vector2(200f, 50f), FeedGreen, 20);
+        }
+
         private static RectTransform CreateEmptyRect(Transform parent, string name)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
             RectTransform rt = go.AddComponent<RectTransform>();
             UiFactory.Stretch(rt);
+            return rt;
+        }
+
+        private static RectTransform CreateRect(Transform parent, string name, Vector2 pos, Vector2 size)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            RectTransform rt = go.AddComponent<RectTransform>();
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
             return rt;
         }
 
@@ -496,26 +1161,6 @@ namespace SixDaysRemaining.UI
                 case SurvivorStatus.Left: return new Color(0.55f, 0.55f, 0.55f, 1f);
                 default: return new Color(0.34f, 0.72f, 0.44f, 1f);
             }
-        }
-
-        private static string BuildTraitText(Survivor survivor)
-        {
-            List<string> lines = new List<string>();
-            for (int i = 0; i < TraitCatalog.SlotDefs.Length; i++)
-            {
-                SurvivorTrait trait = TraitCatalog.SlotDefs[i];
-                if (trait == null || trait.Id == TraitIds.Hero)
-                {
-                    continue;
-                }
-
-                if (TraitCatalog.IsProvidedBySurvivorDef(trait, survivor.defId))
-                {
-                    lines.Add(trait.Title + "：" + trait.Description);
-                }
-            }
-
-            return lines.Count > 0 ? string.Join("\n", lines) : "无特质数据";
         }
 
         private static string PhaseLabel(GameplayPhase phase)

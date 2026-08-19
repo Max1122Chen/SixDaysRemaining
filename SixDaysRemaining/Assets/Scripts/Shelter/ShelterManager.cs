@@ -20,9 +20,11 @@ namespace SixDaysRemaining.Shelter
         private readonly List<Survivor> survivors = new List<Survivor>();
         private readonly List<string> personnelChanges = new List<string>();
         private readonly List<string> bulletins = new List<string>();
+        private readonly HashSet<string> fedDefIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly GameState state;
         private readonly ShelterPassiveService passives;
         private GameplaySubsystem gameplay;
+        private int foodAllocationDay = -1;
 
         public int HungryThreshold { get; set; } = DefaultHungryThreshold;
         public int HungerPerFoodUnit { get; set; } = DefaultHungerPerFoodUnit;
@@ -256,6 +258,27 @@ namespace SixDaysRemaining.Shelter
                 && gameplay.HasTagExact(GameplayTags.DoctorBiguActive);
         }
 
+        /// <summary>
+        /// 该幸存者当天是否已分配过食物（每日重置）。
+        /// </summary>
+        public bool IsFedToday(Survivor survivor)
+        {
+            EnsureFoodAllocationDay();
+            return survivor != null
+                && !string.IsNullOrEmpty(survivor.defId)
+                && fedDefIds.Contains(survivor.defId);
+        }
+
+        /// <summary>当天已分配食物的幸存者 defId 集合（只读）。</summary>
+        public IReadOnlyCollection<string> FedDefIdsToday
+        {
+            get
+            {
+                EnsureFoodAllocationDay();
+                return fedDefIds;
+            }
+        }
+
         /// <summary>将存活幸存者设为正常并保证最低饱食度（实验成功等）。</summary>
         public bool SetSurvivorHealthy(Survivor survivor, int minHunger = 2)
         {
@@ -422,11 +445,37 @@ namespace SixDaysRemaining.Shelter
                 return false;
             }
 
+            EnsureFoodAllocationDay();
+            if (!string.IsNullOrEmpty(survivor.defId) && fedDefIds.Contains(survivor.defId))
+            {
+                return false;
+            }
+
             state.foodStock -= amount;
             survivor.hunger += amount * HungerPerFoodUnit;
+            if (!string.IsNullOrEmpty(survivor.defId))
+            {
+                fedDefIds.Add(survivor.defId);
+            }
+
             UpdateSurvivorStatus(survivor);
             SyncPopulation();
             return true;
+        }
+
+        /// <summary>
+        /// 当日喂食状态仅在当天有效：天数推进后自动清空，次日重新分配。
+        /// </summary>
+        private void EnsureFoodAllocationDay()
+        {
+            int day = state != null ? state.day : -1;
+            if (day == foodAllocationDay)
+            {
+                return;
+            }
+
+            foodAllocationDay = day;
+            fedDefIds.Clear();
         }
 
         /// <summary>

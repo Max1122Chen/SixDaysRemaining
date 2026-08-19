@@ -17,6 +17,9 @@ namespace SixDaysRemaining.Shelter.Content
         public string defaultStatus;
         public int hungryToDyingDays;
         public string[] passiveIds;
+        public int age;
+        public string fitness;
+        public string quote;
     }
 
     [Serializable]

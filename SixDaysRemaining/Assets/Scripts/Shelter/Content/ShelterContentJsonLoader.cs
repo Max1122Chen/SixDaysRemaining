@@ -228,10 +228,26 @@ namespace SixDaysRemaining.Shelter.Content
                 def.HungryToDyingDays = dto.hungryToDyingDays;
                 def.DefaultStatus = ParseOptionalStatus(dto.defaultStatus, path, def.Id);
                 def.PassiveIds = passiveIds;
+                MergeProfileFields(def, dto);
                 lib.Register(def);
             }
 
             return lib;
+        }
+
+        /// <summary>
+        /// 展示字段（年龄/身体素质/语录）为可选：JSON 有值则覆盖，缺省用 ShelterProfiles 兜底。
+        /// </summary>
+        private static void MergeProfileFields(SurvivorDef def, SurvivorDefDto dto)
+        {
+            SurvivorProfile fallback = ShelterProfiles.Get(def.Id);
+            def.Age = dto.age > 0 ? dto.age : (fallback != null ? fallback.Age : 0);
+            def.Fitness = !string.IsNullOrWhiteSpace(dto.fitness)
+                ? dto.fitness.Trim()
+                : (fallback != null ? fallback.Fitness : "");
+            def.Quote = !string.IsNullOrWhiteSpace(dto.quote)
+                ? dto.quote.Trim()
+                : (fallback != null ? fallback.Quote : "");
         }
 
         private static string[] NormalizePassiveIds(
