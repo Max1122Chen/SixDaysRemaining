@@ -1,6 +1,6 @@
 using System;
+using System.Collections;
 using SixDaysRemaining.Combat.Cards;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -25,15 +25,18 @@ namespace SixDaysRemaining.UI
         public bool Interactable { get; private set; } = true;
 
         private Image shadow;
-        private TextMeshProUGUI titleText;
-        private TextMeshProUGUI descText;
-        private TextMeshProUGUI costText;
+        private Image overlay;
         private Vector2 handSize;
         private Vector2 slotSize;
         private Vector2 grabOffset;
         private Color baseColor = new Color(0.30f, 0.34f, 0.42f, 1f);
         private Color hoverColor = new Color(0.42f, 0.55f, 0.72f, 1f);
         private bool dragging;
+        private bool highlighted;
+        private bool corrupted;
+        private bool hasArt;
+        private static readonly Color HoverOverlayColor = new Color(1f, 1f, 1f, 0.14f);
+        private static readonly Color CorruptedOverlayColor = new Color(0.60f, 0.08f, 0.12f, 0.32f);
         private const float HandHoverScale = 1.2f;
         private const float SlotHoverScale = 1.05f;
         private static readonly Vector2 HoverRaiseOffset = new Vector2(0f, 52f);
@@ -67,12 +70,9 @@ namespace SixDaysRemaining.UI
             view.Background = UiFactory.CreateImage(go.transform, "Bg", Vector2.zero, handSize, view.baseColor);
             view.Background.raycastTarget = true;
 
-            view.titleText = UiFactory.CreateText(go.transform, "Txt_Title", "", 20, new Vector2(0f, 48f), new Vector2(handSize.x - 16f, 32f));
-            view.titleText.raycastTarget = false;
-            view.descText = UiFactory.CreateText(go.transform, "Txt_Desc", "", 12, new Vector2(0f, -10f), new Vector2(handSize.x - 20f, 96f), TextAlignmentOptions.Top);
-            view.descText.raycastTarget = false;
-            view.costText = UiFactory.CreateText(go.transform, "Txt_Cost", "", 18, new Vector2(0f, -76f), new Vector2(handSize.x - 16f, 24f));
-            view.costText.raycastTarget = false;
+            // 美术图自带文字，卡面不再生成文本；覆盖层只用于悬停/腐化反馈，不污染美术颜色。
+            view.overlay = UiFactory.CreateImage(go.transform, "Overlay", Vector2.zero, handSize, Color.clear);
+            view.overlay.raycastTarget = false;
 
             view.SetCard(card);
             return view;
@@ -85,20 +85,14 @@ namespace SixDaysRemaining.UI
             {
                 baseColor = new Color(0.30f, 0.34f, 0.42f, 1f);
                 Background.color = baseColor;
-                titleText.text = "测试卡牌";
-                descText.text = "占位效果";
-                costText.text = "0";
+                hasArt = false;
+                UpdateOverlay();
                 return;
             }
 
-            string title = string.IsNullOrEmpty(card.Def.DisplayName)
-                ? card.Def.Id.ToString()
-                : card.Def.DisplayName;
-            titleText.text = title;
-            descText.text = CardText.DescribeDetail(card.Def);
-            costText.text = "0";
             baseColor = TintFor(card.Def);
             Background.color = baseColor;
+            ApplyCardArt();
         }
 
         public void SetCorruptedVisual(bool on)
@@ -112,18 +106,57 @@ namespace SixDaysRemaining.UI
             {
                 baseColor = new Color(0.38f, 0.14f, 0.20f, 1f);
                 hoverColor = new Color(0.52f, 0.22f, 0.30f, 1f);
-                string title = string.IsNullOrEmpty(Card.Def.DisplayName)
-                    ? Card.Def.Id.ToString()
-                    : Card.Def.DisplayName;
-                titleText.text = "Corrupted · " + title;
+                corrupted = true;
+                if (!hasArt)
+                {
+                    Background.color = baseColor;
+                }
+
+                UpdateOverlay();
             }
             else
             {
                 hoverColor = new Color(0.42f, 0.55f, 0.72f, 1f);
+                corrupted = false;
                 SetCard(Card);
             }
+        }
 
-            Background.color = baseColor;
+        /// <summary>
+        /// 若美术图已按 Resources/Cards/{ArtKey 或 CardDef.Id}.png 的规则导入，则替换占位底色；
+        /// 未导入时继续使用原来的颜色卡面，避免美术未到位时报错。
+        /// </summary>
+        private void ApplyCardArt()
+        {
+            Sprite art = null;
+            if (Card != null && Card.Def != null)
+            {
+                string artKey = string.IsNullOrEmpty(Card.Def.ArtKey)
+                    ? Card.Def.Id.ToString()
+                    : Card.Def.ArtKey;
+                art = Resources.Load<Sprite>("Cards/" + artKey);
+            }
+
+            // 临时占位回退：当前 star_moon 1..8 是同一张图，任意卡先统一显示第一张。
+            // 正式美术按 Id/ArtKey 命名后，这段回退自然不会再命中。
+            if (art == null)
+            {
+                art = Resources.Load<Sprite>("Cards/star_moon 1");
+            }
+
+            hasArt = art != null;
+            if (hasArt)
+            {
+                Background.sprite = art;
+                Background.color = Color.white;
+            }
+            else
+            {
+                Background.sprite = null;
+                Background.color = baseColor;
+            }
+
+            UpdateOverlay();
         }
 
         public void SetHighlighted(bool on)
@@ -133,7 +166,39 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            Background.color = on ? hoverColor : baseColor;
+            highlighted = on;
+            if (!hasArt)
+            {
+                Background.color = on ? hoverColor : baseColor;
+            }
+
+            UpdateOverlay();
+        }
+
+        private void UpdateOverlay()
+        {
+            if (overlay == null)
+            {
+                return;
+            }
+
+            if (corrupted)
+            {
+                overlay.color = CorruptedOverlayColor;
+            }
+            else if (highlighted)
+            {
+                overlay.color = HoverOverlayColor;
+            }
+            else
+            {
+                overlay.color = Color.clear;
+            }
+        }
+
+        public void SetSlotSize(Vector2 size)
+        {
+            slotSize = size;
         }
 
         public void AnimateToSlot(int slotIndex, Vector2 slotPos)
@@ -141,7 +206,7 @@ namespace SixDaysRemaining.UI
             InSlot = true;
             raised = false;
             StopHandAnimations();
-            layoutAnim = StartCoroutine(UiAnim.MoveAndResize(Rect, slotPos, slotSize, 0.18f));
+            layoutAnim = StartCoroutine(MoveAndResizeCard(slotPos, slotSize, 0.18f));
             rotateAnim = StartCoroutine(UiAnim.Rotate(Rect, 0f, 0.18f));
         }
 
@@ -151,7 +216,7 @@ namespace SixDaysRemaining.UI
             restingPosition = handPos;
             StopHandAnimations();
             Vector2 target = raised ? handPos + HoverRaiseOffset : handPos;
-            layoutAnim = StartCoroutine(UiAnim.MoveAndResize(Rect, target, handSize, 0.18f));
+            layoutAnim = StartCoroutine(MoveAndResizeCard(target, handSize, 0.18f));
             rotateAnim = StartCoroutine(UiAnim.Rotate(Rect, handAngleDeg, 0.18f));
         }
 
@@ -160,8 +225,73 @@ namespace SixDaysRemaining.UI
             restingPosition = pos;
             StopHandAnimations();
             Rect.anchoredPosition = raised ? pos + HoverRaiseOffset : pos;
-            Rect.sizeDelta = size;
+            ApplyCardLayout(size);
             Rect.localRotation = Quaternion.Euler(0f, 0f, angleDeg);
+        }
+
+        private IEnumerator MoveAndResizeCard(Vector2 toPos, Vector2 toSize, float duration)
+        {
+            Vector2 fromPos = Rect.anchoredPosition;
+            Vector2 fromSize = Rect.sizeDelta;
+            float t = 0f;
+            while (t < duration)
+            {
+                if (Rect == null)
+                {
+                    yield break;
+                }
+
+                t += Time.unscaledDeltaTime;
+                float k = duration <= 0f
+                    ? 1f
+                    : Mathf.Clamp01(t / duration);
+                Vector2 size = Vector2.LerpUnclamped(fromSize, toSize, k);
+                Rect.anchoredPosition = Vector2.LerpUnclamped(fromPos, toPos, k);
+                ApplyCardLayout(size);
+                yield return null;
+            }
+
+            if (Rect == null)
+            {
+                yield break;
+            }
+
+            Rect.anchoredPosition = toPos;
+            ApplyCardLayout(toSize);
+        }
+
+        private void ApplyCardLayout(Vector2 size)
+        {
+            if (Rect == null)
+            {
+                return;
+            }
+
+            Rect.sizeDelta = size;
+
+            float scaleX = handSize.x > 0.0001f ? size.x / handSize.x : 1f;
+            float scaleY = handSize.y > 0.0001f ? size.y / handSize.y : 1f;
+
+            SetChildRect(shadow != null ? shadow.rectTransform : null,
+                new Vector2(-8f * scaleX, -8f * scaleY),
+                size);
+            SetChildRect(Background != null ? Background.rectTransform : null,
+                Vector2.zero,
+                size);
+            SetChildRect(overlay != null ? overlay.rectTransform : null,
+                Vector2.zero,
+                size);
+        }
+
+        private static void SetChildRect(RectTransform child, Vector2 pos, Vector2 size)
+        {
+            if (child == null)
+            {
+                return;
+            }
+
+            child.anchoredPosition = pos;
+            child.sizeDelta = size;
         }
 
         public void SetInteractable(bool on)

@@ -44,15 +44,12 @@ namespace SixDaysRemaining.UI
         private bool interactable = true;
         private Action<SurvivorTrait> activated;
 
-        private void Awake()
-        {
-            if (avatarImage == null)
-            {
+        private void Awake() {
+            if (avatarImage == null) {
                 avatarImage = GetComponent<Image>();
             }
 
-            if (button == null)
-            {
+            if (button == null) {
                 button = GetComponent<Button>();
             }
         }
@@ -148,8 +145,7 @@ namespace SixDaysRemaining.UI
             this.used = used;
             this.interactable = interactable;
 
-            if (tooltip != null)
-            {
+            if (tooltip != null) {
                 tooltip.SetActive(false);
             }
 
@@ -206,7 +202,7 @@ namespace SixDaysRemaining.UI
             RefreshButtonState();
         }
 
-        public void SetInteractable(bool on)
+        public void SetInteractable(bool on) 
         {
             interactable = on;
             RefreshButtonState();

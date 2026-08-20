@@ -150,6 +150,7 @@ namespace SixDaysRemaining.App
             Shelter = new ShelterManager(Gameplay.State);
             Shelter.BindGameplay(Gameplay);
             Shelter.InitializeDefaultRoster(StartingFoodStock);
+            UnlockMetaSurvivors(Shelter.Survivors);
             ApplyDebugShelterOverrides();
             BindEventsSubsystem(seed);
         }
@@ -305,6 +306,24 @@ namespace SixDaysRemaining.App
             if (debugSettings.hungerDecayOverride > 0)
             {
                 Shelter.DailyHungerDecay = debugSettings.hungerDecayOverride;
+            }
+        }
+
+        /// <summary>开局/入住即解锁对应幸存者图鉴。</summary>
+        private void UnlockMetaSurvivors(IReadOnlyList<Survivor> survivors)
+        {
+            if (Meta == null || survivors == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                Survivor survivor = survivors[i];
+                if (survivor != null && !string.IsNullOrEmpty(survivor.defId))
+                {
+                    Meta.UnlockSurvivor(survivor.defId);
+                }
             }
         }
 

@@ -11,6 +11,7 @@ namespace SixDaysRemaining.App.Meta
         public int schemaVersion = 1;
         public string[] unlockedEndingIds = new string[0];
         public string[] unlockedStoryTags = new string[0];
+        public string[] unlockedSurvivorIds = new string[0];
     }
 
     /// <summary>
@@ -108,6 +109,53 @@ namespace SixDaysRemaining.App.Meta
             return profile.unlockedEndingIds ?? new string[0];
         }
 
+        public bool UnlockSurvivor(string defId)
+        {
+            if (string.IsNullOrWhiteSpace(defId))
+            {
+                return false;
+            }
+
+            string id = defId.Trim();
+            List<string> list = new List<string>(profile.unlockedSurvivorIds ?? new string[0]);
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (string.Equals(list[i], id, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            list.Add(id);
+            profile.unlockedSurvivorIds = list.ToArray();
+            Save();
+            return true;
+        }
+
+        public bool HasSurvivor(string defId)
+        {
+            if (string.IsNullOrWhiteSpace(defId) || profile.unlockedSurvivorIds == null)
+            {
+                return false;
+            }
+
+            string id = defId.Trim();
+            for (int i = 0; i < profile.unlockedSurvivorIds.Length; i++)
+            {
+                if (string.Equals(profile.unlockedSurvivorIds[i], id, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public IReadOnlyList<string> GetUnlockedSurvivorIds()
+        {
+            return profile.unlockedSurvivorIds ?? new string[0];
+        }
+
         public void ClearAll()
         {
             profile = CreateEmpty();
@@ -133,7 +181,8 @@ namespace SixDaysRemaining.App.Meta
             {
                 schemaVersion = SchemaVersion,
                 unlockedEndingIds = new string[0],
-                unlockedStoryTags = new string[0]
+                unlockedStoryTags = new string[0],
+                unlockedSurvivorIds = new string[0]
             };
         }
 
@@ -153,6 +202,11 @@ namespace SixDaysRemaining.App.Meta
             if (dto.unlockedStoryTags == null)
             {
                 dto.unlockedStoryTags = new string[0];
+            }
+
+            if (dto.unlockedSurvivorIds == null)
+            {
+                dto.unlockedSurvivorIds = new string[0];
             }
 
             return dto;

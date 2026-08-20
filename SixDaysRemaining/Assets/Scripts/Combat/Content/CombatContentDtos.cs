@@ -15,6 +15,7 @@ namespace SixDaysRemaining.Combat.Content
         public int id;
         public string displayName;
         public string description;
+        public string artKey;
         public string[] tags;
         public bool canBlacken = true;
         public EffectDto[] effects;

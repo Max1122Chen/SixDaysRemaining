@@ -83,12 +83,12 @@ namespace SixDaysRemaining.UI
             windowRt.anchoredPosition = new Vector2(0f, -20f);
             windowRt.sizeDelta = new Vector2(900f, 600f);
 
-            view.titleText = UiFactory.CreateText(window.transform, "Txt_Title", "", 34, new Vector2(0f, 250f), new Vector2(560f, 50f), TextAlignmentOptions.Center, Color.white);
+            view.titleText = UiFactory.CreateText(window.transform, "Txt_Title", "", 34, new Vector2(0f, 260f), new Vector2(560f, 50f), TextAlignmentOptions.Center, Color.white);
             view.titleText.raycastTarget = false;
 
             view.eventGroup = CreateFullChild(window.transform, "EventGroup");
             BuildArtPlaceholder(view.eventGroup.transform, "ArtPlaceholder", "示意图", new Vector2(-215f, -10f), new Vector2(390f, 450f));
-            view.bodyText = UiFactory.CreateText(view.eventGroup.transform, "Txt_Body", "", 20, new Vector2(240f, 175f), new Vector2(410f, 150f), TextAlignmentOptions.Top);
+            view.bodyText = UiFactory.CreateText(view.eventGroup.transform, "Txt_Body", "", 20, new Vector2(240f, 140f), new Vector2(410f, 150f), TextAlignmentOptions.Top);
             view.bodyText.raycastTarget = false;
 
             view.optionButtons = new Button[OptionCount];
@@ -184,7 +184,7 @@ namespace SixDaysRemaining.UI
 
             view.dayEndGroup = CreateFullChild(window.transform, "DayEndGroup");
             BuildArtPlaceholder(view.dayEndGroup.transform, "DayEndArt", "一日结束", new Vector2(-215f, -10f), new Vector2(390f, 450f));
-            view.summaryText = UiFactory.CreateText(view.dayEndGroup.transform, "Txt_Summary", "", 22, new Vector2(240f, 60f), new Vector2(410f, 320f), TextAlignmentOptions.Top);
+            view.summaryText = UiFactory.CreateText(view.dayEndGroup.transform, "Txt_Summary", "", 22, new Vector2(240f, 0f), new Vector2(410f, 320f), TextAlignmentOptions.Top);
             view.summaryText.raycastTarget = false;
             view.continueButton = UiFactory.CreateButton(
                 view.dayEndGroup.transform,
@@ -279,7 +279,7 @@ namespace SixDaysRemaining.UI
             pendingOptions = def != null ? def.Options : null;
             titleText.text = def != null ? def.Title : "事件";
             bodyText.text = def != null ? def.Body : "";
-            SetBodySize(new Vector2(240f, 175f), new Vector2(410f, 150f));
+            SetBodySize(new Vector2(240f, 140f), new Vector2(410f, 150f));
             if (resultContinueButton != null)
             {
                 resultContinueButton.gameObject.SetActive(false);
@@ -423,7 +423,7 @@ namespace SixDaysRemaining.UI
             pendingOptions = null;
             titleText.text = "事件结果";
             bodyText.text = BuildResultText(result, gi);
-            SetBodySize(new Vector2(240f, 90f), new Vector2(410f, 360f));
+            SetBodySize(new Vector2(240f, 0f), new Vector2(410f, 360f));
 
             for (int i = 0; i < optionButtons.Length; i++)
             {

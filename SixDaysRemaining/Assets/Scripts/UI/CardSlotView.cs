@@ -1,10 +1,11 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 出战卡槽视图：悬停 / 结算高亮；填充仅作逻辑标记，视觉与空槽相同（避免破坏原表现）。
+    /// 出战卡槽视图：悬停 / 结算边框亮起；填充仅作逻辑标记，视觉与空槽相同（避免破坏原表现）。
     /// </summary>
     public class CardSlotView : MonoBehaviour
     {
@@ -17,10 +18,12 @@ namespace SixDaysRemaining.UI
         private Color normalColor = new Color(0.42f, 0.45f, 0.52f, 0.55f);
         private Color hoverColor = new Color(0.55f, 0.80f, 1f, 0.9f);
         private static readonly Color ResolvingColor = new Color(1f, 0.78f, 0.25f, 0.95f);
+        private static readonly Color ResolvingGlowColor = new Color(1f, 0.94f, 0.62f, 1f);
 
         private bool hover;
         private bool filled;
         private bool resolving;
+        private Coroutine resolvingPulse;
 
         public static CardSlotView Create(Transform parent, int index, Vector2 pos, Vector2 size)
         {
@@ -94,6 +97,18 @@ namespace SixDaysRemaining.UI
             }
 
             resolving = on;
+            if (resolvingPulse != null)
+            {
+                StopCoroutine(resolvingPulse);
+                resolvingPulse = null;
+            }
+
+            if (resolving)
+            {
+                resolvingPulse = StartCoroutine(ResolvingPulseRoutine());
+                return;
+            }
+
             ApplyVisual();
         }
 
@@ -120,19 +135,37 @@ namespace SixDaysRemaining.UI
             if (resolving)
             {
                 frame.color = ResolvingColor;
-                Rect.localScale = new Vector3(1.08f, 1.08f, 1f);
                 return;
             }
 
             if (hover)
             {
                 frame.color = hoverColor;
-                Rect.localScale = new Vector3(1.06f, 1.06f, 1f);
                 return;
             }
 
             frame.color = normalColor;
             Rect.localScale = Vector3.one;
+        }
+
+        private IEnumerator ResolvingPulseRoutine()
+        {
+            float t = 0f;
+            while (resolving)
+            {
+                t += Time.unscaledDeltaTime;
+                if (frame != null)
+                {
+                    frame.color = Color.Lerp(
+                        ResolvingColor,
+                        ResolvingGlowColor,
+                        Mathf.PingPong(t * 3f, 1f));
+                }
+
+                yield return null;
+            }
+
+            ApplyVisual();
         }
     }
 }

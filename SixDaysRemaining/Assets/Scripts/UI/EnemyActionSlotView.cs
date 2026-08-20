@@ -1,3 +1,4 @@
+using System.Collections;
 using SixDaysRemaining.Combat;
 using TMPro;
 using UnityEngine;
@@ -21,9 +22,11 @@ namespace SixDaysRemaining.UI
 
         private static readonly Color NormalColor = new Color(0.22f, 0.25f, 0.30f, 0.9f);
         private static readonly Color ActiveColor = new Color(1f, 0.78f, 0.25f, 0.95f);
+        private static readonly Color ActiveGlowColor = new Color(1f, 0.94f, 0.62f, 1f);
 
         private bool active;
         private Color actionColor = NormalColor;
+        private Coroutine activePulse;
 
         public static EnemyActionSlotView Create(Transform parent, int index, Vector2 pos, Vector2 size)
         {
@@ -95,14 +98,39 @@ namespace SixDaysRemaining.UI
         public void SetActive(bool on)
         {
             active = on;
-            if (frame != null)
+            if (activePulse != null)
             {
-                frame.color = active ? ActiveColor : actionColor;
+                StopCoroutine(activePulse);
+                activePulse = null;
             }
 
-            if (Rect != null)
+            if (active)
             {
-                Rect.localScale = on ? new Vector3(1.08f, 1.08f, 1f) : Vector3.one;
+                activePulse = StartCoroutine(ActivePulseRoutine());
+                return;
+            }
+
+            if (frame != null)
+            {
+                frame.color = actionColor;
+            }
+        }
+
+        private IEnumerator ActivePulseRoutine()
+        {
+            float t = 0f;
+            while (active)
+            {
+                t += Time.unscaledDeltaTime;
+                if (frame != null)
+                {
+                    frame.color = Color.Lerp(
+                        ActiveColor,
+                        ActiveGlowColor,
+                        Mathf.PingPong(t * 3f, 1f));
+                }
+
+                yield return null;
             }
         }
 
