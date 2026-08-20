@@ -10,12 +10,12 @@ namespace SixDaysRemaining.Shelter
     /// </summary>
     public class ShelterManager
     {
-        public const int DefaultStartingFoodStock = 10;
+        public const int DefaultStartingFoodStock = 1;
         public const int DefaultHungryThreshold = 1;
         public const int DefaultHungerPerFoodUnit = 1;
         public const int DefaultDailyHungerDecay = 1;
         public const int MaxPopulation = 5;
-        public const int CorruptionOnDeath = 8;
+        public const int CorruptionOnDeath = 10;
 
         private readonly List<Survivor> survivors = new List<Survivor>();
         private readonly List<string> personnelChanges = new List<string>();
@@ -531,6 +531,23 @@ namespace SixDaysRemaining.Shelter
             bool fused = passives.TickEndOfDay();
             CleanupPassivesForAbsentSurvivors();
             return fused;
+        }
+
+        public void ResolveNextDayTransitions()
+        {
+            if (gameplay == null || !gameplay.HasTagExact(GameplayTags.WandererDiesNextDay))
+            {
+                return;
+            }
+
+            gameplay.RemoveTag(GameplayTags.WandererDiesNextDay);
+            Survivor wanderer = FindByDefId(SurvivorIds.Wanderer);
+            if (wanderer == null || !IsAlive(wanderer))
+            {
+                return;
+            }
+
+            MarkDead(wanderer, "流浪者死亡，腐蚀度+10");
         }
 
         private void TryActivateDoctorBigu()

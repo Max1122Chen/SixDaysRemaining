@@ -15,6 +15,9 @@ namespace SixDaysRemaining.Combat
         private readonly DeckRuntime deck = new DeckRuntime();
         private readonly HashSet<int> usedTraitIds = new HashSet<int>();
 
+        private int deckSeedBase;
+        private int turnDrawCounter;
+
         public bool Invincible { get; set; }
 
         public DeckRuntime Deck
@@ -28,6 +31,8 @@ namespace SixDaysRemaining.Combat
             deck.LoadDefs(starterCards);
             deck.Shuffle(seed);
             deck.DrawUntilHandLimit(HandLimit);
+            deckSeedBase = seed;
+            turnDrawCounter = 0;
         }
 
         public bool IsTraitUsed(int traitId)
@@ -55,6 +60,10 @@ namespace SixDaysRemaining.Combat
         public void OnPlayerTurnStart()
         {
             deck.ClearSelection();
+            // 回合补牌前重洗：避免“连续抽到同类卡”的固定序列感。
+            // 使用确定性 seed，确保同一局可复现。
+            turnDrawCounter++;
+            deck.Shuffle(deckSeedBase + turnDrawCounter * 997);
             deck.DrawUntilHandLimit(HandLimit);
         }
 

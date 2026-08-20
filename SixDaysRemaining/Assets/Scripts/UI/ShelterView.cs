@@ -241,26 +241,18 @@ namespace SixDaysRemaining.UI
 
         private void RefreshExpeditionControls(GameInstance gi, GameState state)
         {
-            bool expeditionBlocked = gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition);
             if (departButton != null)
             {
-                departButton.interactable = !expeditionBlocked
-                    && state.currentPhase == GameplayPhase.ExpeditionPrep
+                // 设计需求：幼童陪玩（ForbiddenExpedition）不应把“外出战斗/出发”硬禁用，
+                // 而是点击后走“承诺陪玩代替出战”的流程推进每日事件链。
+                departButton.interactable = state.currentPhase == GameplayPhase.ExpeditionPrep
                     && (gi.Events == null || !gi.Events.IsSequenceActive);
-                TextMeshProUGUI label = departButton.GetComponentInChildren<TextMeshProUGUI>();
-                if (label != null)
-                {
-                    label.text = expeditionBlocked
-                        ? "你答应了幼童，今天要陪他一起玩抛石头"
-                        : "出发";
-                }
             }
 
             if (dayEndButton != null)
             {
-                bool showDayEnd = expeditionBlocked
-                    && state.currentPhase == GameplayPhase.ExpeditionPrep
-                    && (gi.Events == null || !gi.Events.IsSequenceActive);
+                // 避免玩家跳过“承诺陪玩代替出战”的流程，导致每日事件链无法推进。
+                bool showDayEnd = false;
                 dayEndButton.gameObject.SetActive(showDayEnd);
                 dayEndButton.interactable = showDayEnd;
             }
@@ -620,7 +612,8 @@ namespace SixDaysRemaining.UI
                 for (int i = 0; i < roster.Count; i++)
                 {
                     Survivor s = roster[i];
-                    if (s.status != SurvivorStatus.Dead && s.status != SurvivorStatus.Left)
+                    if (s.status != SurvivorStatus.Dead && s.status != SurvivorStatus.Left
+                        && s.defId != SurvivorIds.Wanderer)
                     {
                         alive.Add(s);
                     }

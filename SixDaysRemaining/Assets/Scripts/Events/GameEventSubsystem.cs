@@ -444,6 +444,10 @@ namespace SixDaysRemaining.Events
                     if (shelter != null && !string.IsNullOrEmpty(fragment.SurvivorDefId))
                     {
                         shelter.TakeIn(fragment.SurvivorDefId);
+                        if (string.Equals(fragment.SurvivorDefId, SurvivorIds.Wanderer, StringComparison.Ordinal))
+                        {
+                            gameplay.AddTag(GameplayTags.WandererDiesNextDay);
+                        }
                     }
                     break;
                 case GameEventEffectOp.ExpelSurvivor:

@@ -20,6 +20,8 @@ namespace SixDaysRemaining.Combat
         public int TurnsElapsed;
         public string RewardTier;
         public bool RunEndedByCorruption;
+        /// <summary>为 true 时表示 CorruptionDelta 已在战斗中写入 RunCorruption，结算继续时不应重复 Apply。</summary>
+        public bool CorruptionAlreadyApplied;
     }
 
     public class CombatStartConfig
@@ -33,7 +35,8 @@ namespace SixDaysRemaining.Combat
         public IReadOnlyList<CardDef> StarterCards;
         public int DeckSeed = 1;
         public int WinFoodGained = 3;
-        public int FlatCorruptionOnFinish = 3;
+        // 设计需求：无论战斗轮数/空槽数量，结算固定腐蚀为 +10
+        public int FlatCorruptionOnFinish = 10;
         public bool UseRoundRewards;
         public System.Random ResolveRng;
         public ICorruptionRunState RunCorruption;
@@ -64,6 +67,7 @@ namespace SixDaysRemaining.Combat
         private CombatResolveContext resolveContext;
         private int cardCorruptionDelta;
         private int passivePenaltyStacks;
+        private int runCorruptionAppliedDelta;
         private ICorruptionRunState runCorruption;
         private int fallbackRunCorruption;
         private CombatResult result;
@@ -194,10 +198,7 @@ namespace SixDaysRemaining.Combat
                 }
             }
 
-            if (placed < 3)
-            {
-                passivePenaltyStacks++;
-            }
+            passivePenaltyStacks += SlotCount - placed;
 
             session.Player.ClearSelection();
             for (int i = 0; i < SlotCount; i++)
@@ -471,6 +472,7 @@ namespace SixDaysRemaining.Combat
             roundActive = false;
             cardCorruptionDelta = 0;
             passivePenaltyStacks = 0;
+            runCorruptionAppliedDelta = 0;
             runCorruption = config.RunCorruption;
             ownedTraits = config.OwnedTraits != null ? config.OwnedTraits : TraitCatalog.GetDefaultOwnedTraits();
             fallbackRunCorruption = runCorruption != null
@@ -578,6 +580,7 @@ namespace SixDaysRemaining.Combat
                     return true;
                 }
 
+                runCorruptionAppliedDelta += delta;
                 return false;
             }
 
@@ -684,8 +687,8 @@ namespace SixDaysRemaining.Combat
             int corruption = cardCorruptionDelta;
             if (applyFlatCorruption)
             {
-                int flat = config != null ? config.FlatCorruptionOnFinish : 3;
-                int finishDelta = flat + passivePenaltyStacks * 2;
+                int flat = config != null ? config.FlatCorruptionOnFinish : 10;
+                int finishDelta = flat + passivePenaltyStacks * 3;
                 if (runCorruption != null)
                 {
                     if (runCorruption.ApplyCorruption(finishDelta))
@@ -694,16 +697,17 @@ namespace SixDaysRemaining.Combat
                         return;
                     }
 
-                    corruption = 0;
+                    runCorruptionAppliedDelta += finishDelta;
                 }
                 else
                 {
                     corruption += finishDelta;
                 }
             }
-            else if (runCorruption != null)
+
+            if (runCorruption != null)
             {
-                corruption = 0;
+                corruption = runCorruptionAppliedDelta;
             }
 
             finished = true;
@@ -719,6 +723,7 @@ namespace SixDaysRemaining.Combat
                 corruption = 0;
             }
 
+            result.CorruptionAlreadyApplied = runCorruption != null;
             if (outcome == CombatOutcome.Win && config != null && config.UseRoundRewards)
             {
                 CombatRewardTier tier = CombatRewardTable.GetTier(turnsElapsed);

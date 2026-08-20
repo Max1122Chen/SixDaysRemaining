@@ -16,7 +16,7 @@ namespace SixDaysRemaining.App
     public class GameInstance : MonoBehaviour
     {
         public const int DefaultNewGameSeed = 42;
-        public const int StartingFoodStock = 5;
+        public const int StartingFoodStock = 1;
 
         public static GameInstance Instance { get; private set; }
 

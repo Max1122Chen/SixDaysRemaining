@@ -199,10 +199,10 @@
     {
       "id": "child_stone_day2",
       "title": "角落里的石子",
-      "body": "（旧版 D2，已停用）",
+      "body": "幼童攥着磨圆的石头蹲在角落，举起石子盯着你，突然说：“明天能不能陪我玩一会抛石头？没人陪我玩，我好孤单。英雄一定可以解决我的烦恼！”",
       "trigger": "AfterTriumph",
       "priority": 90,
-      "enabled": false,
+      "enabled": true,
       "requiredDayMin": 2,
       "requiredDayMax": 2,
       "requiredSurvivorIds": ["child"],
@@ -210,10 +210,11 @@
         {
           "id": "stay_play",
           "label": "放下搜集计划，留下来陪他玩耍",
-          "resultText": "你答应了他。",
+          "resultText": "你答应了他。今天晚些时候，庇护所里难得有了笑声。",
           "effects": [
             { "op": "CorruptionDelta", "amount": -20 },
-            { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" }
+            { "op": "AddTag", "tagId": "State.ForbiddenExpedition.Once" },
+            { "op": "AddTag", "tagId": "Story.Child.PlayBoost.Once" }
           ]
         },
         {
@@ -221,6 +222,7 @@
           "label": "婉拒，优先外出搜集物资",
           "resultText": "幼童没再说话。",
           "effects": [
+            { "op": "AddTag", "tagId": "Story.Child.PassiveOff.Once" },
             { "op": "AddTag", "tagId": "Story.ChildStone.Declined.Day2" }
           ]
         }

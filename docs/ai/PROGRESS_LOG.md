@@ -2,6 +2,20 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-20（CORE-F09 设计师反馈修复包 01 启动）
+
+- 范围：对齐设计师反馈中的规则错配、流程阻塞与关键 UI 反馈
+- 已完成（逻辑）：
+  - 战斗腐蚀：固定 +10、空槽每格 +3（`CombatManager` / `AppFlowController`）
+  - NPC 死亡腐蚀 +10（`ShelterManager`）
+  - 幼童陪玩：`ForbiddenExpedition` 日仍可出征，走 `ResolvePromisedPlayDay` 推进事件链
+  - 流浪者：接纳打 tag、次日 `ResolveNextDayTransitions` 死亡+弹幕；庇护所卡片不展示立绘
+  - 开局食物 1；starter 剑意 5 / 血祭 3；回合补牌前洗牌
+  - 已撤回 UI 改动（交 UI 伙伴）
+- 下一步：
+  - Play 验证：战斗腐蚀、幼童陪玩、流浪者次日死亡、开局资源与牌库洗牌
+  - UI 项（2/3/7/8/9）不在本 feat 范围
+
 ## 2026-08-16（内容对齐盘点 + README）
 
 - 对照 `docs/designs/` 产品源与 `FEATURE_REGISTRY` / StreamingAssets

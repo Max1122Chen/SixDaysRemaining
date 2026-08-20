@@ -155,7 +155,8 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnNewGame()
         {
-            Game.StartNewGame(GameInstance.DefaultNewGameSeed);
+            int seed = System.Guid.NewGuid().GetHashCode();
+            Game.StartNewGame(seed);
             ShowStoryIntro();
         }
 
@@ -182,11 +183,6 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
-            if (gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition))
-            {
-                return;
-            }
-
             DebugRunSettings debug = gi.DebugSettings;
             bool skipCombat = debug != null && debug.skipCombat;
             if (!skipCombat && (gi.PlayerCombat == null || gi.EnemyPrefab == null))
@@ -195,6 +191,13 @@ namespace SixDaysRemaining.Gameplay
             }
 
             gi.Gameplay.AdvancePhase();
+
+            if (gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition))
+            {
+                gi.Gameplay.RemoveTag(GameplayTags.ForbiddenExpeditionOnce);
+                ResolvePromisedPlayDay(gi);
+                return;
+            }
 
             if (skipCombat)
             {
@@ -211,7 +214,7 @@ namespace SixDaysRemaining.Gameplay
             config.DeckSeed = unchecked(gi.Gameplay.State.rngSeed + gi.Gameplay.State.day * 997);
             config.Day = gi.Gameplay.State.day;
             config.UseRoundRewards = true;
-            config.FlatCorruptionOnFinish = 3;
+            config.FlatCorruptionOnFinish = 10;
             config.RunCorruption = new GameplayCorruptionBridge(gi.Gameplay);
             if (gi.Shelter != null)
             {
@@ -244,6 +247,29 @@ namespace SixDaysRemaining.Gameplay
             };
 
             OnCombatFinished(result);
+        }
+
+        private void ResolvePromisedPlayDay(GameInstance gi)
+        {
+            CombatResult result = new CombatResult
+            {
+                Outcome = CombatOutcome.Win,
+                FoodGained = 0,
+                CorruptionDelta = 0,
+                TurnsElapsed = 0,
+                RewardTier = "陪玩",
+                RunEndedByCorruption = false
+            };
+
+            // 设计需求：幼童陪玩应视作“外出战斗已完成”，直接推进到结算后的庇护所事件链，
+            // 不额外弹出“战斗结算”浮层（避免玩家以为发生了真实战斗）。
+            pendingResult = result;
+            if (gi.Gameplay.CurrentPhase == GameplayPhase.Combat)
+            {
+                gi.Gameplay.AdvancePhase(); // Combat -> TriumphReturn
+            }
+
+            OnSettlementContinue();
         }
 
         public void BeginDayEnd()
@@ -311,7 +337,9 @@ namespace SixDaysRemaining.Gameplay
             }
 
             gi.Shelter.DepositFood(pendingResult.FoodGained);
-            if (gi.Gameplay.ApplyCorruption(pendingResult.CorruptionDelta))
+            if (!pendingResult.CorruptionAlreadyApplied
+                && pendingResult.CorruptionDelta != 0
+                && gi.Gameplay.ApplyCorruption(pendingResult.CorruptionDelta))
             {
                 ForceEndingFlow(gi.Gameplay.State != null ? gi.Gameplay.State.endingId : EndingIds.G);
                 return;
@@ -459,6 +487,7 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
+            gi.Shelter?.ResolveNextDayTransitions();
             EnterShelterWithBeforeDepart(resetBudget: true);
         }
 

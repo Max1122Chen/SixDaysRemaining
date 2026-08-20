@@ -19,6 +19,7 @@ namespace SixDaysRemaining.Gameplay
         public const string DoctorBiguActive = "Story.Doctor.BiguActive";
 
         public const string TempPlayerHpOnce = "State.Combat.TempPlayerHp.Once";
+        public const string WandererDiesNextDay = "Story.Wanderer.DiesNextDay";
 
         public const string Day4SavePrompted = "Story.Save.Day4Prompted";
     }
