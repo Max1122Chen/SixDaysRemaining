@@ -435,6 +435,13 @@ namespace SixDaysRemaining.UI
                 return gameEventView;
             }
 
+            // 支持场景手动搭建：如果场景里已经放了 GameEventView 并拖好引用，直接复用。
+            gameEventView = FindObjectOfType<GameEventView>(true);
+            if (gameEventView != null)
+            {
+                return gameEventView;
+            }
+
             Transform root = GetUiRoot();
             if (root == null || flow == null)
             {

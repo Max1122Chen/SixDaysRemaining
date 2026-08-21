@@ -19,6 +19,9 @@ namespace SixDaysRemaining.UI
 
         private AppFlowController flow;
 
+        [SerializeField, Tooltip("场景手动搭建时保持 Txt_Body 的位置/大小不被代码覆盖")]
+        private bool preserveManualLayout = true;
+
         [SerializeField]
         private TextMeshProUGUI titleText;
 
@@ -36,6 +39,9 @@ namespace SixDaysRemaining.UI
 
         [SerializeField]
         private GameObject dayEndGroup;
+
+        [SerializeField]
+        private TextMeshProUGUI dayEndTitleText;
 
         [SerializeField]
         private TextMeshProUGUI summaryText;
@@ -69,12 +75,16 @@ namespace SixDaysRemaining.UI
 
         private GameEventOptionDef[] pendingOptions;
         private readonly List<string> swapDefIds = new List<string>();
+        private readonly Color[] cachedOptionLabelColors = new Color[OptionCount];
+        private readonly bool[] cachedOptionLabelColorFlags = new bool[OptionCount];
 
         public static GameEventView Build(Transform parent, AppFlowController flow)
         {
             GameObject overlay = UiFactory.CreatePanel(parent, "GameEventOverlay", new Color(0f, 0f, 0f, 0.72f));
             GameEventView view = overlay.AddComponent<GameEventView>();
             view.flow = flow;
+            // 代码生成 UI 时仍由代码控制布局；场景手动搭建时保留手动布局。
+            view.preserveManualLayout = false;
 
             GameObject window = UiFactory.CreatePanel(overlay.transform, "Window", new Color(0.09f, 0.11f, 0.14f, 1f), false);
             RectTransform windowRt = window.GetComponent<RectTransform>();
@@ -205,6 +215,15 @@ namespace SixDaysRemaining.UI
         public void Wire(AppFlowController flow)
         {
             this.flow = flow;
+            if (dayEndTitleText == null && dayEndGroup != null)
+            {
+                Transform title = dayEndGroup.transform.Find("Txt_Title");
+                if (title != null)
+                {
+                    dayEndTitleText = title.GetComponent<TextMeshProUGUI>();
+                }
+            }
+
             if (resultContinueButton == null)
             {
                 Transform parent = eventGroup != null ? eventGroup.transform : transform;
@@ -277,9 +296,21 @@ namespace SixDaysRemaining.UI
         public void ShowEvent(GameEventDef def)
         {
             pendingOptions = def != null ? def.Options : null;
-            titleText.text = def != null ? def.Title : "事件";
-            bodyText.text = def != null ? def.Body : "";
-            SetBodySize(new Vector2(240f, 140f), new Vector2(410f, 150f));
+            if (titleText != null)
+            {
+                titleText.text = def != null ? def.Title : "事件";
+            }
+
+            if (bodyText != null)
+            {
+                bodyText.text = def != null ? def.Body : "";
+            }
+
+            if (!preserveManualLayout)
+            {
+                SetBodySize(new Vector2(240f, 140f), new Vector2(410f, 150f));
+            }
+
             if (resultContinueButton != null)
             {
                 resultContinueButton.gameObject.SetActive(false);
@@ -308,10 +339,18 @@ namespace SixDaysRemaining.UI
                 TextMeshProUGUI label = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>(true);
                 if (label != null)
                 {
+                    // 记住第一次见到时的颜色（即你在场景里手动设置的颜色），
+                    // 之后每次显示都恢复它，避免被禁用态灰色污染。
+                    if (!cachedOptionLabelColorFlags[i])
+                    {
+                        cachedOptionLabelColors[i] = label.color;
+                        cachedOptionLabelColorFlags[i] = true;
+                    }
+
                     if (enabled)
                     {
                         label.text = option.Label;
-                        label.color = Color.white;
+                        label.color = cachedOptionLabelColors[i];
                     }
                     else
                     {
@@ -334,13 +373,24 @@ namespace SixDaysRemaining.UI
                 savePromptGroup.SetActive(false);
             }
 
-            eventGroup.SetActive(true);
-            dayEndGroup.SetActive(false);
+            if (eventGroup != null)
+            {
+                eventGroup.SetActive(true);
+            }
+
+            if (dayEndGroup != null)
+            {
+                dayEndGroup.SetActive(false);
+            }
         }
 
         public void ShowSavePrompt()
         {
-            titleText.text = "存档提示";
+            if (titleText != null)
+            {
+                titleText.text = "存档提示";
+            }
+
             if (savePromptBodyText != null)
             {
                 savePromptBodyText.text = "第四天随机事件危险系数高，开放存档。您是否存档？";
@@ -369,7 +419,11 @@ namespace SixDaysRemaining.UI
 
         public void ShowTakeInSwap(IReadOnlyList<Survivor> alive)
         {
-            titleText.text = "庇护所已满";
+            if (titleText != null)
+            {
+                titleText.text = "庇护所已满";
+            }
+
             if (swapBodyText != null)
             {
                 swapBodyText.text = "接纳新人前，请选择一位现有幸存者离开。取消则返回选项。";
@@ -391,7 +445,6 @@ namespace SixDaysRemaining.UI
                 if (label != null)
                 {
                     label.text = string.IsNullOrEmpty(s.name) ? s.defId : s.name;
-                    label.color = Color.white;
                 }
 
                 swapButtons[i].interactable = true;
@@ -421,9 +474,20 @@ namespace SixDaysRemaining.UI
         public void ShowResult(GameEventResult result, GameInstance gi)
         {
             pendingOptions = null;
-            titleText.text = "事件结果";
-            bodyText.text = BuildResultText(result, gi);
-            SetBodySize(new Vector2(240f, 0f), new Vector2(410f, 360f));
+            if (titleText != null)
+            {
+                titleText.text = "事件结果";
+            }
+
+            if (bodyText != null)
+            {
+                bodyText.text = BuildResultText(result, gi);
+            }
+
+            if (!preserveManualLayout)
+            {
+                SetBodySize(new Vector2(240f, 0f), new Vector2(410f, 360f));
+            }
 
             for (int i = 0; i < optionButtons.Length; i++)
             {
@@ -449,19 +513,39 @@ namespace SixDaysRemaining.UI
                 resultContinueButton.gameObject.SetActive(true);
             }
 
-            eventGroup.SetActive(true);
-            dayEndGroup.SetActive(false);
+            if (eventGroup != null)
+            {
+                eventGroup.SetActive(true);
+            }
+
+            if (dayEndGroup != null)
+            {
+                dayEndGroup.SetActive(false);
+            }
         }
 
         public void ShowDayEnd(GameInstance gi, IReadOnlyList<string> changes)
         {
-            titleText.text = "第 " + gi.Gameplay.State.day + " 天结束";
+            if (titleText != null)
+            {
+                titleText.text = "第 " + gi.Gameplay.State.day + " 天结束";
+            }
+
+            if (dayEndTitleText != null)
+            {
+                dayEndTitleText.text = "第 " + gi.Gameplay.State.day + " 天结束";
+            }
+
             string body = changes != null && changes.Count > 0
                 ? string.Join("\n", changes)
                 : "今日庇护所内无人员变动";
-            summaryText.text = "存粮：" + gi.Gameplay.State.foodStock
-                + "\n腐蚀度：" + gi.Gameplay.State.corruption
-                + "\n\n今日记事\n" + body;
+            if (summaryText != null)
+            {
+                summaryText.text = "存粮：" + gi.Gameplay.State.foodStock
+                    + "\n腐蚀度：" + gi.Gameplay.State.corruption
+                    + "\n\n今日记事\n" + body;
+            }
+
 
             if (swapGroup != null)
             {
@@ -473,8 +557,15 @@ namespace SixDaysRemaining.UI
                 savePromptGroup.SetActive(false);
             }
 
-            eventGroup.SetActive(false);
-            dayEndGroup.SetActive(true);
+            if (eventGroup != null)
+            {
+                eventGroup.SetActive(false);
+            }
+
+            if (dayEndGroup != null)
+            {
+                dayEndGroup.SetActive(true);
+            }
         }
 
         private void OnOptionClicked(int index)
