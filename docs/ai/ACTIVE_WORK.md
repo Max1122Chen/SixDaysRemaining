@@ -4,7 +4,8 @@
 
 | 优先级 | 关联 | 状态 | 负责人 | 下一步行动 |
 |--------|------|------|--------|-------------|
-| P0 | **END-F02** 结局判定数据驱动（A–I） | In Progress | Max | endings.json + RunComplete/CombatLose/PopulationZero |
+| P0 | **AUDIO-F01** 场景 BGM 接入 | In Progress | Max | 已挂钩 Presentation；Play：主菜单/故事/庇护所/战斗/结局 |
+| P0 | **END-F02** 结局判定数据驱动（A–I） | Review | Max | 已合 main；轻 Play 后可 Done |
 | P0 | **CORE-F09** 设计师反馈修复包 01（逻辑） | Review | Max | 已合 main；UI 2/3/7/8 交伙伴 |
 | P0 | **COMB-F11** 卡牌数值 2.0 | Review | Max | JSON 已同步；轻 Play / EditMode 后可 Done |
 | — | **SHLT-F05** / **EVT-F04** / **SAVE-F02** | Review（半开放） | 他人验收 | Play：辟谷、陪玩 −12、实验、临时 HP、D4 存档、D5 |

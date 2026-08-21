@@ -2,6 +2,16 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-21（AUDIO-F01 场景 BGM）
+
+- 范围：2 首设计师 mp3 按文件名映射主界面；单通道淡入淡出
+- 已完成：
+  - 资源：`Resources/Audio/Bgm/destiny.mp3`（《宿命》）、`dark_altar.mp3`（《黑暗祭祀圣坛》）
+  - `BgmService`（同曲续播 / 换曲 0.5s 淡化）
+  - `PresentationManager`：Start/Combat/Ending→Destiny；Story/Shelter→DarkAltar
+  - Overlay 不换曲；音量跟随 `AudioListener.volume`
+- 下一步：Play 验收后标 Review/Done
+
 ## 2026-08-20（END-F02 结局判定数据驱动）
 
 - 范围：按《结局设计》落地 A–I；JSON 条件 + 优先级，同构事件系统

@@ -1,5 +1,6 @@
 using System;
 using SixDaysRemaining.App;
+using SixDaysRemaining.App.Audio;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Debugging;
 using SixDaysRemaining.Gameplay;
@@ -88,6 +89,7 @@ namespace SixDaysRemaining.UI
             }
 
             flow.BindGame(gi);
+            BgmService.Ensure(gameObject);
             presentation.Bind(
                 flow,
                 startView,

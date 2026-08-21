@@ -40,7 +40,8 @@
 | `SAVE-F02` | 第四日存档询问 | CORE | Review（半开放） | `designs/SAVE-F02-day4-save-prompt.md` | — | `main` | Max | 他人 Play |
 | `COMB-F11` | 卡牌数值 2.0 同步 | COMB | Review | `designs/COMB-F11-card-values-2.md` | — | `main` | Max | 敌人计划已同步；待 EditMode/轻 Play |
 | `CORE-F09` | 设计师反馈修复包 01（逻辑） | CORE | Review | `designs/CORE-F09-designer-fix-pack-01.md` | — | `main` | Max | 逻辑 only；UI 2/3/7/8/9 交伙伴 |
-| `END-F02` | 结局判定数据驱动（A–I） | CORE | In Progress | `designs/END-F02-data-driven-endings.md` | — | `main` | Max | endings.json + EndingEvaluator |
+| `END-F02` | 结局判定数据驱动（A–I） | CORE | Review | `designs/END-F02-data-driven-endings.md` | — | `main` | Max | endings.json 已落地；待轻 Play |
+| `AUDIO-F01` | 场景 BGM 接入 | AUDIO | In Progress | `designs/AUDIO-F01-scene-bgm.md` | — | `main` | Max | BgmService + Resources；待 Play |
 
 ## 域代码
 
@@ -50,6 +51,7 @@
 - `UI` - 界面交互与呈现
 - `EVT` - 突发事件
 - `META` - 局外回顾 / 成就式元数据
+- `AUDIO` - 背景音 / 音效
 
 ## 近期执行顺序（2026-08-16）
 

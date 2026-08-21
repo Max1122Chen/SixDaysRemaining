@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SixDaysRemaining.App;
+using SixDaysRemaining.App.Audio;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Events;
 using SixDaysRemaining.Gameplay;
@@ -144,6 +145,7 @@ namespace SixDaysRemaining.UI
 
         private void ShowStartScreen()
         {
+            BgmService.Ensure(gameObject).SetTarget(BgmId.Destiny);
             SwitchScreen(startView != null ? startView.gameObject : null);
             RefreshStartScreen();
             HideHud();
@@ -181,6 +183,7 @@ namespace SixDaysRemaining.UI
 
         private void ShowStoryIntroScreen()
         {
+            BgmService.Ensure(gameObject).SetTarget(BgmId.DarkAltar);
             SwitchScreen(storyView != null ? storyView.gameObject : null);
             if (storyView != null)
             {
@@ -192,6 +195,7 @@ namespace SixDaysRemaining.UI
 
         private void ShowShelterScreen()
         {
+            BgmService.Ensure(gameObject).SetTarget(BgmId.DarkAltar);
             EnsureHud();
             SwitchScreen(shelterView != null ? shelterView.gameObject : null);
             if (hudView != null)
@@ -209,6 +213,7 @@ namespace SixDaysRemaining.UI
 
         private void ShowCombatScreen()
         {
+            BgmService.Ensure(gameObject).SetTarget(BgmId.Destiny);
             EnsureHud();
             SwitchScreen(combatView != null ? combatView.gameObject : null);
             if (hudView != null)
@@ -226,6 +231,7 @@ namespace SixDaysRemaining.UI
 
         private void ShowEndingScreen()
         {
+            BgmService.Ensure(gameObject).SetTarget(BgmId.Destiny);
             SwitchScreen(endingView != null ? endingView.gameObject : null);
             if (endingView != null)
             {
