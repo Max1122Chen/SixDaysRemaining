@@ -80,7 +80,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
             CardInstance[] empty = new CardInstance[5];
             Assert.IsTrue(manager.BeginRound(empty));
-            Assert.AreEqual(1, manager.PassivePenaltyStacks);
+            Assert.AreEqual(5, manager.PassivePenaltyStacks);
         }
 
         [Test]

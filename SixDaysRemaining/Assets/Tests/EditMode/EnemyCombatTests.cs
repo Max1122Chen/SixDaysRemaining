@@ -34,7 +34,7 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(0, enemy.PlanIndex);
             CardInstance first = enemy.GetSlotCard(0);
             Assert.IsNotNull(first);
-            Assert.AreEqual(CardIds.Attack(4), first.Def.Id);
+            Assert.AreEqual(CardIds.Attack(3), first.Def.Id);
 
             CombatSession session = new CombatSession(player, new[] { enemy });
             CombatResolveContext context = new CombatResolveContext
@@ -48,11 +48,11 @@ namespace SixDaysRemaining.Tests.EditMode
 
             float playerHp = player.Attributes.HP;
             CombatEffectExecutor.Execute(enemy.GetSlotCard(0), enemy, context);
-            Assert.AreEqual(playerHp - 4f, player.Attributes.HP);
+            Assert.AreEqual(playerHp - 3f, player.Attributes.HP);
 
             enemy.AdvanceRoundPlan();
             Assert.AreEqual(1, enemy.PlanIndex);
-            Assert.AreEqual(CardIds.Attack(5), enemy.GetSlotCard(0).Def.Id);
+            Assert.AreEqual(CardIds.Attack(4), enemy.GetSlotCard(0).Def.Id);
 
             enemy.AdvanceRoundPlan();
             enemy.AdvanceRoundPlan();

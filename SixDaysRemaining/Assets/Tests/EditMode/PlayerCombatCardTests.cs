@@ -35,7 +35,7 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(PlayerCombatComponent.HandLimit, 8);
             Assert.AreEqual(PlayerCombatComponent.CommitCount, 5);
             Assert.AreEqual(8, player.Deck.Hand.Count);
-            Assert.AreEqual(8, player.Deck.DrawPile.Count);
+            Assert.AreEqual(10, player.Deck.DrawPile.Count);
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.AreEqual(0, player.Deck.Selection.Count);
             Assert.AreEqual(3, player.Deck.Hand.Count);
-            Assert.AreEqual(13, player.Deck.DrawPile.Count);
+            Assert.AreEqual(15, player.Deck.DrawPile.Count);
 
             for (int i = 0; i < 5; i++)
             {

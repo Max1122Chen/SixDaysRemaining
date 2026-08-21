@@ -42,7 +42,7 @@ namespace SixDaysRemaining.Tests.EditMode
             Assert.AreEqual(5f, sleepFive.Effects[0].Amount);
 
             System.Collections.Generic.List<CardDef> starter = CombatContent.CreateDefaultStarterDefs();
-            Assert.AreEqual(16, starter.Count);
+            Assert.AreEqual(18, starter.Count);
         }
 
         [Test]

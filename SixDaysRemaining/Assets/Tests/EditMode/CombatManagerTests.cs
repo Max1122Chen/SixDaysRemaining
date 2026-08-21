@@ -96,13 +96,13 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.IsTrue(manager.IsFinished);
             Assert.AreEqual(CombatOutcome.Win, manager.Result.Outcome);
-            Assert.AreEqual(4, manager.Result.FoodGained);
+            Assert.AreEqual(5, manager.Result.FoodGained);
             Assert.AreEqual(3, manager.Result.CorruptionDelta);
             Assert.AreEqual("速战", manager.Result.RewardTier);
         }
 
         [Test]
-        public void EmptySlots_UnderThree_AddsPassivePenaltyCorruption()
+        public void EmptySlots_AddsPassivePenaltyCorruptionPerEmptySlot()
         {
             Start(new CombatStartConfig
             {
@@ -119,11 +119,12 @@ namespace SixDaysRemaining.Tests.EditMode
             slots[0] = player.Deck.Hand[0];
             slots[1] = player.Deck.Hand[1];
             Assert.IsTrue(manager.BeginRound(slots));
-            Assert.AreEqual(1, manager.PassivePenaltyStacks);
+            // 5 槽出 2 张 → 3 空槽；每空槽 +3 腐蚀（叠在 flat 上）
+            Assert.AreEqual(3, manager.PassivePenaltyStacks);
             manager.ResolvePlayerSlot(0);
 
             Assert.IsTrue(manager.IsFinished);
-            Assert.AreEqual(5, manager.Result.CorruptionDelta);
+            Assert.AreEqual(3 + 3 * 3, manager.Result.CorruptionDelta);
         }
 
         [Test]
