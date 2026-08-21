@@ -482,7 +482,13 @@ namespace SixDaysRemaining.Gameplay
             CloseOverlay();
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
-                string endingId = gi.Gameplay.State != null ? gi.Gameplay.State.endingId : EndingIds.MaxDay;
+                string endingId = gi.Gameplay.State != null ? gi.Gameplay.State.endingId : null;
+                if (string.IsNullOrEmpty(endingId)
+                    || string.Equals(endingId, EndingIds.MaxDay, System.StringComparison.Ordinal))
+                {
+                    EndingEvaluator.TryResolveRunComplete(gi.Shelter, gi.Gameplay, out endingId);
+                }
+
                 ForceEndingFlow(string.IsNullOrEmpty(endingId) ? EndingIds.MaxDay : endingId);
                 return;
             }

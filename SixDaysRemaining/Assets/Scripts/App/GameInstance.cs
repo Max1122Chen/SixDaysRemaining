@@ -3,6 +3,7 @@ using SixDaysRemaining.Events;
 using SixDaysRemaining.Events.Content;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
+using SixDaysRemaining.App.Ending;
 using SixDaysRemaining.App.Meta;
 using SixDaysRemaining.App.Save;
 using System.Collections.Generic;
@@ -153,6 +154,7 @@ namespace SixDaysRemaining.App
             UnlockMetaSurvivors(Shelter.Survivors);
             ApplyDebugShelterOverrides();
             BindEventsSubsystem(seed);
+            EndingContent.Ensure();
         }
 
         /// <summary>
@@ -251,6 +253,7 @@ namespace SixDaysRemaining.App
                 Events.SetEventsConsumedToday(dto.eventsConsumedToday);
             }
 
+            EndingContent.Ensure();
             Mode = AppMode.InGame;
         }
 

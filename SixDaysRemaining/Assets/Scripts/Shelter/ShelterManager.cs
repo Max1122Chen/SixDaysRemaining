@@ -50,6 +50,11 @@ namespace SixDaysRemaining.Shelter
             get { return bulletins; }
         }
 
+        public GameState State
+        {
+            get { return state; }
+        }
+
         public int Population
         {
             get
@@ -530,6 +535,12 @@ namespace SixDaysRemaining.Shelter
             SyncPopulation();
             bool fused = passives.TickEndOfDay();
             CleanupPassivesForAbsentSurvivors();
+            if (!fused)
+            {
+                TryForcePopulationZeroEnding();
+                fused = gameplay != null && gameplay.CurrentPhase == GameplayPhase.Ending;
+            }
+
             return fused;
         }
 
@@ -628,6 +639,7 @@ namespace SixDaysRemaining.Shelter
             string message = "驱赶了 " + survivor.name;
             personnelChanges.Add(message);
             bulletins.Add(message);
+            TryForcePopulationZeroEnding();
         }
 
         /// <summary>
@@ -670,6 +682,18 @@ namespace SixDaysRemaining.Shelter
             {
                 gameplay.ApplyCorruption(CorruptionOnDeath);
             }
+
+            TryForcePopulationZeroEnding();
+        }
+
+        private void TryForcePopulationZeroEnding()
+        {
+            if (gameplay == null || gameplay.CurrentPhase == GameplayPhase.Ending || Population > 0)
+            {
+                return;
+            }
+
+            gameplay.ForceEnding(EndingIds.F);
         }
 
         private void CleanupPassivesForAbsentSurvivors()

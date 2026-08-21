@@ -275,6 +275,7 @@ namespace SixDaysRemaining.Gameplay
                     State.day += 1;
                     if (State.day > MaxDay)
                     {
+                        // 先写入 MaxDay 占位；App 层 EndingEvaluator.RunComplete 会再 ForceEnding 到 A–I。
                         ForceEnding(EndingIds.MaxDay);
                     }
                     else

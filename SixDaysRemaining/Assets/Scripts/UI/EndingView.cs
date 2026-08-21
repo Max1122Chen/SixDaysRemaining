@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace SixDaysRemaining.UI
 {
     /// <summary>
-    /// 结局展示：按 <see cref="GameState.endingId"/> 查文案。
+    /// 结局展示：按 <see cref="GameState.endingId"/> 查 EndingContent 文案。
     /// </summary>
     public class EndingView : MonoBehaviour
     {
@@ -61,7 +61,7 @@ namespace SixDaysRemaining.UI
 
             if (endingText != null)
             {
-                endingText.text = ResolveEndingText(endingId);
+                endingText.text = EndingEvaluator.ResolveDisplayText(endingId);
             }
 
             if (summaryText != null)
@@ -76,28 +76,6 @@ namespace SixDaysRemaining.UI
                 {
                     summaryText.text = string.Empty;
                 }
-            }
-        }
-
-        public static string ResolveEndingText(string endingId)
-        {
-            if (string.IsNullOrEmpty(endingId))
-            {
-                return "六日已过，避难所的故事暂时告一段落。\n结局内容待策划标准化后接入。";
-            }
-
-            switch (endingId)
-            {
-                case EndingIds.G:
-                    return "腐蚀吞噬了一切。\n你已无法继续……（结局 G）";
-                case EndingIds.E:
-                    return "政治家倒在废墟里。\n庇护所失去了最后的筹码……（结局 E 占位）";
-                case EndingIds.MaxDay:
-                    return "六日已过。\n你们暂时熬过了这段日子……（天数结局）";
-                case EndingIds.Debug:
-                    return "（Debug 强制终局）";
-                default:
-                    return "终局：" + endingId + "\n（文案待补）";
             }
         }
     }

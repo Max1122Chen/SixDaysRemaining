@@ -69,7 +69,7 @@ namespace SixDaysRemaining.UI
             {
                 string id = ids[i];
                 sb.Append("· ").Append(id).Append('\n');
-                sb.Append(EndingView.ResolveEndingText(id)).Append("\n\n");
+                sb.Append(EndingEvaluator.ResolveDisplayText(id)).Append("\n\n");
             }
 
             bodyText.text = sb.ToString().TrimEnd();

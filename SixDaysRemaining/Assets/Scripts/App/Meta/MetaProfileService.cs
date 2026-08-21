@@ -168,8 +168,15 @@ namespace SixDaysRemaining.App.Meta
         {
             return new[]
             {
-                EndingIds.G,
+                EndingIds.A,
+                EndingIds.B,
+                EndingIds.C,
+                EndingIds.D,
                 EndingIds.E,
+                EndingIds.F,
+                EndingIds.G,
+                EndingIds.H,
+                EndingIds.I,
                 EndingIds.MaxDay,
                 EndingIds.Debug
             };

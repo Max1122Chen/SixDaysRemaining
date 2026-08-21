@@ -2,6 +2,16 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-20（END-F02 结局判定数据驱动）
+
+- 范围：按《结局设计》落地 A–I；JSON 条件 + 优先级，同构事件系统
+- 已完成：
+  - `StreamingAssets/Endings/endings.json`
+  - `EndingContent` / JsonLoader / `EndingRequirements` / 扩展 `EndingEvaluator`
+  - RunComplete（六日结束）分支 A/B/C/D/H/I；CombatLose→E；PopulationZero→F；文案走目录
+  - `EndingView` / `KnownEndingIds` 同步
+- 下一步：EditMode / 轻 Play 后标 Review→Done
+
 ## 2026-08-20（CORE-F09 设计师反馈修复包 01 启动）
 
 - 范围：对齐设计师反馈中的规则错配、流程阻塞与关键 UI 反馈
