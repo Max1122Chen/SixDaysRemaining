@@ -27,6 +27,8 @@ namespace SixDaysRemaining.App.Save
         public string name;
         public int hunger;
         public int status;
+        /// <summary>界面展示状态；-1 表示旧档未记录，读档时回退为 status。</summary>
+        public int displayStatus = -1;
         public int hungryDayCount;
         public int hungryToDyingDays = 1;
         public bool dyingGraceConsumed;
