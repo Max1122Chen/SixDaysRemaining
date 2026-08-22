@@ -541,9 +541,11 @@ namespace SixDaysRemaining.UI
                 : "今日庇护所内无人员变动";
             if (summaryText != null)
             {
-                summaryText.text = "存粮：" + gi.Gameplay.State.foodStock
-                    + "\n腐蚀度：" + gi.Gameplay.State.corruption
-                    + "\n\n今日记事\n" + body;
+                // 单组件内局部样式：用 TMP 富文本标签。
+                // “存粮/腐蚀度”两行改色 #A1000B；“今日记事”加粗并放大到 32 号。
+                summaryText.text = "<color=#A1000B>存粮：" + gi.Gameplay.State.foodStock
+                    + "\n腐蚀度：" + gi.Gameplay.State.corruption + "</color>"
+                    + "\n\n<b><size=32>今日记事</size></b>\n" + body;
             }
 
 
