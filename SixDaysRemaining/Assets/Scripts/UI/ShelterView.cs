@@ -21,8 +21,6 @@ namespace SixDaysRemaining.UI
         private static readonly Color LockedColor = new Color(0.42f, 0.44f, 0.48f, 1f);
         private static readonly Color ActiveColor = new Color(1f, 0.92f, 0.72f, 1f);
         private static readonly Color FeedGreen = new Color(0.28f, 0.50f, 0.40f, 1f);
-        private static readonly Color PressedGray = new Color(0.22f, 0.24f, 0.27f, 1f);
-        private static readonly Color DisabledGray = new Color(0.30f, 0.32f, 0.36f, 1f);
 
         private AppFlowController flow;
         private bool layoutBuilt;
@@ -85,6 +83,10 @@ namespace SixDaysRemaining.UI
 
         [SerializeField]
         private Image detailAvatarImage;
+
+        /// <summary>信息面板头像框（Frame_Avatar）的 RectTransform，用于让头像自适应其手动设置的高和宽。</summary>
+        [SerializeField]
+        private RectTransform detailAvatarFrame;
 
         [SerializeField]
         private TextMeshProUGUI detailIdentityText;
@@ -157,6 +159,9 @@ namespace SixDaysRemaining.UI
         private readonly List<GameObject> taskNodeObjects = new List<GameObject>();
         private readonly List<GameObject> taskArrowObjects = new List<GameObject>();
         private readonly List<GameObject> taskCollapsibleObjects = new List<GameObject>();
+
+        // 手动模式：记录每个 Seat 的原始美术（精灵/颜色），未分配 NPC 时恢复原样。
+        private readonly Dictionary<Image, SeatArt> seatArts = new Dictionary<Image, SeatArt>();
 
         // 手动模式：记录用户在场景里摆放的任务栏尺寸与 R 按钮位置，展开时恢复。
         private Vector2 manualTaskBarSize;
@@ -290,7 +295,7 @@ namespace SixDaysRemaining.UI
             }
 
             bool[] done = { node0Done, node1Done, node2Done };
-            string[] names = { "分配食物", "外出战斗", "处理每日事件" };
+            string[] names = { "给庇护者分配食物", "外出战斗", "处理每日事件" };
             for (int i = 0; i < taskNodeLabels.Count && i < 3; i++)
             {
                 bool locked = i > 0 && !done[i - 1];
@@ -449,6 +454,38 @@ namespace SixDaysRemaining.UI
             ApplyRoomActive(roomIndex);
             RectTransform current = roomRoots[roomIndex];
             ShelterSeatSlot[] slots = CollectSeatSlots(current);
+
+            // 先把本房间所有 Seat 恢复为原始美术，未分配 NPC 的座位不再残留上次的立绘。
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] == null)
+                {
+                    continue;
+                }
+
+                Image seatImage = slots[i].GetComponent<Image>();
+                if (seatImage == null)
+                {
+                    continue;
+                }
+
+                SeatArt original;
+                if (!seatArts.TryGetValue(seatImage, out original))
+                {
+                    original = new SeatArt
+                    {
+                        Sprite = seatImage.sprite,
+                        Color = seatImage.color,
+                        Type = seatImage.type,
+                        PreserveAspect = seatImage.preserveAspect,
+                        Captured = true
+                    };
+                    seatArts[seatImage] = original;
+                }
+
+                ApplySeatArt(seatImage, original);
+            }
+
             int count = Mathf.Min(alive.Count, slots.Length);
             for (int i = 0; i < count; i++)
             {
@@ -510,15 +547,68 @@ namespace SixDaysRemaining.UI
 
         private void CreateNpcNodeOnSlot(Survivor survivor, ShelterSeatSlot slot, int day)
         {
-            CreateNpcNode(
-                survivor,
-                slot.transform,
-                Vector2.zero,
-                slot.NpcOffset,
-                slot.NameOffset,
-                slot.StatusOffset,
-                slot.IdentityOffset,
-                day);
+            if (slot == null)
+            {
+                return;
+            }
+
+            SurvivorDef def;
+            ShelterContent.Survivors.TryGet(survivor.defId, out def);
+            Sprite portrait = ShelterPortraits.Load(def, survivor.status, day);
+
+            // 只用 Seat 自身的 Image 表示人物，不再生成 Portrait_xxx / Txt_Npc* 子节点
+            // （立绘、名字、状态、身份等信息都在 Panel_Detail 里展示）。
+            Image seatImage = slot.GetComponent<Image>();
+            if (seatImage != null)
+            {
+                if (portrait != null)
+                {
+                    seatImage.sprite = portrait;
+                    seatImage.color = Color.white;
+                }
+                else
+                {
+                    seatImage.sprite = UiFactory.CircleSprite;
+                    seatImage.color = StatusColor(survivor.status);
+                }
+
+                seatImage.type = Image.Type.Simple;
+                seatImage.preserveAspect = true;
+                seatImage.raycastTarget = true;
+            }
+
+            // 座椅自身作为点击区域，点击打开/切换 Panel_Detail。
+            Button click = slot.GetComponent<Button>();
+            if (click == null)
+            {
+                click = slot.gameObject.AddComponent<Button>();
+            }
+
+            click.targetGraphic = seatImage;
+            click.onClick.RemoveAllListeners();
+            click.onClick.AddListener(() => OnNpcClicked(survivor.defId));
+        }
+
+        private static void ApplySeatArt(Image image, SeatArt art)
+        {
+            if (image == null || !art.Captured)
+            {
+                return;
+            }
+
+            image.sprite = art.Sprite;
+            image.color = art.Color;
+            image.type = art.Type;
+            image.preserveAspect = art.PreserveAspect;
+        }
+
+        private struct SeatArt
+        {
+            public Sprite Sprite;
+            public Color Color;
+            public Image.Type Type;
+            public bool PreserveAspect;
+            public bool Captured;
         }
 
         private void CreateNpcNode(Survivor survivor, Vector2 seatPos, int day)
@@ -687,7 +777,7 @@ namespace SixDaysRemaining.UI
             SurvivorProfile profile = ShelterProfiles.Resolve(def);
 
             detailGroup.SetActive(true);
-            SetText(detailIdentityText, "身份：" + (def != null ? def.DisplayName : selected.name));
+            SetText(detailIdentityText, def != null ? def.DisplayName : selected.name);
             SetText(detailNameText, def != null ? def.DisplayName : selected.name);
             SetText(detailAgeText, "年龄：" + (profile.Age > 0 ? profile.Age + " 岁" : "未知"));
             SetText(detailStatusText, "生存状态：" + StatusName(selected.status) + "　饱食度 " + selected.hunger);
@@ -701,17 +791,51 @@ namespace SixDaysRemaining.UI
                 {
                     detailAvatarImage.sprite = portrait;
                     detailAvatarImage.color = Color.white;
-                    detailAvatarImage.rectTransform.sizeDelta = new Vector2(104f, 132f);
                 }
                 else
                 {
                     detailAvatarImage.sprite = UiFactory.CircleSprite;
                     detailAvatarImage.color = StatusColor(selected.status);
-                    detailAvatarImage.rectTransform.sizeDelta = new Vector2(104f, 104f);
                 }
+
+                FitAvatarToFrame();
             }
 
             RefreshFeedButton(shelter, selected, state);
+        }
+
+        /// <summary>
+        /// 让头像 Source Image 自适应 Frame_Avatar 手动设置的高和宽：
+        /// 任意尺寸的立绘都按 Frame_Avatar 的矩形等比缩放居中显示（preserveAspect），不拉伸变形。
+        /// 手动模式里 detailAvatarImage 直接就是 Frame_Avatar，保持场景摆好的尺寸不动；
+        /// 代码布局里头像作为 Frame_Avatar 的子节点，拉伸填满父级并留少量内边距。
+        /// </summary>
+        private void FitAvatarToFrame()
+        {
+            if (detailAvatarImage == null)
+            {
+                return;
+            }
+
+            // Simple 模式 + PreserveAspect：不同尺寸的图片都能等比缩放适配矩形，防止比例变形。
+            detailAvatarImage.type = Image.Type.Simple;
+            detailAvatarImage.preserveAspect = true;
+            RectTransform avatarRt = detailAvatarImage.rectTransform;
+            RectTransform frameRt = detailAvatarFrame;
+
+            // 手动模式：Source Image 就是 Frame_Avatar 本身，保持场景里手动设置的尺寸和 anchor 不动。
+            if (frameRt == null || frameRt == avatarRt)
+            {
+                return;
+            }
+
+            // 代码布局：头像作为 Frame_Avatar 的子节点，拉伸填满父级并留少量内边距。
+            avatarRt.anchorMin = Vector2.zero;
+            avatarRt.anchorMax = Vector2.one;
+            avatarRt.offsetMin = new Vector2(6f, 6f);
+            avatarRt.offsetMax = new Vector2(-6f, -6f);
+            avatarRt.anchoredPosition = Vector2.zero;
+            avatarRt.sizeDelta = Vector2.zero;
         }
 
         private void RefreshFeedButton(ShelterManager shelter, Survivor survivor, GameState state)
@@ -726,38 +850,32 @@ namespace SixDaysRemaining.UI
             bool fedToday = shelter.IsFedToday(survivor);
             bool inFeedPhase = state.currentPhase == GameplayPhase.ExpeditionPrep;
 
-            Image buttonBg = feedButton.GetComponent<Image>();
             if (bigu)
             {
-                SetButtonState(feedButton, buttonBg, "辟谷中", false, DisabledGray);
+                SetButtonState(feedButton, "辟谷中", false);
             }
             else if (fedToday)
             {
-                SetButtonState(feedButton, buttonBg, "已分配食物", false, PressedGray);
+                SetButtonState(feedButton, "已分配食物", false);
             }
             else if (!inFeedPhase)
             {
                 // 不在“出征准备·每日分配”阶段：按钮置灰但保持“分配食物”文案，方便区分原因。
-                SetButtonState(feedButton, buttonBg, "分配食物", false, DisabledGray);
+                SetButtonState(feedButton, "分配食物", false);
             }
             else if (state.foodStock < 1)
             {
-                SetButtonState(feedButton, buttonBg, "粮食不足", false, DisabledGray);
+                SetButtonState(feedButton, "粮食不足", false);
             }
             else
             {
-                SetButtonState(feedButton, buttonBg, "分配食物", true, FeedGreen);
+                SetButtonState(feedButton, "分配食物", true);
             }
         }
 
-        private static void SetButtonState(Button button, Image bg, string label, bool interactable, Color color)
+        private static void SetButtonState(Button button, string label, bool interactable)
         {
             button.interactable = interactable;
-            if (bg != null)
-            {
-                bg.color = color;
-            }
-
             TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>(true);
             if (text != null)
             {
@@ -1075,6 +1193,7 @@ namespace SixDaysRemaining.UI
 
             Image frame = UiFactory.CreateImage(detailGroup.transform, "Frame_Avatar", new Vector2(0f, 108f), new Vector2(116f, 140f), new Color(0.28f, 0.32f, 0.38f, 1f));
             frame.raycastTarget = false;
+            detailAvatarFrame = frame.rectTransform;
             detailAvatarImage = UiFactory.CreateImage(frame.transform, "Avatar", Vector2.zero, new Vector2(104f, 128f), new Color(0.34f, 0.72f, 0.44f, 1f));
             detailAvatarImage.raycastTarget = false;
 
