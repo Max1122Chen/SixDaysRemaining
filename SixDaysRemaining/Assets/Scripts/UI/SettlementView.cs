@@ -101,7 +101,7 @@ namespace SixDaysRemaining.UI
             }
 
             sb.Append("\n获得食物：+").Append(result.FoodGained);
-            sb.Append("\n腐蚀度变化：+").Append(result.CorruptionDelta);
+            sb.Append("\n本日腐蚀：+").Append(result.CorruptionDelta);
             sb.Append("\n战斗回合：").Append(result.TurnsElapsed);
 
             if (gi != null && gi.Gameplay != null && gi.Gameplay.State != null)

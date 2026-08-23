@@ -26,8 +26,8 @@ namespace SixDaysRemaining.Combat
                 Label = "速战",
                 MinRounds = 1,
                 MaxRounds = 2,
-                FoodGained = 5,
-                CorruptionDelta = 1
+                FoodGained = 4,
+                CorruptionDelta = 0
             },
             new CombatRewardTier
             {
@@ -35,15 +35,15 @@ namespace SixDaysRemaining.Combat
                 MinRounds = 3,
                 MaxRounds = 6,
                 FoodGained = 3,
-                CorruptionDelta = 2
+                CorruptionDelta = 0
             },
             new CombatRewardTier
             {
                 Label = "鏖战",
                 MinRounds = 7,
                 MaxRounds = int.MaxValue,
-                FoodGained = 2,
-                CorruptionDelta = 3
+                FoodGained = 1,
+                CorruptionDelta = 0
             }
         };
 

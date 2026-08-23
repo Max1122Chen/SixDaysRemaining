@@ -14,6 +14,7 @@ namespace SixDaysRemaining.App.Ending.Content
         public string id;
         public string title;
         public string body;
+        public string criteriaHint;
         public string trigger;
         public int priority;
         public bool enabled = true;

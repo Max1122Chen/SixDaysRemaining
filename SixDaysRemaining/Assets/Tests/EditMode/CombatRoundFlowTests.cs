@@ -118,7 +118,7 @@ namespace SixDaysRemaining.Tests.EditMode
                 DeckSeed = 1
             }, player, enemyPrefab: null, combatRoot: null);
 
-            Assert.AreEqual(35f, manager.Session.Enemies[0].Attributes.MaxHP);
+            Assert.AreEqual(15f, manager.Session.Enemies[0].Attributes.MaxHP);
             Assert.AreEqual(EncounterIds.Mob01, manager.ActiveEncounter.Id);
         }
 

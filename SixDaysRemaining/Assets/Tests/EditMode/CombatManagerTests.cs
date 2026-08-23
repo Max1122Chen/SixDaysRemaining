@@ -78,6 +78,14 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void GetTier_TwoRounds_UsesFirstFoodTier()
+        {
+            CombatRewardTier tier = CombatRewardTable.GetTier(2);
+            Assert.AreEqual("速战", tier.Label);
+            Assert.AreEqual(4, tier.FoodGained);
+        }
+
+        [Test]
         public void FightUntilWin_UsesFlatCorruptionAndFoodTier()
         {
             Start(new CombatStartConfig
@@ -96,7 +104,7 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.IsTrue(manager.IsFinished);
             Assert.AreEqual(CombatOutcome.Win, manager.Result.Outcome);
-            Assert.AreEqual(5, manager.Result.FoodGained);
+            Assert.AreEqual(4, manager.Result.FoodGained);
             Assert.AreEqual(3, manager.Result.CorruptionDelta);
             Assert.AreEqual("速战", manager.Result.RewardTier);
         }

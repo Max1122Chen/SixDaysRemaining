@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.Shelter;
@@ -43,7 +44,7 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void AllocateFood_ReducesStockAndIncreasesHunger()
+        public void AllocateFood_ReducesStock_DeferredHungerUntilNextDay()
         {
             Survivor survivor = new Survivor { name = "Test", hunger = 1, status = SurvivorStatus.Hungry };
             shelter.RegisterSurvivor(survivor);
@@ -53,6 +54,11 @@ namespace SixDaysRemaining.Tests.EditMode
 
             Assert.IsTrue(ok);
             Assert.AreEqual(3, state.foodStock);
+            Assert.AreEqual(1, survivor.hunger);
+            Assert.AreEqual(SurvivorStatus.Hungry, survivor.status);
+
+            shelter.ApplyFedYesterdayRecovery(new Dictionary<string, int> { { "__name:Test", 2 } });
+
             Assert.AreEqual(3, survivor.hunger);
             Assert.AreEqual(SurvivorStatus.Healthy, survivor.status);
             Assert.AreEqual(0, survivor.hungryDayCount);
@@ -166,10 +172,11 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void DyingSurvivor_CanBeSavedByAllocationBeforeNextEndOfDay()
+        public void DyingSurvivor_FedYesterday_RecoversAfterDayAdvance()
         {
             Survivor survivor = new Survivor
             {
+                defId = SurvivorIds.Farmer,
                 name = "Test",
                 hunger = 0,
                 status = SurvivorStatus.Dying,
@@ -179,7 +186,12 @@ namespace SixDaysRemaining.Tests.EditMode
             state.foodStock = 3;
 
             Assert.IsTrue(shelter.AllocateFood(survivor, 2));
-            Assert.AreEqual(SurvivorStatus.Healthy, survivor.status);
+            Assert.AreEqual(SurvivorStatus.Dying, survivor.status);
+            Assert.AreEqual(0, survivor.hunger);
+
+            shelter.ApplyFedYesterdayRecovery(new Dictionary<string, int> { { SurvivorIds.Farmer, 2 } });
+            Assert.AreEqual(SurvivorStatus.Hungry, survivor.status);
+            Assert.AreEqual(2, survivor.hunger);
 
             shelter.ProcessEndOfDay();
 
@@ -213,6 +225,65 @@ namespace SixDaysRemaining.Tests.EditMode
             shelter.UpdateSurvivorStatus(survivor);
 
             Assert.AreEqual(SurvivorStatus.Hungry, survivor.status);
+        }
+
+        [Test]
+        public void AllocateFood_DyingSurvivor_KeepsDyingPortraitSameDay()
+        {
+            Survivor survivor = new Survivor
+            {
+                defId = SurvivorIds.Child,
+                name = "幼童",
+                hunger = 0,
+                status = SurvivorStatus.Dying
+            };
+            shelter.RegisterSurvivor(survivor);
+            state.foodStock = 2;
+
+            Assert.IsTrue(shelter.AllocateFood(survivor, 1));
+            Assert.AreEqual(SurvivorStatus.Dying, survivor.status);
+            Assert.AreEqual(0, survivor.hunger);
+            Assert.IsTrue(shelter.IsFedToday(survivor));
+        }
+
+        [Test]
+        public void ApplyFedYesterdayRecovery_DyingBecomesHungryAndGainsHunger()
+        {
+            Survivor survivor = new Survivor
+            {
+                defId = SurvivorIds.Child,
+                name = "幼童",
+                hunger = 0,
+                status = SurvivorStatus.Dying
+            };
+            shelter.RegisterSurvivor(survivor);
+            state.foodStock = 2;
+            Assert.IsTrue(shelter.AllocateFood(survivor, 1));
+
+            shelter.ApplyFedYesterdayRecovery(new Dictionary<string, int> { { SurvivorIds.Child, 1 } });
+
+            Assert.AreEqual(SurvivorStatus.Hungry, survivor.status);
+            Assert.AreEqual(1, survivor.hunger);
+        }
+
+        [Test]
+        public void ApplyFedYesterdayRecovery_HungryBecomesHealthyAndGainsHunger()
+        {
+            Survivor survivor = new Survivor
+            {
+                defId = SurvivorIds.Farmer,
+                name = "农民",
+                hunger = 1,
+                status = SurvivorStatus.Hungry
+            };
+            shelter.RegisterSurvivor(survivor);
+            state.foodStock = 2;
+            Assert.IsTrue(shelter.AllocateFood(survivor, 1));
+
+            shelter.ApplyFedYesterdayRecovery(new Dictionary<string, int> { { SurvivorIds.Farmer, 1 } });
+
+            Assert.AreEqual(SurvivorStatus.Healthy, survivor.status);
+            Assert.AreEqual(2, survivor.hunger);
         }
 
         [Test]

@@ -41,7 +41,8 @@
 | `COMB-F11` | 卡牌数值 2.0 同步 | COMB | Review | `designs/COMB-F11-card-values-2.md` | — | `main` | Max | 敌人计划已同步；待 EditMode/轻 Play |
 | `CORE-F09` | 设计师反馈修复包 01（逻辑） | CORE | Review | `designs/CORE-F09-designer-fix-pack-01.md` | — | `main` | Max | 逻辑 only；UI 2/3/7/8/9 交伙伴 |
 | `END-F02` | 结局判定数据驱动（A–I） | CORE | Review | `designs/END-F02-data-driven-endings.md` | — | `main` | Max | endings.json 已落地；待轻 Play |
-| `AUDIO-F01` | 场景 BGM 接入 | AUDIO | In Progress | `designs/AUDIO-F01-scene-bgm.md` | — | `main` | Max | BgmService + Resources；待 Play |
+| `AUDIO-F01` | 场景 BGM 接入 | AUDIO | Done | `designs/AUDIO-F01-scene-bgm.md` | — | `main` | Max | 已合 main |
+| `CORE-F10` | 设计师反馈修复包 02 | CORE | Review | `designs/CORE-F10-designer-fix-pack-02.md` | — | `main` | Max | 5 日战斗+日6终局/HP/牌库/投喂/奖励/结局条件 |
 
 ## 域代码
 

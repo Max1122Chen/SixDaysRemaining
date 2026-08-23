@@ -20,7 +20,8 @@ namespace SixDaysRemaining.Shelter
         private readonly List<Survivor> survivors = new List<Survivor>();
         private readonly List<string> personnelChanges = new List<string>();
         private readonly List<string> bulletins = new List<string>();
-        private readonly HashSet<string> fedDefIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> fedFoodAmounts =
+            new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly GameState state;
         private readonly ShelterPassiveService passives;
         private GameplaySubsystem gameplay;
@@ -269,18 +270,27 @@ namespace SixDaysRemaining.Shelter
         public bool IsFedToday(Survivor survivor)
         {
             EnsureFoodAllocationDay();
-            return survivor != null
-                && !string.IsNullOrEmpty(survivor.defId)
-                && fedDefIds.Contains(survivor.defId);
+            string key = GetFeedTrackingKey(survivor);
+            return !string.IsNullOrEmpty(key) && fedFoodAmounts.ContainsKey(key);
         }
 
-        /// <summary>当天已分配食物的幸存者 defId 集合（只读）。</summary>
+        /// <summary>当天已分配食物：trackingKey → 分配单位数（只读快照）。</summary>
+        public IReadOnlyDictionary<string, int> FedFoodAmountsToday
+        {
+            get
+            {
+                EnsureFoodAllocationDay();
+                return new Dictionary<string, int>(fedFoodAmounts);
+            }
+        }
+
+        /// <summary>当天已分配食物的 trackingKey 集合（只读）。</summary>
         public IReadOnlyCollection<string> FedDefIdsToday
         {
             get
             {
                 EnsureFoodAllocationDay();
-                return fedDefIds;
+                return fedFoodAmounts.Keys;
             }
         }
 
@@ -431,7 +441,7 @@ namespace SixDaysRemaining.Shelter
         }
 
         /// <summary>
-        /// 出征前分配食物：扣存量、提升幸存者饱食度。
+        /// 出征前分配食物：扣存量并记录份量；饱食度与状态回升在次日 <see cref="ApplyFedYesterdayRecovery"/> 结算。
         /// </summary>
         public bool AllocateFood(Survivor survivor, int amount)
         {
@@ -451,25 +461,119 @@ namespace SixDaysRemaining.Shelter
             }
 
             EnsureFoodAllocationDay();
-            if (!string.IsNullOrEmpty(survivor.defId) && fedDefIds.Contains(survivor.defId))
+            string key = GetFeedTrackingKey(survivor);
+            if (string.IsNullOrEmpty(key) || fedFoodAmounts.ContainsKey(key))
             {
                 return false;
             }
 
             state.foodStock -= amount;
-            survivor.hunger += amount * HungerPerFoodUnit;
-            if (!string.IsNullOrEmpty(survivor.defId))
-            {
-                fedDefIds.Add(survivor.defId);
-            }
-
-            UpdateSurvivorStatus(survivor);
+            fedFoodAmounts[key] = amount;
             SyncPopulation();
             return true;
         }
 
         /// <summary>
-        /// 当日喂食状态仅在当天有效：天数推进后自动清空，次日重新分配。
+        /// 日切换后：昨日已投喂 → 先加饱食度，再向健康方向升一格状态。
+        /// </summary>
+        public void ApplyFedYesterdayRecovery(IReadOnlyDictionary<string, int> fedYesterdayAmounts)
+        {
+            if (fedYesterdayAmounts == null || fedYesterdayAmounts.Count == 0)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, int> entry in fedYesterdayAmounts)
+            {
+                if (string.IsNullOrEmpty(entry.Key) || entry.Value <= 0)
+                {
+                    continue;
+                }
+
+                Survivor survivor = FindSurvivorByFeedKey(entry.Key);
+                if (survivor == null || !IsAlive(survivor) || IsBiguExempt(survivor))
+                {
+                    continue;
+                }
+
+                survivor.hunger += entry.Value * HungerPerFoodUnit;
+                ImproveStatusOneStep(survivor);
+            }
+
+            SyncPopulation();
+        }
+
+        /// <summary>新一天开始时清空当日喂食记录（在昨日回升处理之后调用）。</summary>
+        public void ResetDailyFoodAllocationForCurrentDay()
+        {
+            foodAllocationDay = state != null ? state.day : -1;
+            fedFoodAmounts.Clear();
+        }
+
+        private void ImproveStatusOneStep(Survivor survivor)
+        {
+            switch (survivor.status)
+            {
+                case SurvivorStatus.Dying:
+                    survivor.status = SurvivorStatus.Hungry;
+                    survivor.dyingGraceConsumed = false;
+                    survivor.hungryDayCount = 0;
+                    break;
+                case SurvivorStatus.Hungry:
+                    survivor.status = SurvivorStatus.Healthy;
+                    survivor.hungryDayCount = 0;
+                    survivor.dyingGraceConsumed = false;
+                    break;
+            }
+        }
+
+        private static string GetFeedTrackingKey(Survivor survivor)
+        {
+            if (survivor == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(survivor.defId))
+            {
+                return survivor.defId;
+            }
+
+            if (!string.IsNullOrEmpty(survivor.name))
+            {
+                return "__name:" + survivor.name;
+            }
+
+            return null;
+        }
+
+        private Survivor FindSurvivorByFeedKey(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+
+            if (key.StartsWith("__name:", StringComparison.Ordinal))
+            {
+                string name = key.Substring("__name:".Length);
+                for (int i = 0; i < survivors.Count; i++)
+                {
+                    Survivor s = survivors[i];
+                    if (s != null && string.Equals(s.name, name, StringComparison.Ordinal))
+                    {
+                        return s;
+                    }
+                }
+
+                return null;
+            }
+
+            return FindByDefId(key);
+        }
+
+        /// <summary>
+        /// 当日喂食记录随天数推进重置；份量与饱食度在次日一并结算。
         /// </summary>
         private void EnsureFoodAllocationDay()
         {
@@ -480,7 +584,7 @@ namespace SixDaysRemaining.Shelter
             }
 
             foodAllocationDay = day;
-            fedDefIds.Clear();
+            fedFoodAmounts.Clear();
         }
 
         /// <summary>

@@ -297,6 +297,28 @@ namespace SixDaysRemaining.Gameplay
             ShowEnding();
         }
 
+        /// <summary>
+        /// 六日终局：按当前腐蚀/人口解析 A–I，再进入结局屏（MaxDay 仅作解析前占位）。
+        /// </summary>
+        public void ForceRunCompleteEndingFlow()
+        {
+            GameInstance gi = Game;
+            string endingId = gi != null && gi.Gameplay != null && gi.Gameplay.State != null
+                ? gi.Gameplay.State.endingId
+                : null;
+            if (string.IsNullOrEmpty(endingId)
+                || string.Equals(endingId, EndingIds.MaxDay, System.StringComparison.Ordinal))
+            {
+                if (gi?.Shelter != null && gi.Gameplay != null
+                    && EndingEvaluator.TryResolveRunComplete(gi.Shelter, gi.Gameplay, out endingId))
+                {
+                    // resolved
+                }
+            }
+
+            ForceEndingFlow(string.IsNullOrEmpty(endingId) ? EndingIds.MaxDay : endingId);
+        }
+
         public void OnCombatFinished(CombatResult result)
         {
             pendingResult = result;
@@ -466,6 +488,10 @@ namespace SixDaysRemaining.Gameplay
                 return;
             }
 
+            IReadOnlyDictionary<string, int> fedYesterday = gi.Shelter != null
+                ? gi.Shelter.FedFoodAmountsToday
+                : null;
+
             bool blockedExpeditionDay = gi.Gameplay.CurrentPhase == GameplayPhase.ExpeditionPrep
                 && gi.Gameplay.HasTag(GameplayTags.ForbiddenExpedition);
 
@@ -482,15 +508,14 @@ namespace SixDaysRemaining.Gameplay
             CloseOverlay();
             if (gi.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
-                string endingId = gi.Gameplay.State != null ? gi.Gameplay.State.endingId : null;
-                if (string.IsNullOrEmpty(endingId)
-                    || string.Equals(endingId, EndingIds.MaxDay, System.StringComparison.Ordinal))
-                {
-                    EndingEvaluator.TryResolveRunComplete(gi.Shelter, gi.Gameplay, out endingId);
-                }
-
-                ForceEndingFlow(string.IsNullOrEmpty(endingId) ? EndingIds.MaxDay : endingId);
+                ForceRunCompleteEndingFlow();
                 return;
+            }
+
+            if (gi.Shelter != null)
+            {
+                gi.Shelter.ApplyFedYesterdayRecovery(fedYesterday);
+                gi.Shelter.ResetDailyFoodAllocationForCurrentDay();
             }
 
             gi.Shelter?.ResolveNextDayTransitions();
@@ -501,9 +526,9 @@ namespace SixDaysRemaining.Gameplay
         {
             GameplaySubsystem gameplay = gi.Gameplay;
             gameplay.State.day += 1;
-            if (gameplay.State.day > GameplaySubsystem.MaxDay)
+            if (gameplay.State.day >= GameplaySubsystem.MaxDay)
             {
-                gameplay.SetPhase(GameplayPhase.Ending);
+                gameplay.ForceEnding(EndingIds.MaxDay);
             }
             else
             {

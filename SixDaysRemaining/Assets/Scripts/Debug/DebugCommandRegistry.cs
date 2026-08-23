@@ -228,7 +228,7 @@ namespace SixDaysRemaining.Debugging
             bool ended = context.Gameplay.SetDay(value);
             if (ended)
             {
-                context.Flow?.ForceEndingFlow(EndingIds.MaxDay);
+                context.Flow?.ForceRunCompleteEndingFlow();
             }
             else
             {
@@ -276,10 +276,7 @@ namespace SixDaysRemaining.Debugging
             context.Gameplay.AdvancePhase();
             if (context.Gameplay.CurrentPhase == GameplayPhase.Ending)
             {
-                context.Flow?.ForceEndingFlow(
-                    string.IsNullOrEmpty(context.Gameplay.State.endingId)
-                        ? EndingIds.MaxDay
-                        : context.Gameplay.State.endingId);
+                context.Flow?.ForceRunCompleteEndingFlow();
                 return "阶段已推进，进入终局。";
             }
 

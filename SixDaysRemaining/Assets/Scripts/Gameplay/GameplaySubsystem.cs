@@ -273,9 +273,9 @@ namespace SixDaysRemaining.Gameplay
 
                 case GameplayPhase.TriumphReturn:
                     State.day += 1;
-                    if (State.day > MaxDay)
+                    if (State.day >= MaxDay)
                     {
-                        // 先写入 MaxDay 占位；App 层 EndingEvaluator.RunComplete 会再 ForceEnding 到 A–I。
+                        // 第 6 日为结局日（CORE-F10）：不再进入出征；App 层再解析 A–I。
                         ForceEnding(EndingIds.MaxDay);
                     }
                     else

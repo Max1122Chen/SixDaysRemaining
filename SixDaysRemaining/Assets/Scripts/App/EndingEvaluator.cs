@@ -104,6 +104,98 @@ namespace SixDaysRemaining.App
             return "《" + title + "》\n" + body;
         }
 
+        public static string ResolveCriteriaText(string endingId)
+        {
+            EndingDef def = GetDef(endingId);
+            if (def == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(def.CriteriaHint))
+            {
+                return def.CriteriaHint.Trim();
+            }
+
+            return BuildCriteriaFromDef(def);
+        }
+
+        private static string BuildCriteriaFromDef(EndingDef def)
+        {
+            if (def == null)
+            {
+                return string.Empty;
+            }
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            switch (def.Trigger)
+            {
+                case EndingTrigger.CorruptionFuse:
+                    sb.Append("腐蚀度 ≥ 100");
+                    break;
+                case EndingTrigger.CombatLose:
+                    sb.Append("战斗失败");
+                    if (def.RequiredSurvivorIds != null && def.RequiredSurvivorIds.Length > 0)
+                    {
+                        sb.Append("，且庇护所有「").Append(string.Join("、", def.RequiredSurvivorIds)).Append("」");
+                    }
+
+                    break;
+                case EndingTrigger.PopulationZero:
+                    sb.Append("庇护所人数 = 0");
+                    break;
+                case EndingTrigger.RunComplete:
+                    AppendRange(sb, "腐蚀度", def.CorruptionMin, def.CorruptionMax);
+                    AppendRange(sb, "人数", def.PopulationMin, def.PopulationMax);
+                    if (sb.Length == 0)
+                    {
+                        sb.Append("六日已到，未匹配其他分支");
+                    }
+
+                    break;
+            }
+
+            return sb.ToString();
+        }
+
+        private static void AppendRange(
+            System.Text.StringBuilder sb,
+            string label,
+            int? min,
+            int? max)
+        {
+            if (!min.HasValue && !max.HasValue)
+            {
+                return;
+            }
+
+            if (sb.Length > 0)
+            {
+                sb.Append("；");
+            }
+
+            if (min.HasValue && max.HasValue && min.Value == max.Value)
+            {
+                sb.Append(label).Append(" = ").Append(min.Value);
+                return;
+            }
+
+            if (min.HasValue && max.HasValue)
+            {
+                sb.Append(min.Value).Append(" ≤ ").Append(label).Append(" ≤ ").Append(max.Value);
+                return;
+            }
+
+            if (min.HasValue)
+            {
+                sb.Append(label).Append(" ≥ ").Append(min.Value);
+            }
+            else
+            {
+                sb.Append(label).Append(" ≤ ").Append(max.Value);
+            }
+        }
+
         private static EndingDef Select(EndingTrigger trigger, ShelterManager shelter, int corruption)
         {
             EndingQuery query = new EndingQuery

@@ -216,6 +216,21 @@ namespace SixDaysRemaining.Tests.EditMode
             StringAssert.Contains("政治家", text);
         }
 
+        [Test]
+        public void ResolveCriteriaText_UsesJsonHintForEndingA()
+        {
+            string criteria = EndingEvaluator.ResolveCriteriaText(EndingIds.A);
+            StringAssert.Contains("39", criteria);
+            StringAssert.Contains("3", criteria);
+        }
+
+        [Test]
+        public void ResolveCriteriaText_FallsBackWhenHintMissing()
+        {
+            string criteria = EndingEvaluator.ResolveCriteriaText(EndingIds.G);
+            StringAssert.Contains("100", criteria);
+        }
+
         private const string SampleJson = @"{
   ""endings"": [
     {

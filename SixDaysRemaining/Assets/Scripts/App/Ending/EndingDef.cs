@@ -26,6 +26,7 @@ namespace SixDaysRemaining.App.Ending
         public int? PopulationMin;
         public int? PopulationMax;
         public string[] RequiredSurvivorIds = Array.Empty<string>();
+        public string CriteriaHint = string.Empty;
     }
 
     public sealed class EndingQuery

@@ -61,7 +61,14 @@ namespace SixDaysRemaining.UI
 
             if (endingText != null)
             {
-                endingText.text = EndingEvaluator.ResolveDisplayText(endingId);
+                string body = EndingEvaluator.ResolveDisplayText(endingId);
+                string criteria = EndingEvaluator.ResolveCriteriaText(endingId);
+                if (!string.IsNullOrEmpty(criteria))
+                {
+                    body += "\n\n【达成条件】\n" + criteria;
+                }
+
+                endingText.text = body;
             }
 
             if (summaryText != null)

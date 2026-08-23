@@ -57,24 +57,23 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
-        public void AfterSixthDayTriumph_EntersEnding()
+        public void AfterFifthDayTriumph_EntersEndingOnDaySix()
         {
             GameplaySubsystem gameplay = new GameplaySubsystem();
             gameplay.StartNewRun(0);
 
-            // 推进 6 个完整日：每天 3 次 Advance（Prep->Combat->Triumph->次日）
-            // 第 6 日凯旋后再 Advance：day 变为 7，进入 Ending
-            for (int i = 0; i < GameplaySubsystem.MaxDay; i++)
+            // 5 个完整出征日；第 5 日凯旋后 day=6，直接进入 Ending（CORE-F10）。
+            for (int i = 0; i < GameplaySubsystem.MaxDay - 1; i++)
             {
                 Assert.AreEqual(i + 1, gameplay.State.day);
                 Assert.AreEqual(GameplayPhase.ExpeditionPrep, gameplay.CurrentPhase);
 
                 gameplay.AdvancePhase(); // Combat
                 gameplay.AdvancePhase(); // TriumphReturn
-                gameplay.AdvancePhase(); // 下一天 Prep 或 Ending
+                gameplay.AdvancePhase(); // day++ 或 Ending
             }
 
-            Assert.AreEqual(GameplaySubsystem.MaxDay + 1, gameplay.State.day);
+            Assert.AreEqual(GameplaySubsystem.MaxDay, gameplay.State.day);
             Assert.AreEqual(GameplayPhase.Ending, gameplay.CurrentPhase);
             Assert.AreEqual(EndingIds.MaxDay, gameplay.State.endingId);
         }

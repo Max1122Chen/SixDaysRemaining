@@ -126,6 +126,7 @@ namespace SixDaysRemaining.App.Ending.Content
                     Id = id,
                     Title = dto.title ?? string.Empty,
                     Body = dto.body ?? string.Empty,
+                    CriteriaHint = dto.criteriaHint ?? string.Empty,
                     Trigger = trigger,
                     Priority = dto.priority,
                     Enabled = dto.enabled,

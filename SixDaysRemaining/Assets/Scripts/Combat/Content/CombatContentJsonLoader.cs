@@ -291,12 +291,12 @@ namespace SixDaysRemaining.Combat.Content
                 lib.MapDay(entry.day, entry.encounterId);
             }
 
-            for (int day = 1; day <= 6; day++)
+            for (int day = 1; day <= 5; day++)
             {
                 if (!days.Contains(day))
                 {
                     throw new InvalidOperationException(
-                        "dayMap missing day " + day + " in " + path);
+                        "dayMap missing combat day " + day + " in " + path);
                 }
             }
 

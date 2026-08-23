@@ -2,6 +2,19 @@
 
 追加式、按时间顺序的项目事实记录（append-only）。
 
+## 2026-08-23（CORE-F10 设计师反馈修复包 02）
+
+- 范围：5 日战斗 + 第 6 日终局、敌人 HP、牌库比例、投喂次日回升、日腐蚀语义、回合奖励 4/3/1、结局条件展示
+- 已完成：
+  - `encounters.json` HP 15/42/65/80/92；`dayMap` 仅 1–5 日
+  - `starter.json` 攻击 +1 / 庇佑 −1（20 张）
+  - `GameplaySubsystem`：第 5 日凯旋后 day=6 直接 Ending
+  - `ShelterManager`：昨日投喂 → 次日 Dying→Hungry→Healthy；濒死当日投喂不跳立绘
+  - `CombatRewardTable` 食物 4/3/1；结算文案「本日腐蚀」
+  - `endings.json` + `EndingView` 展示 `criteriaHint`
+  - EditMode 回归 + 新测（投喂、日循环、2 回合速战档）
+- 下一步：轻 Play 验收后标 Done
+
 ## 2026-08-21（AUDIO-F01 场景 BGM）
 
 - 范围：2 首设计师 mp3 按文件名映射主界面；单通道淡入淡出

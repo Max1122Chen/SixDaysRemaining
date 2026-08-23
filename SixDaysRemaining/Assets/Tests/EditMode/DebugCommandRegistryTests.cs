@@ -55,6 +55,39 @@ namespace SixDaysRemaining.Tests.EditMode
         }
 
         [Test]
+        public void Execute_RunDaySet_AtMaxDay_ResolvesRunCompleteEnding()
+        {
+            GameObject giGo = new GameObject("DebugGi");
+            GameObject flowGo = new GameObject("DebugFlow");
+            try
+            {
+                GameInstance gi = giGo.AddComponent<GameInstance>();
+                gi.StartNewGame(1);
+                gi.Gameplay.SetCorruption(10);
+
+                AppFlowController flow = flowGo.AddComponent<AppFlowController>();
+                flow.BindGame(gi);
+                flow.ShowEndingScreen = () => { };
+
+                new DebugCommandRegistry().Execute(new DebugCommandContext
+                {
+                    Gameplay = gi.Gameplay,
+                    Shelter = gi.Shelter,
+                    Flow = flow,
+                    GameInstance = gi
+                }, "run.day set 6");
+
+                Assert.AreEqual(GameplayPhase.Ending, gi.Gameplay.CurrentPhase);
+                Assert.AreEqual(EndingIds.H, gi.Gameplay.State.endingId);
+            }
+            finally
+            {
+                Object.DestroyImmediate(flowGo);
+                Object.DestroyImmediate(giGo);
+            }
+        }
+
+        [Test]
         public void Execute_ShelterHungerDecaySet_UpdatesManager()
         {
             GameState state = new GameState();

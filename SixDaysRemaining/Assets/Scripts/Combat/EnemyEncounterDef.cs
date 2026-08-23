@@ -67,9 +67,11 @@ namespace SixDaysRemaining.Combat
             int encounterId;
             if (!dayToEncounterId.TryGetValue(day, out encounterId))
             {
-                encounterId = dayToEncounterId.ContainsKey(6)
-                    ? dayToEncounterId[6]
-                    : EncounterIds.Mob03;
+                if (!dayToEncounterId.TryGetValue(5, out encounterId))
+                {
+                    throw new System.Collections.Generic.KeyNotFoundException(
+                        "No encounter mapped for day " + day);
+                }
             }
 
             return Get(encounterId);
