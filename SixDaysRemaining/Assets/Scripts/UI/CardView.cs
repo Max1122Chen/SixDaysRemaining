@@ -25,6 +25,7 @@ namespace SixDaysRemaining.UI
         public bool Interactable { get; private set; } = true;
 
         private Image shadow;
+        private Image stackShadow;
         private Image overlay;
         private Vector2 handSize;
         private Vector2 slotSize;
@@ -66,6 +67,16 @@ namespace SixDaysRemaining.UI
             view.shadow = UiFactory.CreateImage(go.transform, "Shadow", new Vector2(-8f, -8f), handSize, new Color(0f, 0f, 0f, 0.35f));
             view.shadow.raycastTarget = false;
             view.shadow.gameObject.SetActive(false);
+
+            // 手牌层叠阴影：略微向左下偏移的深色底，配合右盖左的扇形排列形成交错阴影。
+            view.stackShadow = UiFactory.CreateImage(
+                go.transform,
+                "StackShadow",
+                new Vector2(-7f, -9f),
+                handSize,
+                new Color(0f, 0f, 0f, 0.32f));
+            view.stackShadow.raycastTarget = false;
+            view.stackShadow.transform.SetAsFirstSibling();
 
             view.Background = UiFactory.CreateImage(go.transform, "Bg", Vector2.zero, handSize, view.baseColor);
             view.Background.raycastTarget = true;
@@ -275,6 +286,9 @@ namespace SixDaysRemaining.UI
             SetChildRect(shadow != null ? shadow.rectTransform : null,
                 new Vector2(-8f * scaleX, -8f * scaleY),
                 size);
+            SetChildRect(stackShadow != null ? stackShadow.rectTransform : null,
+                new Vector2(-7f * scaleX, -9f * scaleY),
+                size);
             SetChildRect(Background != null ? Background.rectTransform : null,
                 Vector2.zero,
                 size);
@@ -370,6 +384,8 @@ namespace SixDaysRemaining.UI
                 else
                 {
                     raised = true;
+                    // 悬停时把手牌提到最上层，避免被右边的手牌盖住。
+                    Rect.SetAsLastSibling();
                     StopCoroutineIfActive(ref layoutAnim);
                     hoverScaleAnim = StartCoroutine(UiAnim.Scale(Rect, new Vector3(HandHoverScale, HandHoverScale, 1f), 0.08f));
                     hoverMoveAnim = StartCoroutine(UiAnim.Move(Rect, restingPosition + HoverRaiseOffset, 0.12f));

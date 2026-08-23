@@ -62,6 +62,34 @@ namespace SixDaysRemaining.Shelter
             return LoadByBase(displayName, status, day);
         }
 
+        /// <summary>
+        /// 按身份、状态与指定变体加载立绘；variant 为 0 表示该状态唯一的基准立绘。
+        /// 场景立绘冲突自动切换变体时，详情面板用同一变体保持一致。
+        /// </summary>
+        public static Sprite LoadVariant(SurvivorDef def, SurvivorStatus status, int variant)
+        {
+            if (def == null)
+            {
+                return null;
+            }
+
+            string primary = AssetBaseName(def.Id);
+            Sprite sprite = LoadByVariant(primary ?? def.DisplayName, status, variant);
+            if (sprite == null
+                && primary != null
+                && !string.Equals(primary, def.DisplayName, System.StringComparison.Ordinal))
+            {
+                sprite = LoadByVariant(def.DisplayName, status, variant);
+            }
+
+            return sprite;
+        }
+
+        public static Sprite LoadVariant(string displayName, SurvivorStatus status, int variant)
+        {
+            return LoadByVariant(displayName, status, variant);
+        }
+
         private static string AssetBaseName(string defId)
         {
             if (string.IsNullOrEmpty(defId))
@@ -89,8 +117,26 @@ namespace SixDaysRemaining.Shelter
                 if (variantCount > 0)
                 {
                     int index = ((day - 1) % variantCount + variantCount) % variantCount + 1;
-                    return LoadSprite(basePath + "_" + index);
+                    return LoadByVariant(displayName, status, index);
                 }
+            }
+
+            return LoadByVariant(displayName, status, 0);
+        }
+
+        private static Sprite LoadByVariant(string displayName, SurvivorStatus status, int variant)
+        {
+            if (string.IsNullOrEmpty(displayName)
+                || status == SurvivorStatus.Dead
+                || status == SurvivorStatus.Left)
+            {
+                return null;
+            }
+
+            string basePath = Folder + displayName + "-" + StatusSuffix(status);
+            if (variant > 0)
+            {
+                return LoadSprite(basePath + "_" + variant);
             }
 
             return LoadSprite(basePath);
@@ -121,6 +167,12 @@ namespace SixDaysRemaining.Shelter
             }
 
             sprite = Resources.Load<Sprite>(path);
+            if (sprite == null)
+            {
+                // 资源文件名存在“农民—正常”这类全角破折号命名，兼容两种写法。
+                sprite = Resources.Load<Sprite>(path.Replace('-', '\u2014'));
+            }
+
             cache[path] = sprite;
             return sprite;
         }

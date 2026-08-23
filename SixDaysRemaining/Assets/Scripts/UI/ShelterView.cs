@@ -21,8 +21,6 @@ namespace SixDaysRemaining.UI
         private static readonly Color LockedColor = new Color(0.42f, 0.44f, 0.48f, 1f);
         private static readonly Color ActiveColor = new Color(1f, 0.92f, 0.72f, 1f);
         private static readonly Color FeedGreen = new Color(0.28f, 0.50f, 0.40f, 1f);
-        private static readonly Color PressedGray = new Color(0.22f, 0.24f, 0.27f, 1f);
-        private static readonly Color DisabledGray = new Color(0.30f, 0.32f, 0.36f, 1f);
 
         private AppFlowController flow;
         private bool layoutBuilt;
@@ -85,6 +83,10 @@ namespace SixDaysRemaining.UI
 
         [SerializeField]
         private Image detailAvatarImage;
+
+        /// <summary>信息面板头像框（Frame_Avatar）的 RectTransform，用于让头像自适应其手动设置的高和宽。</summary>
+        [SerializeField]
+        private RectTransform detailAvatarFrame;
 
         [SerializeField]
         private TextMeshProUGUI detailIdentityText;
@@ -157,6 +159,10 @@ namespace SixDaysRemaining.UI
         private readonly List<GameObject> taskNodeObjects = new List<GameObject>();
         private readonly List<GameObject> taskArrowObjects = new List<GameObject>();
         private readonly List<GameObject> taskCollapsibleObjects = new List<GameObject>();
+
+        // 手动模式：本次刷新中每个 NPC 实际选中的立绘变体，供详情面板保持一致。
+        private readonly Dictionary<string, int> assignedVariants =
+            new Dictionary<string, int>(System.StringComparer.Ordinal);
 
         // 手动模式：记录用户在场景里摆放的任务栏尺寸与 R 按钮位置，展开时恢复。
         private Vector2 manualTaskBarSize;
@@ -290,7 +296,7 @@ namespace SixDaysRemaining.UI
             }
 
             bool[] done = { node0Done, node1Done, node2Done };
-            string[] names = { "分配食物", "外出战斗", "处理每日事件" };
+            string[] names = { "给庇护者分配食物", "外出战斗", "处理每日事件" };
             for (int i = 0; i < taskNodeLabels.Count && i < 3; i++)
             {
                 bool locked = i > 0 && !done[i - 1];
@@ -447,13 +453,28 @@ namespace SixDaysRemaining.UI
         private void RebuildManualRoom(GameState state, List<Survivor> alive)
         {
             ApplyRoomActive(roomIndex);
-            RectTransform current = roomRoots[roomIndex];
-            ShelterSeatSlot[] slots = CollectSeatSlots(current);
-            int count = Mathf.Min(alive.Count, slots.Length);
-            for (int i = 0; i < count; i++)
+            assignedVariants.Clear();
+
+            // 场景立绘位置/尺寸已由美术手动摆好，这里只负责“显示哪张、隐藏哪张”，
+            // 不再动态改 Sprite 或移动坐标。
+            NpcPortraitSlotRef[] slots = CollectPortraitSlots();
+            for (int i = 0; i < slots.Length; i++)
             {
-                CreateNpcNodeOnSlot(alive[i], slots[i], state.day);
+                slots[i].Image.gameObject.SetActive(false);
             }
+
+            // 每个存活 NPC 按（身份, 展示状态）选择立绘；位置冲突时自动切换同状态另一变体。
+            Dictionary<Survivor, NpcPortraitSlotRef> assigned = ResolvePortraits(alive, state.day, slots);
+            foreach (KeyValuePair<Survivor, NpcPortraitSlotRef> pair in assigned)
+            {
+                NpcPortraitSlotRef slot = pair.Value;
+                slot.Image.gameObject.SetActive(true);
+                assignedVariants[pair.Key.defId] = slot.Variant;
+                WirePortraitClick(slot.Image, pair.Key.defId);
+            }
+
+            // 没有对应场景立绘的幸存者（医生/小贼/步兵等）在大厅用占位圆点兜底，保持可点击。
+            CreateFallbackNodes(alive, assigned);
         }
 
         private void RebuildCodeRoom(GameState state, List<Survivor> alive)
@@ -493,32 +514,254 @@ namespace SixDaysRemaining.UI
             }
         }
 
-        private static ShelterSeatSlot[] CollectSeatSlots(RectTransform roomRoot)
+        /// <summary>收集三个房间里所有可识别的立绘节点（位置/尺寸保持场景手工摆放）。</summary>
+        private NpcPortraitSlotRef[] CollectPortraitSlots()
         {
-            if (roomRoot == null)
+            List<NpcPortraitSlotRef> slots = new List<NpcPortraitSlotRef>();
+            if (roomRoots == null)
             {
-                return new ShelterSeatSlot[0];
+                return slots.ToArray();
             }
 
-            ShelterSeatSlot[] slots = roomRoot.GetComponentsInChildren<ShelterSeatSlot>(true);
-            System.Array.Sort(slots, delegate (ShelterSeatSlot a, ShelterSeatSlot b)
+            for (int r = 0; r < roomRoots.Length; r++)
             {
-                return a.SeatIndex.CompareTo(b.SeatIndex);
-            });
-            return slots;
+                RectTransform roomRoot = roomRoots[r];
+                if (roomRoot == null)
+                {
+                    continue;
+                }
+
+                Image[] images = roomRoot.GetComponentsInChildren<Image>(true);
+                for (int i = 0; i < images.Length; i++)
+                {
+                    Image image = images[i];
+                    string identityId;
+                    SurvivorStatus status;
+                    int variant;
+                    if (ShelterPortraitSlots.TryParse(image.name, out identityId, out status, out variant))
+                    {
+                        string spotId = ShelterPortraitSlots.GetSpotId(identityId, status, variant);
+                        if (string.IsNullOrEmpty(spotId))
+                        {
+                            continue;
+                        }
+
+                        slots.Add(new NpcPortraitSlotRef
+                        {
+                            Image = image,
+                            IdentityId = identityId,
+                            Status = status,
+                            Variant = variant,
+                            SpotId = spotId
+                        });
+                    }
+                }
+            }
+
+            return slots.ToArray();
         }
 
-        private void CreateNpcNodeOnSlot(Survivor survivor, ShelterSeatSlot slot, int day)
+        /// <summary>
+        /// 为每个存活 NPC 分配互不重叠的立绘：默认按天数轮换变体（与 ShelterPortraits 一致），
+        /// 位置冲突时回溯切换同状态下的其它变体，保证同一画面内不出现立绘重叠。
+        /// </summary>
+        private Dictionary<Survivor, NpcPortraitSlotRef> ResolvePortraits(
+            List<Survivor> alive,
+            int day,
+            NpcPortraitSlotRef[] slots)
         {
-            CreateNpcNode(
-                survivor,
-                slot.transform,
-                Vector2.zero,
-                slot.NpcOffset,
-                slot.NameOffset,
-                slot.StatusOffset,
-                slot.IdentityOffset,
-                day);
+            Dictionary<Survivor, NpcPortraitSlotRef> result =
+                new Dictionary<Survivor, NpcPortraitSlotRef>();
+            if (alive == null || alive.Count == 0 || slots == null || slots.Length == 0)
+            {
+                return result;
+            }
+
+            Dictionary<string, List<NpcPortraitSlotRef>> byKey =
+                new Dictionary<string, List<NpcPortraitSlotRef>>(System.StringComparer.Ordinal);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                NpcPortraitSlotRef slot = slots[i];
+                string key = SlotKey(slot.IdentityId, slot.Status);
+                List<NpcPortraitSlotRef> list;
+                if (!byKey.TryGetValue(key, out list))
+                {
+                    list = new List<NpcPortraitSlotRef>();
+                    byKey[key] = list;
+                }
+
+                list.Add(slot);
+            }
+
+            List<List<NpcPortraitSlotRef>> candidates = new List<List<NpcPortraitSlotRef>>(alive.Count);
+            for (int i = 0; i < alive.Count; i++)
+            {
+                Survivor survivor = alive[i];
+                List<NpcPortraitSlotRef> list;
+                if (!byKey.TryGetValue(SlotKey(survivor.defId, survivor.displayStatus), out list)
+                    || list.Count == 0)
+                {
+                    candidates.Add(null);
+                    continue;
+                }
+
+                candidates.Add(OrderByDay(list, day));
+            }
+
+            HashSet<string> used = new HashSet<string>(System.StringComparer.Ordinal);
+            TryAssignPortraits(alive, candidates, 0, used, result);
+            return result;
+        }
+
+        private static string SlotKey(string identityId, SurvivorStatus status)
+        {
+            return identityId + "\u0001" + (int)status;
+        }
+
+        /// <summary>把候选立绘按变体号排序，并按天数旋转使当天默认变体排在首位。</summary>
+        private static List<NpcPortraitSlotRef> OrderByDay(List<NpcPortraitSlotRef> list, int day)
+        {
+            List<NpcPortraitSlotRef> copy = new List<NpcPortraitSlotRef>(list);
+            copy.Sort(delegate (NpcPortraitSlotRef a, NpcPortraitSlotRef b)
+            {
+                return a.Variant.CompareTo(b.Variant);
+            });
+
+            int start = ((day - 1) % copy.Count + copy.Count) % copy.Count;
+            List<NpcPortraitSlotRef> ordered = new List<NpcPortraitSlotRef>(copy.Count);
+            for (int i = 0; i < copy.Count; i++)
+            {
+                ordered.Add(copy[(start + i) % copy.Count]);
+            }
+
+            return ordered;
+        }
+
+        private static bool TryAssignPortraits(
+            List<Survivor> survivors,
+            List<List<NpcPortraitSlotRef>> candidates,
+            int index,
+            HashSet<string> used,
+            Dictionary<Survivor, NpcPortraitSlotRef> result)
+        {
+            if (index >= survivors.Count)
+            {
+                return true;
+            }
+
+            List<NpcPortraitSlotRef> list = candidates[index];
+            if (list == null || list.Count == 0)
+            {
+                return TryAssignPortraits(survivors, candidates, index + 1, used, result);
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                NpcPortraitSlotRef slot = list[i];
+                if (string.IsNullOrEmpty(slot.SpotId) || used.Contains(slot.SpotId))
+                {
+                    continue;
+                }
+
+                used.Add(slot.SpotId);
+                result[survivors[index]] = slot;
+                if (TryAssignPortraits(survivors, candidates, index + 1, used, result))
+                {
+                    return true;
+                }
+
+                result.Remove(survivors[index]);
+                used.Remove(slot.SpotId);
+            }
+
+            return false;
+        }
+
+        private void WirePortraitClick(Image image, string defId)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.raycastTarget = true;
+            Button click = image.GetComponent<Button>();
+            if (click == null)
+            {
+                click = image.gameObject.AddComponent<Button>();
+            }
+
+            click.targetGraphic = image;
+            click.onClick.RemoveAllListeners();
+            click.onClick.AddListener(() => OnNpcClicked(defId));
+        }
+
+        /// <summary>
+        /// 没有场景立绘的幸存者（医生/小贼/步兵等）固定在大厅顶部用占位圆点展示，
+        /// 保证仍可点击查看信息/分配食物，且不与任何手工摆放的立绘重叠。
+        /// </summary>
+        private void CreateFallbackNodes(
+            List<Survivor> alive,
+            Dictionary<Survivor, NpcPortraitSlotRef> assigned)
+        {
+            if (roomRoots == null || roomRoots.Length < 2 || roomRoots[1] == null)
+            {
+                return;
+            }
+
+            List<Survivor> fallback = new List<Survivor>();
+            for (int i = 0; i < alive.Count; i++)
+            {
+                if (!assigned.ContainsKey(alive[i]))
+                {
+                    fallback.Add(alive[i]);
+                }
+            }
+
+            if (fallback.Count == 0)
+            {
+                return;
+            }
+
+            RectTransform hallRoot = roomRoots[1];
+            for (int i = 0; i < fallback.Count; i++)
+            {
+                Survivor survivor = fallback[i];
+                float x = (i - (fallback.Count - 1) * 0.5f) * 170f;
+                Image circle = UiFactory.CreateCircleImage(
+                    hallRoot,
+                    "FallbackNpc_" + survivor.defId,
+                    new Vector2(x, 420f),
+                    new Vector2(116f, 116f),
+                    StatusColor(survivor.displayStatus));
+                circle.raycastTarget = true;
+
+                TextMeshProUGUI label = UiFactory.CreateText(
+                    circle.transform,
+                    "Txt_FallbackName",
+                    survivor.name,
+                    16,
+                    new Vector2(0f, -82f),
+                    new Vector2(180f, 24f),
+                    TextAlignmentOptions.Center,
+                    Color.white);
+                label.raycastTarget = false;
+
+                Button click = circle.gameObject.AddComponent<Button>();
+                click.targetGraphic = circle;
+                click.onClick.RemoveAllListeners();
+                click.onClick.AddListener(() => OnNpcClicked(survivor.defId));
+                roomObjects.Add(circle.gameObject);
+            }
+        }
+
+        private struct NpcPortraitSlotRef
+        {
+            public Image Image;
+            public string IdentityId;
+            public SurvivorStatus Status;
+            public int Variant;
+            public string SpotId;
         }
 
         private void CreateNpcNode(Survivor survivor, Vector2 seatPos, int day)
@@ -546,7 +789,7 @@ namespace SixDaysRemaining.UI
         {
             SurvivorDef def;
             bool hasDef = ShelterContent.Survivors.TryGet(survivor.defId, out def);
-            Sprite portrait = ShelterPortraits.Load(def, survivor.status, day);
+            Sprite portrait = ShelterPortraits.Load(def, survivor.displayStatus, day);
 
             // 点击区域覆盖整个 NPC 块（立绘 + 名字 + 状态 + 身份），避免只能点中立绘。
             float top = portraitPos.y + 66f;
@@ -584,7 +827,7 @@ namespace SixDaysRemaining.UI
             }
             else
             {
-                portraitImage = UiFactory.CreateCircleImage(nodeGo.transform, "Portrait_" + survivor.defId, childPortrait, new Vector2(104f, 104f), StatusColor(survivor.status));
+                portraitImage = UiFactory.CreateCircleImage(nodeGo.transform, "Portrait_" + survivor.defId, childPortrait, new Vector2(104f, 104f), StatusColor(survivor.displayStatus));
             }
 
             portraitImage.raycastTarget = false;
@@ -592,7 +835,7 @@ namespace SixDaysRemaining.UI
             TextMeshProUGUI name = UiFactory.CreateText(nodeGo.transform, "Txt_NpcName_" + survivor.defId, survivor.name, 18, childName, new Vector2(170f, 26f), TextAlignmentOptions.Center, Color.white);
             name.raycastTarget = false;
 
-            TextMeshProUGUI status = UiFactory.CreateText(nodeGo.transform, "Txt_NpcStatus_" + survivor.defId, StatusName(survivor.status), 15, childStatus, new Vector2(140f, 22f), TextAlignmentOptions.Center, StatusColor(survivor.status));
+            TextMeshProUGUI status = UiFactory.CreateText(nodeGo.transform, "Txt_NpcStatus_" + survivor.defId, StatusName(survivor.displayStatus), 15, childStatus, new Vector2(140f, 22f), TextAlignmentOptions.Center, StatusColor(survivor.displayStatus));
             status.raycastTarget = false;
 
             if (hasDef)
@@ -687,31 +930,68 @@ namespace SixDaysRemaining.UI
             SurvivorProfile profile = ShelterProfiles.Resolve(def);
 
             detailGroup.SetActive(true);
-            SetText(detailIdentityText, "身份：" + (def != null ? def.DisplayName : selected.name));
+            SetText(detailIdentityText, def != null ? def.DisplayName : selected.name);
             SetText(detailNameText, def != null ? def.DisplayName : selected.name);
             SetText(detailAgeText, "年龄：" + (profile.Age > 0 ? profile.Age + " 岁" : "未知"));
-            SetText(detailStatusText, "生存状态：" + StatusName(selected.status) + "　饱食度 " + selected.hunger);
+            SetText(detailStatusText, "生存状态：" + StatusName(selected.displayStatus) + "　饱食度 " + selected.hunger);
             SetText(detailFitnessText, "身体素质：" + (string.IsNullOrEmpty(profile.Fitness) ? "未知" : profile.Fitness));
             SetText(detailQuoteText, "语录：\n“" + (string.IsNullOrEmpty(profile.Quote) ? "（暂无语录）" : profile.Quote) + "”");
 
-            Sprite portrait = ShelterPortraits.Load(def, selected.status, state.day);
+            int variant;
+            Sprite portrait = assignedVariants.TryGetValue(selected.defId, out variant)
+                ? ShelterPortraits.LoadVariant(def, selected.displayStatus, variant)
+                : ShelterPortraits.Load(def, selected.displayStatus, state.day);
             if (detailAvatarImage != null)
             {
                 if (portrait != null)
                 {
                     detailAvatarImage.sprite = portrait;
                     detailAvatarImage.color = Color.white;
-                    detailAvatarImage.rectTransform.sizeDelta = new Vector2(104f, 132f);
                 }
                 else
                 {
                     detailAvatarImage.sprite = UiFactory.CircleSprite;
-                    detailAvatarImage.color = StatusColor(selected.status);
-                    detailAvatarImage.rectTransform.sizeDelta = new Vector2(104f, 104f);
+                    detailAvatarImage.color = StatusColor(selected.displayStatus);
                 }
+
+                FitAvatarToFrame();
             }
 
             RefreshFeedButton(shelter, selected, state);
+        }
+
+        /// <summary>
+        /// 让头像 Source Image 自适应 Frame_Avatar 手动设置的高和宽：
+        /// 任意尺寸的立绘都按 Frame_Avatar 的矩形等比缩放居中显示（preserveAspect），不拉伸变形。
+        /// 手动模式里 detailAvatarImage 直接就是 Frame_Avatar，保持场景摆好的尺寸不动；
+        /// 代码布局里头像作为 Frame_Avatar 的子节点，拉伸填满父级并留少量内边距。
+        /// </summary>
+        private void FitAvatarToFrame()
+        {
+            if (detailAvatarImage == null)
+            {
+                return;
+            }
+
+            // Simple 模式 + PreserveAspect：不同尺寸的图片都能等比缩放适配矩形，防止比例变形。
+            detailAvatarImage.type = Image.Type.Simple;
+            detailAvatarImage.preserveAspect = true;
+            RectTransform avatarRt = detailAvatarImage.rectTransform;
+            RectTransform frameRt = detailAvatarFrame;
+
+            // 手动模式：Source Image 就是 Frame_Avatar 本身，保持场景里手动设置的尺寸和 anchor 不动。
+            if (frameRt == null || frameRt == avatarRt)
+            {
+                return;
+            }
+
+            // 代码布局：头像作为 Frame_Avatar 的子节点，拉伸填满父级并留少量内边距。
+            avatarRt.anchorMin = Vector2.zero;
+            avatarRt.anchorMax = Vector2.one;
+            avatarRt.offsetMin = new Vector2(6f, 6f);
+            avatarRt.offsetMax = new Vector2(-6f, -6f);
+            avatarRt.anchoredPosition = Vector2.zero;
+            avatarRt.sizeDelta = Vector2.zero;
         }
 
         private void RefreshFeedButton(ShelterManager shelter, Survivor survivor, GameState state)
@@ -726,43 +1006,39 @@ namespace SixDaysRemaining.UI
             bool fedToday = shelter.IsFedToday(survivor);
             bool inFeedPhase = state.currentPhase == GameplayPhase.ExpeditionPrep;
 
-            Image buttonBg = feedButton.GetComponent<Image>();
             if (bigu)
             {
-                SetButtonState(feedButton, buttonBg, "辟谷中", false, DisabledGray);
+                SetButtonState(feedButton, "辟谷中", false);
             }
             else if (fedToday)
             {
-                SetButtonState(feedButton, buttonBg, "已分配食物", false, PressedGray);
+                SetButtonState(feedButton, "【已分配】", false, true);
             }
             else if (!inFeedPhase)
             {
                 // 不在“出征准备·每日分配”阶段：按钮置灰但保持“分配食物”文案，方便区分原因。
-                SetButtonState(feedButton, buttonBg, "分配食物", false, DisabledGray);
+                SetButtonState(feedButton, "分配食物", false);
             }
             else if (state.foodStock < 1)
             {
-                SetButtonState(feedButton, buttonBg, "粮食不足", false, DisabledGray);
+                SetButtonState(feedButton, "粮食不足", false);
             }
             else
             {
-                SetButtonState(feedButton, buttonBg, "分配食物", true, FeedGreen);
+                SetButtonState(feedButton, "分配食物", true);
             }
         }
 
-        private static void SetButtonState(Button button, Image bg, string label, bool interactable, Color color)
+        private static void SetButtonState(Button button, string label, bool interactable, bool blackFont = false)
         {
             button.interactable = interactable;
-            if (bg != null)
-            {
-                bg.color = color;
-            }
-
             TextMeshProUGUI text = button.GetComponentInChildren<TextMeshProUGUI>(true);
             if (text != null)
             {
                 text.text = label;
-                text.color = interactable ? Color.white : new Color(0.55f, 0.58f, 0.63f, 1f);
+                text.color = blackFont
+                    ? Color.black
+                    : (interactable ? Color.white : new Color(0.55f, 0.58f, 0.63f, 1f));
             }
         }
 
@@ -1075,6 +1351,7 @@ namespace SixDaysRemaining.UI
 
             Image frame = UiFactory.CreateImage(detailGroup.transform, "Frame_Avatar", new Vector2(0f, 108f), new Vector2(116f, 140f), new Color(0.28f, 0.32f, 0.38f, 1f));
             frame.raycastTarget = false;
+            detailAvatarFrame = frame.rectTransform;
             detailAvatarImage = UiFactory.CreateImage(frame.transform, "Avatar", Vector2.zero, new Vector2(104f, 128f), new Color(0.34f, 0.72f, 0.44f, 1f));
             detailAvatarImage.raycastTarget = false;
 

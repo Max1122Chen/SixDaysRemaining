@@ -124,6 +124,7 @@ namespace SixDaysRemaining.App.Save
                     name = s.name,
                     hunger = s.hunger,
                     status = (int)s.status,
+                    displayStatus = (int)s.displayStatus,
                     hungryDayCount = s.hungryDayCount,
                     hungryToDyingDays = s.hungryToDyingDays,
                     dyingGraceConsumed = s.dyingGraceConsumed

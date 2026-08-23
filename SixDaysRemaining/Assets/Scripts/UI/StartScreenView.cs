@@ -102,7 +102,10 @@ namespace SixDaysRemaining.UI
 
         private void SetupJuicyButtons()
         {
-            JuicyButton cont = JuicyButton.Attach(btnContinue);
+            // 场景手动搭 UI 时可能只拖了 btnStart（Btn_Start），
+            // 此时继续/开始按钮也要挂果冻交互（悬停高亮 + 上下浮动）。
+            Button primary = btnContinue != null ? btnContinue : btnStart;
+            JuicyButton cont = JuicyButton.Attach(primary);
             if (cont != null)
             {
                 cont.SetIdle(7f, 1.7f, 0f)

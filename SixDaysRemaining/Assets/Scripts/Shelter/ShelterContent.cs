@@ -116,6 +116,7 @@ namespace SixDaysRemaining.Shelter
                 survivor.status = SurvivorStatus.Healthy;
             }
 
+            survivor.displayStatus = survivor.status;
             return survivor;
         }
 

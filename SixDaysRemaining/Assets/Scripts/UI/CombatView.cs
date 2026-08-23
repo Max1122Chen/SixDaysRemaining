@@ -21,10 +21,11 @@ namespace SixDaysRemaining.UI
     {
         private const int SlotCount = 5;
         private const float CompanionYOffset = -105f;
-        private const float HandSpacing = 150f;
+        // 扇形手牌：间距小于牌宽，让右边牌盖住左边牌，形成交错层叠效果。
+        private const float HandSpacing = 96f;
         // 手牌整体比原布局下移 78 单位（UI 中向下为负 Y）。
         private const float HandBaseY = -458f;
-        private const float HandMaxArcDeg = 12f;
+        private const float HandMaxArcDeg = 16f;
         private static readonly Vector2 CardSize = new Vector2(166.5f, 254.7f);
         private static readonly Vector2 HandSize = CardSize;
         private static readonly Vector2 SlotSize = new Vector2(150f, 200f);
@@ -127,6 +128,8 @@ namespace SixDaysRemaining.UI
             this.flow = flow;
             WireButton(commitButton, OnCommit);
             SetButtonLabel(commitButton, "开始战斗");
+            // 悬停时给「开始战斗」加描边高亮作为选中态反馈。
+            HoverOutline.Attach(commitButton, new Color(1f, 0.84f, 0.35f, 1f));
 
             for (int i = 0; i < slots.Length; i++)
             {

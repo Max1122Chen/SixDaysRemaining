@@ -310,6 +310,7 @@ namespace SixDaysRemaining.Shelter
             survivor.status = SurvivorStatus.Healthy;
             survivor.hungryDayCount = 0;
             survivor.dyingGraceConsumed = false;
+            SyncDisplayStatus(survivor);
             SyncPopulation();
             return true;
         }
@@ -609,6 +610,7 @@ namespace SixDaysRemaining.Shelter
                     survivor.status = SurvivorStatus.Healthy;
                     survivor.hungryDayCount = 0;
                     survivor.dyingGraceConsumed = false;
+                    SyncDisplayStatus(survivor);
                     continue;
                 }
 
@@ -650,6 +652,9 @@ namespace SixDaysRemaining.Shelter
 
         public void ResolveNextDayTransitions()
         {
+            // 次日开局：统一刷新界面展示状态（分配食物造成的状态/立绘变化延迟生效）。
+            RefreshDisplayStatuses();
+
             if (gameplay == null || !gameplay.HasTagExact(GameplayTags.WandererDiesNextDay))
             {
                 return;
@@ -663,6 +668,29 @@ namespace SixDaysRemaining.Shelter
             }
 
             MarkDead(wanderer, "流浪者死亡，腐蚀度+10");
+        }
+
+        /// <summary>
+        /// 次日开局统一刷新界面展示状态：分配食物导致的状态/立绘变化延迟到此时生效。
+        /// </summary>
+        public void RefreshDisplayStatuses()
+        {
+            for (int i = 0; i < survivors.Count; i++)
+            {
+                Survivor survivor = survivors[i];
+                if (survivor != null)
+                {
+                    survivor.displayStatus = survivor.status;
+                }
+            }
+        }
+
+        private static void SyncDisplayStatus(Survivor survivor)
+        {
+            if (survivor != null)
+            {
+                survivor.displayStatus = survivor.status;
+            }
         }
 
         private void TryActivateDoctorBigu()
@@ -696,6 +724,7 @@ namespace SixDaysRemaining.Shelter
             if (survivor.hunger == 0)
             {
                 survivor.status = SurvivorStatus.Dying;
+                SyncDisplayStatus(survivor);
                 return;
             }
 
@@ -708,12 +737,14 @@ namespace SixDaysRemaining.Shelter
 
                 survivor.status = SurvivorStatus.Hungry;
                 survivor.dyingGraceConsumed = false;
+                SyncDisplayStatus(survivor);
                 return;
             }
 
             survivor.hungryDayCount = 0;
             survivor.status = SurvivorStatus.Healthy;
             survivor.dyingGraceConsumed = false;
+            SyncDisplayStatus(survivor);
         }
 
         private void GrantPassivesFromDef(Survivor survivor)
@@ -738,6 +769,7 @@ namespace SixDaysRemaining.Shelter
         private void MarkLeft(Survivor survivor)
         {
             survivor.status = SurvivorStatus.Left;
+            SyncDisplayStatus(survivor);
             passives.RevokeBySourceDefId(survivor.defId);
             SyncPopulation();
             string message = "驱赶了 " + survivor.name;
@@ -774,6 +806,7 @@ namespace SixDaysRemaining.Shelter
             }
 
             survivor.status = SurvivorStatus.Dead;
+            SyncDisplayStatus(survivor);
             passives.RevokeBySourceDefId(survivor.defId);
             SyncPopulation();
             if (!string.IsNullOrEmpty(message))
@@ -836,10 +869,12 @@ namespace SixDaysRemaining.Shelter
                 {
                     survivor.status = SurvivorStatus.Dying;
                     survivor.dyingGraceConsumed = false;
+                    SyncDisplayStatus(survivor);
                 }
                 else
                 {
                     survivor.status = SurvivorStatus.Hungry;
+                    SyncDisplayStatus(survivor);
                 }
 
                 return;
@@ -847,6 +882,7 @@ namespace SixDaysRemaining.Shelter
 
             survivor.hungryDayCount = 0;
             survivor.status = SurvivorStatus.Healthy;
+            SyncDisplayStatus(survivor);
         }
 
         private void SyncPopulation()

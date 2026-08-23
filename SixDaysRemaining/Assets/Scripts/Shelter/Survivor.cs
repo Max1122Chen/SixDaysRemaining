@@ -34,5 +34,11 @@ namespace SixDaysRemaining.Shelter
         /// 进食离开濒死后清零。
         /// </summary>
         public bool dyingGraceConsumed;
+
+        /// <summary>
+        /// 界面展示用状态。分配食物等延迟生效的状态变化不会立即写到这里；
+        /// 由 ShelterManager 在次日开局时统一同步为 <see cref="status"/>。
+        /// </summary>
+        public SurvivorStatus displayStatus;
     }
 }
