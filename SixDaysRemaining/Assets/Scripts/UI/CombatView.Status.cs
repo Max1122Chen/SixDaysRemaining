@@ -328,6 +328,7 @@ namespace SixDaysRemaining.UI
                 ? gi.Combat.Session.Enemies[0]
                 : null;
             CardInstance[] intents = enemy != null ? enemy.GetRoundCards() : null;
+            Sprite monsterArt = LoadMonsterArt(enemy);
             for (int i = 0; i < enemyActionSlots.Length; i++)
             {
                 if (enemyActionSlots[i] == null)
@@ -339,7 +340,42 @@ namespace SixDaysRemaining.UI
                     ? intents[i].Def
                     : null;
                 enemyActionSlots[i].SetCard(def);
+                enemyActionSlots[i].SetMonsterArt(monsterArt);
             }
+        }
+
+        /// <summary>
+        /// 根据当前遭遇加载 Resources/Monster/ 下的怪物立绘；
+        /// 强化版（Mob01Boost/Mob02Boost）沿用 01/02 的形象。未加载到资源时返回 null。
+        /// </summary>
+        private static Sprite LoadMonsterArt(EnemyCombatComponent enemy)
+        {
+            EnemyEncounterDef def = enemy != null ? enemy.Encounter : null;
+            if (def == null)
+            {
+                return null;
+            }
+
+            string key;
+            switch (def.Id)
+            {
+                case EncounterIds.Mob01:
+                case EncounterIds.Mob01Boost:
+                    key = "Monster_01";
+                    break;
+                case EncounterIds.Mob02:
+                case EncounterIds.Mob02Boost:
+                    key = "Monster_02";
+                    break;
+                case EncounterIds.Mob03:
+                    key = "Monster_03";
+                    break;
+                default:
+                    key = "Monster_" + def.Id.ToString("D2");
+                    break;
+            }
+
+            return Resources.Load<Sprite>("Monster/" + key);
         }
 
         private void SetEnemyActionActive(int index, bool on)
@@ -827,21 +863,6 @@ namespace SixDaysRemaining.UI
                     layerImage.raycastTarget = false;
                 }
             }
-
-            if (enemyPreview != null)
-            {
-                Image background = enemyPreview.GetComponent<Image>();
-                if (background != null)
-                {
-                    background.raycastTarget = false;
-                }
-
-                TextMeshProUGUI[] labels = enemyPreview.GetComponentsInChildren<TextMeshProUGUI>(true);
-                for (int i = 0; i < labels.Length; i++)
-                {
-                    labels[i].raycastTarget = false;
-                }
-            }
         }
 
         private static void WireButton(Button button, UnityEngine.Events.UnityAction action)
@@ -872,11 +893,6 @@ namespace SixDaysRemaining.UI
             }
 
             PlayerCombatComponent player = gi.Combat.Session.Player;
-            EnemyCombatComponent enemy = gi.Combat.Session.Enemies.Count > 0
-                ? gi.Combat.Session.Enemies[0]
-                : null;
-            enemyPreview.Bind(enemy);
-            enemyPreview.Refresh(gi.Combat.IsPlayerTurn);
             RefreshTraitBar(player, gi);
             flow.RefreshGlobalHud();
 
@@ -896,11 +912,6 @@ namespace SixDaysRemaining.UI
             }
 
             PlayerCombatComponent player = gi.Combat.Session.Player;
-            EnemyCombatComponent enemy = gi.Combat.Session.Enemies.Count > 0
-                ? gi.Combat.Session.Enemies[0]
-                : null;
-            enemyPreview.Bind(enemy);
-            enemyPreview.Refresh(false);
             RefreshTraitBar(player, gi);
             flow.RefreshGlobalHud();
             RefreshHpBars();

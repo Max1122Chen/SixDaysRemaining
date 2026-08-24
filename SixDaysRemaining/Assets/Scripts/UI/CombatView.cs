@@ -44,9 +44,6 @@ namespace SixDaysRemaining.UI
         private Button commitButton;
 
         [SerializeField]
-        private EnemyPreviewView enemyPreview;
-
-        [SerializeField]
         private TraitBarView traitBar;
 
         [SerializeField]
@@ -98,7 +95,6 @@ namespace SixDaysRemaining.UI
             GameObject panel = UiFactory.CreatePanel(parent, "CombatScreen", new Color(0.07f, 0.08f, 0.10f, 0.98f));
             CombatView view = panel.AddComponent<CombatView>();
 
-            view.enemyPreview = EnemyPreviewView.Build(panel.transform, new Vector2(620f, 360f), new Vector2(420f, 220f));
             view.traitBar = TraitBarView.Build(panel.transform, view.OnTraitClicked);
 
             GameObject layerGo = UiFactory.CreatePanel(panel.transform, "CardLayer", new Color(0f, 0f, 0f, 0f));
