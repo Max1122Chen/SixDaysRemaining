@@ -18,7 +18,8 @@ namespace SixDaysRemaining.Shelter
             new Dictionary<string, string>(System.StringComparer.Ordinal)
             {
                 { SurvivorIds.Child, "小孩" },
-                { SurvivorIds.Politician, "政治家" }
+                { SurvivorIds.Politician, "政治家" },
+                { SurvivorIds.Thief, "小偷" }
             };
 
         private static readonly Dictionary<string, Sprite> cache =
@@ -136,7 +137,14 @@ namespace SixDaysRemaining.Shelter
             string basePath = Folder + displayName + "-" + StatusSuffix(status);
             if (variant > 0)
             {
-                return LoadSprite(basePath + "_" + variant);
+                Sprite sprite = LoadSprite(basePath + "_" + variant);
+                if (sprite == null)
+                {
+                    // 场景节点可能是“_1”命名（如 Thief-Normal_1），而资源是基准名（小偷-正常.png）。
+                    sprite = LoadSprite(basePath);
+                }
+
+                return sprite;
             }
 
             return LoadSprite(basePath);
