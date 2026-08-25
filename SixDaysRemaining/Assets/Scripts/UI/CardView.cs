@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using SixDaysRemaining.App.Audio;
 using SixDaysRemaining.Combat.Cards;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -376,6 +377,7 @@ namespace SixDaysRemaining.UI
         {
             if (!dragging && Interactable)
             {
+                SfxService.Play(SfxIds.CardSwitch);
                 SetHighlighted(true);
                 if (InSlot)
                 {

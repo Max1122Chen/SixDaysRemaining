@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SixDaysRemaining.App.Audio;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
@@ -660,6 +661,7 @@ namespace SixDaysRemaining.UI
             highlight.gameObject.SetActive(on);
             if (on)
             {
+                SfxService.Play(SfxIds.CardChosen);
                 RectTransform rt = highlight.rectTransform;
                 if (rt != null)
                 {

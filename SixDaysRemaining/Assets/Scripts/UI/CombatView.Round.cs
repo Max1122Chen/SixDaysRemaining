@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SixDaysRemaining.App.Audio;
 using SixDaysRemaining.Gameplay;
 using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
@@ -23,6 +24,7 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
+            SfxService.Play(SfxIds.StartCombat);
             StartCoroutine(StartRoundRoutine());
         }
 

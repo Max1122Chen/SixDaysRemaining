@@ -13,6 +13,7 @@ namespace SixDaysRemaining.UI
     {
         private const string VideoClipPath = "backstory";
         private const string SurfaceName = "VideoSurface";
+        private const string HostName = "StoryVideoHost";
 
         private AppFlowController flow;
 
@@ -25,8 +26,12 @@ namespace SixDaysRemaining.UI
         [SerializeField, Tooltip("视频播放器，可留空：运行时自动挂载到面板")]
         private VideoPlayer videoPlayer;
 
+        [SerializeField, Tooltip("可留空：留空时运行时自动创建 RenderTexture")]
+        private RenderTexture renderTextureAsset;
+
         private RenderTexture renderTexture;
         private bool videoEnded;
+        private bool pendingPlay;
 
         public static StoryIntroView Build(Transform parent, AppFlowController flow)
         {
@@ -47,6 +52,13 @@ namespace SixDaysRemaining.UI
             }
 
             EnsureVideo();
+            PrepareForPlayback();
+        }
+
+        private void OnEnable()
+        {
+            // 面板每次显示前确保视频已解码出首帧，避免从点击到出画面的黑屏。
+            PrepareForPlayback();
         }
 
         public void Play()
@@ -65,10 +77,37 @@ namespace SixDaysRemaining.UI
                 return;
             }
 
-            videoPlayer.Stop();
-            videoPlayer.Prepare();
+            if (videoPlayer.isPrepared)
+            {
+                videoPlayer.time = 0;
+                videoPlayer.Play();
+                return;
+            }
+
+            pendingPlay = true;
+            PrepareForPlayback();
+        }
+
+        private void PrepareForPlayback()
+        {
+            if (videoPlayer == null || videoPlayer.clip == null)
+            {
+                return;
+            }
+
+            videoPlayer.loopPointReached -= OnLoopPointReached;
+            videoPlayer.loopPointReached += OnLoopPointReached;
+
+            if (videoPlayer.isPrepared)
+            {
+                HoldFirstFrame();
+                return;
+            }
+
             videoPlayer.prepareCompleted -= OnPrepared;
             videoPlayer.prepareCompleted += OnPrepared;
+            videoPlayer.Stop();
+            videoPlayer.Prepare();
         }
 
         private void OnPrepared(VideoPlayer vp)
@@ -79,17 +118,46 @@ namespace SixDaysRemaining.UI
                 videoSurface.texture = vp.texture != null ? vp.texture : renderTexture;
             }
 
-            vp.Play();
+            if (pendingPlay)
+            {
+                pendingPlay = false;
+                vp.time = 0;
+                vp.Play();
+                return;
+            }
+
+            HoldFirstFrame();
+        }
+
+        private void HoldFirstFrame()
+        {
+            if (videoPlayer == null || videoPlayer.clip == null || !videoPlayer.isPrepared)
+            {
+                return;
+            }
+
+            // 已解码但还未正式播放：停在第一帧，RawImage 立刻有画面，不再露黑底。
+            videoPlayer.time = 0;
+            videoPlayer.Play();
+            videoPlayer.Pause();
         }
 
         private void EnsureVideo()
         {
-            if (videoPlayer == null)
+            // VideoPlayer 必须挂在常驻激活的物体上才能提前解码；
+            // 面板本身是未激活的，所以播放器放面板上会导致每次显示都要现解码（黑屏）。
+            if (videoPlayer == null || !videoPlayer.gameObject.activeInHierarchy)
             {
-                videoPlayer = GetComponent<VideoPlayer>();
+                GameObject host = new GameObject(HostName);
+                if (transform.parent != null)
+                {
+                    host.transform.SetParent(transform.parent, false);
+                }
+
+                videoPlayer = host.GetComponent<VideoPlayer>();
                 if (videoPlayer == null)
                 {
-                    videoPlayer = gameObject.AddComponent<VideoPlayer>();
+                    videoPlayer = host.AddComponent<VideoPlayer>();
                 }
             }
 
@@ -117,7 +185,11 @@ namespace SixDaysRemaining.UI
                 videoSurface = surface.GetComponent<RawImage>();
             }
 
-            if (renderTexture == null)
+            if (renderTextureAsset != null)
+            {
+                renderTexture = renderTextureAsset;
+            }
+            else if (renderTexture == null)
             {
                 renderTexture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32);
                 renderTexture.Create();
@@ -163,9 +235,12 @@ namespace SixDaysRemaining.UI
             if (videoPlayer != null)
             {
                 videoPlayer.prepareCompleted -= OnPrepared;
-                videoPlayer.loopPointReached -= OnLoopPointReached;
-                videoPlayer.Stop();
+                // 停到第一帧而不是 Stop：宿主是常驻激活的，首帧会立刻渲染进
+                // RenderTexture，下次面板显示时 RawImage 直接就有画面。
+                HoldFirstFrame();
             }
+
+            pendingPlay = false;
         }
 
         private void OnDestroy()
@@ -176,7 +251,7 @@ namespace SixDaysRemaining.UI
                 videoPlayer.loopPointReached -= OnLoopPointReached;
             }
 
-            if (renderTexture != null)
+            if (renderTexture != null && renderTextureAsset == null)
             {
                 renderTexture.Release();
                 Destroy(renderTexture);
