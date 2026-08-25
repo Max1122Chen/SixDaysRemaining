@@ -1021,7 +1021,7 @@ namespace SixDaysRemaining.UI
             }
             else if (state.foodStock < 1)
             {
-                SetButtonState(feedButton, "粮食不足", false);
+                SetButtonState(feedButton, "粮食不足", false, true);
             }
             else
             {
