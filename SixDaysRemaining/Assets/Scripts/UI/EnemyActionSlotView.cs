@@ -18,9 +18,6 @@ namespace SixDaysRemaining.UI
         private Image frame;
 
         [SerializeField]
-        private Image monsterArt;
-
-        [SerializeField]
         private TextMeshProUGUI label;
 
         private static readonly Color NormalColor = new Color(0.22f, 0.25f, 0.30f, 0.9f);
@@ -46,11 +43,6 @@ namespace SixDaysRemaining.UI
             view.Rect = rt;
             view.frame = UiFactory.CreateImage(go.transform, "Frame", Vector2.zero, size, NormalColor);
             view.frame.raycastTarget = false;
-            // 怪物立绘作为卡槽内的子图：叠在底色之上、行动文字之下。
-            view.monsterArt = UiFactory.CreateImage(go.transform, "Img_Monster", Vector2.zero, size, Color.white);
-            view.monsterArt.raycastTarget = false;
-            view.monsterArt.preserveAspect = true;
-            view.monsterArt.gameObject.SetActive(false);
             view.label = UiFactory.CreateText(
                 go.transform,
                 "Txt_Action",
@@ -74,22 +66,6 @@ namespace SixDaysRemaining.UI
             if (label == null)
             {
                 label = GetComponentInChildren<TextMeshProUGUI>();
-            }
-
-            if (monsterArt == null)
-            {
-                monsterArt = FindChildImage(transform, "Img_Monster");
-            }
-
-            if (monsterArt == null && Rect != null)
-            {
-                // 手搭场景未预置 Img_Monster 时自动补一张；
-                // 插到子物体最底层，保证渲染顺序：卡槽底图 -> 立绘 -> 行动文字。
-                monsterArt = UiFactory.CreateImage(transform, "Img_Monster", Vector2.zero, Rect.rect.size, Color.white);
-                monsterArt.raycastTarget = false;
-                monsterArt.preserveAspect = true;
-                monsterArt.gameObject.SetActive(false);
-                monsterArt.transform.SetSiblingIndex(0);
             }
         }
 
@@ -116,25 +92,6 @@ namespace SixDaysRemaining.UI
             {
                 actionColor = ActionColor(EnemyIntentVisual.KindFromCard(def));
                 frame.color = active ? ActiveColor : actionColor;
-            }
-        }
-
-        /// <summary>
-        /// 把怪物立绘放入卡槽内的 Img_Monster 子图；frame 仍是卡槽底色/高亮，立绘不染色。
-        /// 传 null 时隐藏子图，卡槽恢复纯色块。
-        /// </summary>
-        public void SetMonsterArt(Sprite art)
-        {
-            if (monsterArt == null)
-            {
-                return;
-            }
-
-            monsterArt.gameObject.SetActive(art != null);
-            if (art != null)
-            {
-                monsterArt.sprite = art;
-                monsterArt.color = Color.white;
             }
         }
 
@@ -210,31 +167,6 @@ namespace SixDaysRemaining.UI
                 default:
                     return NormalColor;
             }
-        }
-
-        private static Image FindChildImage(Transform parent, string name)
-        {
-            if (parent == null)
-            {
-                return null;
-            }
-
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                Transform child = parent.GetChild(i);
-                if (child == null || child.name != name)
-                {
-                    continue;
-                }
-
-                Image image = child.GetComponent<Image>();
-                if (image != null)
-                {
-                    return image;
-                }
-            }
-
-            return null;
         }
     }
 }

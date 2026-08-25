@@ -130,6 +130,51 @@ namespace SixDaysRemaining.UI
             EnsureHpBars();
             EnsureEnemyActionSlots();
             EnsureTransitionOverlay();
+            EnsureMonsterPortrait();
+        }
+
+        /// <summary>
+        /// 怪物立绘位：场景手搭的 Img_Monster（战斗界面根节点下的 611x611 子物体）。
+        /// 未在 Inspector 拖引用时按名字查找；找不到则立绘功能静默失效。
+        /// </summary>
+        private void EnsureMonsterPortrait()
+        {
+            if (monsterPortrait != null)
+            {
+                return;
+            }
+
+            monsterPortrait = FindChildImage(transform, "Img_Monster");
+            if (monsterPortrait != null)
+            {
+                monsterPortrait.raycastTarget = false;
+            }
+        }
+
+        /// <summary>
+        /// 把当前遭遇的怪物立绘加载到 Img_Monster 上；未加载到资源时隐藏该元素。
+        /// </summary>
+        private void RefreshMonsterArt()
+        {
+            EnsureMonsterPortrait();
+            if (monsterPortrait == null)
+            {
+                return;
+            }
+
+            GameInstance gi = flow != null ? flow.Game : null;
+            EnemyCombatComponent enemy = gi != null && gi.Combat != null && gi.Combat.Session != null
+                && gi.Combat.Session.Enemies.Count > 0
+                ? gi.Combat.Session.Enemies[0]
+                : null;
+            Sprite art = LoadMonsterArt(enemy);
+            monsterPortrait.gameObject.SetActive(art != null);
+            if (art != null)
+            {
+                monsterPortrait.sprite = art;
+                monsterPortrait.preserveAspect = true;
+                monsterPortrait.color = Color.white;
+            }
         }
 
         private void EnsureHpBars()
@@ -328,7 +373,6 @@ namespace SixDaysRemaining.UI
                 ? gi.Combat.Session.Enemies[0]
                 : null;
             CardInstance[] intents = enemy != null ? enemy.GetRoundCards() : null;
-            Sprite monsterArt = LoadMonsterArt(enemy);
             for (int i = 0; i < enemyActionSlots.Length; i++)
             {
                 if (enemyActionSlots[i] == null)
@@ -340,7 +384,6 @@ namespace SixDaysRemaining.UI
                     ? intents[i].Def
                     : null;
                 enemyActionSlots[i].SetCard(def);
-                enemyActionSlots[i].SetMonsterArt(monsterArt);
             }
         }
 
@@ -896,6 +939,7 @@ namespace SixDaysRemaining.UI
             RefreshTraitBar(player, gi);
             flow.RefreshGlobalHud();
 
+            RefreshMonsterArt();
             RefreshHpBars();
             RefreshEnemyActions();
             UpdateRoundProgress();
@@ -914,6 +958,7 @@ namespace SixDaysRemaining.UI
             PlayerCombatComponent player = gi.Combat.Session.Player;
             RefreshTraitBar(player, gi);
             flow.RefreshGlobalHud();
+            RefreshMonsterArt();
             RefreshHpBars();
             RefreshEnemyActions();
             UpdateRoundProgress();

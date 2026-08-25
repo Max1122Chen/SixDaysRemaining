@@ -73,6 +73,9 @@ namespace SixDaysRemaining.UI
         [SerializeField]
         private EnemyActionSlotView[] enemyActionSlots = new EnemyActionSlotView[SlotCount];
 
+        [SerializeField]
+        private Image monsterPortrait;
+
         private readonly List<CardView> handCards = new List<CardView>();
         private readonly List<CardView> companionCards = new List<CardView>();
         private readonly CardView[] slotCards = new CardView[SlotCount];
