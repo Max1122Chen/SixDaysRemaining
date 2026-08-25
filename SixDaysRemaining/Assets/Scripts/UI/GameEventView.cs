@@ -32,6 +32,9 @@ namespace SixDaysRemaining.UI
         private TextMeshProUGUI bodyText;
 
         [SerializeField]
+        private Image eventImage;
+
+        [SerializeField]
         private Button[] optionButtons = new Button[OptionCount];
 
         [SerializeField]
@@ -97,7 +100,7 @@ namespace SixDaysRemaining.UI
             view.titleText.raycastTarget = false;
 
             view.eventGroup = CreateFullChild(window.transform, "EventGroup");
-            BuildArtPlaceholder(view.eventGroup.transform, "ArtPlaceholder", "示意图", new Vector2(-215f, -10f), new Vector2(390f, 450f));
+            view.eventImage = BuildArtPlaceholder(view.eventGroup.transform, "ArtPlaceholder", "示意图", new Vector2(-215f, -10f), new Vector2(390f, 450f));
             view.bodyText = UiFactory.CreateText(view.eventGroup.transform, "Txt_Body", "", 20, new Vector2(240f, 140f), new Vector2(410f, 150f), TextAlignmentOptions.Top);
             view.bodyText.raycastTarget = false;
 
@@ -305,6 +308,8 @@ namespace SixDaysRemaining.UI
             {
                 bodyText.text = def != null ? def.Body : "";
             }
+
+            SetEventArt(def);
 
             if (!preserveManualLayout)
             {
@@ -659,7 +664,7 @@ namespace SixDaysRemaining.UI
             return go;
         }
 
-        private static void BuildArtPlaceholder(Transform parent, string name, string title, Vector2 pos, Vector2 size)
+        private static Image BuildArtPlaceholder(Transform parent, string name, string title, Vector2 pos, Vector2 size)
         {
             GameObject panel = UiFactory.CreatePanel(parent, name, new Color(0.13f, 0.15f, 0.19f, 1f), false);
             RectTransform rt = panel.GetComponent<RectTransform>();
@@ -672,6 +677,37 @@ namespace SixDaysRemaining.UI
             artTitle.raycastTarget = false;
             TextMeshProUGUI artNote = UiFactory.CreateText(panel.transform, "Txt_ArtNote", "美术资源占位", 16, new Vector2(0f, -44f), new Vector2(300f, 28f), TextAlignmentOptions.Center, new Color(0.45f, 0.48f, 0.54f, 1f));
             artNote.raycastTarget = false;
+            return panel.GetComponent<Image>();
+        }
+
+        private void SetEventArt(GameEventDef def)
+        {
+            if (eventImage == null)
+            {
+                return;
+            }
+
+            Sprite sprite = def != null
+                ? Resources.Load<Sprite>("Events/" + def.Id)
+                : null;
+            if (sprite != null)
+            {
+                eventImage.sprite = sprite;
+                eventImage.enabled = true;
+
+                // 代码生成 UI 的占位文字只在美术图缺失时显示；场景手动搭建时没有这些节点，无副作用。
+                Transform title = eventImage.transform.Find("Txt_ArtTitle");
+                if (title != null)
+                {
+                    title.gameObject.SetActive(false);
+                }
+
+                Transform note = eventImage.transform.Find("Txt_ArtNote");
+                if (note != null)
+                {
+                    note.gameObject.SetActive(false);
+                }
+            }
         }
     }
 }

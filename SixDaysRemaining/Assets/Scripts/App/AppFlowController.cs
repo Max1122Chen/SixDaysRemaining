@@ -699,8 +699,23 @@ namespace SixDaysRemaining.Gameplay
 
             TryWriteCheckpoint();
             List<string> dayLines = new List<string>();
-            dayLines.AddRange(gi.Shelter.ConsumePersonnelChanges());
-            dayLines.AddRange(gi.Shelter.ConsumeBulletins());
+            HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string line in gi.Shelter.ConsumePersonnelChanges())
+            {
+                if (seen.Add(line))
+                {
+                    dayLines.Add(line);
+                }
+            }
+
+            foreach (string line in gi.Shelter.ConsumeBulletins())
+            {
+                if (seen.Add(line))
+                {
+                    dayLines.Add(line);
+                }
+            }
+
             ShowDayEndOverlay?.Invoke(dayLines);
             RefreshHud?.Invoke();
         }

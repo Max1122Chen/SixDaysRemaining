@@ -1008,7 +1008,7 @@ namespace SixDaysRemaining.UI
 
             if (bigu)
             {
-                SetButtonState(feedButton, "辟谷中", false);
+                SetButtonState(feedButton, "辟谷中", false, true);
             }
             else if (fedToday)
             {
