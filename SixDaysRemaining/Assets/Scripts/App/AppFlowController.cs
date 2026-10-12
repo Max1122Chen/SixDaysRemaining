@@ -4,6 +4,7 @@ using SixDaysRemaining.App;
 using SixDaysRemaining.Combat;
 using SixDaysRemaining.Combat.Cards;
 using SixDaysRemaining.Combat.Traits;
+using SixDaysRemaining.Core;
 using SixDaysRemaining.Events;
 using SixDaysRemaining.Shelter;
 using UnityEngine;
@@ -121,6 +122,11 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnStartGame()
         {
+            if (!IsContentReady())
+            {
+                return;
+            }
+
             GameInstance gi = Game;
             if (gi != null && gi.RunSave != null && gi.RunSave.HasContinueableSave())
             {
@@ -133,6 +139,11 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnContinueGame()
         {
+            if (!IsContentReady())
+            {
+                return;
+            }
+
             GameInstance gi = Game;
             if (gi == null)
             {
@@ -155,9 +166,26 @@ namespace SixDaysRemaining.Gameplay
 
         public void OnNewGame()
         {
+            if (!IsContentReady())
+            {
+                return;
+            }
+
             int seed = System.Guid.NewGuid().GetHashCode();
             Game.StartNewGame(seed);
             ShowStoryIntro();
+        }
+
+        /// <summary>WebGL 下内容预取未完成时拦住入口，避免内容加载抛异常导致"点了没反应"。</summary>
+        private static bool IsContentReady()
+        {
+            if (ContentIO.IsReady)
+            {
+                return true;
+            }
+
+            Debug.LogWarning("[AppFlow] 内容尚未加载完成，已忽略本次请求。");
+            return false;
         }
 
         public void OnStorySkip()

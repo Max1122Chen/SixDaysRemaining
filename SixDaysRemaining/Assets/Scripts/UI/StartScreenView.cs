@@ -1,4 +1,5 @@
 using SixDaysRemaining.App;
+using SixDaysRemaining.Core;
 using SixDaysRemaining.Gameplay;
 using TMPro;
 using UnityEngine;
@@ -31,6 +32,9 @@ namespace SixDaysRemaining.UI
 
         [SerializeField]
         private TextMeshProUGUI continueHint;
+
+        /// <summary>WebGL 内容预取是否已完成；非 WebGL 平台恒为 true。</summary>
+        private bool contentReady = true;
 
         public static StartScreenView Build(Transform parent, AppFlowController flow)
         {
@@ -74,21 +78,36 @@ namespace SixDaysRemaining.UI
             WireButton(btnQuit, flow.OnQuit);
             SetupJuicyButtons();
             RefreshContinueState();
+            ApplyContentReadyState();
         }
 
         public void RefreshContinueState()
         {
             GameInstance gi = GameInstance.Instance;
             bool canContinue = gi != null && gi.RunSave != null && gi.RunSave.HasContinueableSave();
-            Button continueButton = btnContinue != null ? btnContinue : btnStart;
-            if (continueButton != null && btnContinue != null)
+
+            if (btnContinue != null)
             {
-                continueButton.interactable = canContinue;
+                btnContinue.interactable = contentReady && canContinue;
+            }
+
+            if (btnStart != null && btnStart != btnContinue)
+            {
+                btnStart.interactable = contentReady;
+            }
+
+            if (btnNew != null)
+            {
+                btnNew.interactable = contentReady;
             }
 
             if (continueHint != null)
             {
-                if (!canContinue)
+                if (!contentReady)
+                {
+                    continueHint.text = "正在加载内容…";
+                }
+                else if (!canContinue)
                 {
                     continueHint.text = "暂无检查点（请先新游戏并到达庇护所节点）";
                 }
@@ -98,6 +117,35 @@ namespace SixDaysRemaining.UI
                     continueHint.text = gi.RunSave.TryGetStatusSummary(out summary) ? summary : "可继续";
                 }
             }
+        }
+
+        private void OnDestroy()
+        {
+            ContentIO.Ready -= OnContentReady;
+        }
+
+        /// <summary>
+        /// WebGL 内容预取完成前禁用会读取 StreamingAssets 的入口（新游戏 / 开始游戏），
+        /// 避免点击后因内容未就绪而静默失败。
+        /// </summary>
+        private void ApplyContentReadyState()
+        {
+            contentReady = ContentIO.IsReady;
+            if (contentReady)
+            {
+                return;
+            }
+
+            ContentIO.Ready -= OnContentReady;
+            ContentIO.Ready += OnContentReady;
+            RefreshContinueState();
+        }
+
+        private void OnContentReady()
+        {
+            ContentIO.Ready -= OnContentReady;
+            contentReady = true;
+            RefreshContinueState();
         }
 
         private void SetupJuicyButtons()

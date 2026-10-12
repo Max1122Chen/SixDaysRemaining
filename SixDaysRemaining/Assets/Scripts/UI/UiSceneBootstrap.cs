@@ -2,11 +2,16 @@ using System;
 using SixDaysRemaining.App;
 using SixDaysRemaining.App.Audio;
 using SixDaysRemaining.Combat;
+using SixDaysRemaining.Core;
 using SixDaysRemaining.Debugging;
 using SixDaysRemaining.Gameplay;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using CombatContentLoader = SixDaysRemaining.Combat.Content.CombatContentJsonLoader;
+using EndingContentLoader = SixDaysRemaining.App.Ending.Content.EndingContentJsonLoader;
+using EventContentLoader = SixDaysRemaining.Events.Content.EventContentJsonLoader;
+using ShelterContentLoader = SixDaysRemaining.Shelter.Content.ShelterContentJsonLoader;
 
 namespace SixDaysRemaining.UI
 {
@@ -104,6 +109,29 @@ namespace SixDaysRemaining.UI
             BindDebugConsole(gi, flow);
             ApplyFontToSceneUi(UiFactory.Font);
             flow.ShowStart();
+
+            // WebGL 下 StreamingAssets 是 URL，System.IO 读不到内容，
+            // 必须在进入任何对局逻辑前把这些文本预取进内存缓存。
+            StartCoroutine(ContentIO.PreloadTextAssets(BuildContentManifest()));
+        }
+
+        /// <summary>
+        /// 需要预取的 StreamingAssets 相对路径清单；文件名常量取自各 JsonLoader，避免写死字符串。
+        /// 非 WebGL 平台 ContentIO 会直接忽略它。
+        /// </summary>
+        private static string[] BuildContentManifest()
+        {
+            return new[]
+            {
+                CombatContentLoader.RelativeFolder + "/" + CombatContentLoader.CardsFileName,
+                CombatContentLoader.RelativeFolder + "/" + CombatContentLoader.EncountersFileName,
+                CombatContentLoader.RelativeFolder + "/" + CombatContentLoader.StarterFileName,
+                ShelterContentLoader.RelativeFolder + "/" + ShelterContentLoader.SurvivorsFileName,
+                ShelterContentLoader.RelativeFolder + "/" + ShelterContentLoader.PassivesFileName,
+                ShelterContentLoader.RelativeFolder + "/" + ShelterContentLoader.StarterFileName,
+                EventContentLoader.RelativeFolder + "/" + EventContentLoader.EventsFileName,
+                EndingContentLoader.RelativeFolder + "/" + EndingContentLoader.EndingsFileName,
+            };
         }
 
         private TMP_FontAsset ResolveFont()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SixDaysRemaining.Core;
 using UnityEngine;
 
 namespace SixDaysRemaining.Shelter.Content
@@ -39,7 +40,7 @@ namespace SixDaysRemaining.Shelter.Content
                 throw new InvalidOperationException("Shelter content folder path is empty.");
             }
 
-            if (!Directory.Exists(folderPath))
+            if (!ContentIO.FolderExists(folderPath))
             {
                 throw new FileNotFoundException("Shelter content folder missing: " + folderPath);
             }
@@ -65,7 +66,7 @@ namespace SixDaysRemaining.Shelter.Content
 
         private static T ReadJson<T>(string path)
         {
-            if (!File.Exists(path))
+            if (!ContentIO.FileExists(path))
             {
                 throw new FileNotFoundException("Shelter content file missing: " + path);
             }
@@ -73,7 +74,7 @@ namespace SixDaysRemaining.Shelter.Content
             string text;
             try
             {
-                text = File.ReadAllText(path);
+                text = ContentIO.ReadAllText(path);
             }
             catch (Exception ex)
             {

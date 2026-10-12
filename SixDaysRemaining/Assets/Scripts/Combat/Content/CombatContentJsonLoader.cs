@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using SixDaysRemaining.Combat.Cards;
+using SixDaysRemaining.Core;
 using UnityEngine;
 
 namespace SixDaysRemaining.Combat.Content
@@ -40,7 +41,7 @@ namespace SixDaysRemaining.Combat.Content
                 throw new InvalidOperationException("Combat content folder path is empty.");
             }
 
-            if (!Directory.Exists(folderPath))
+            if (!ContentIO.FolderExists(folderPath))
             {
                 throw new FileNotFoundException(
                     "Combat content folder missing: " + folderPath);
@@ -67,7 +68,7 @@ namespace SixDaysRemaining.Combat.Content
 
         private static T ReadJson<T>(string path)
         {
-            if (!File.Exists(path))
+            if (!ContentIO.FileExists(path))
             {
                 throw new FileNotFoundException("Combat content file missing: " + path);
             }
@@ -75,7 +76,7 @@ namespace SixDaysRemaining.Combat.Content
             string text;
             try
             {
-                text = File.ReadAllText(path);
+                text = ContentIO.ReadAllText(path);
             }
             catch (Exception ex)
             {

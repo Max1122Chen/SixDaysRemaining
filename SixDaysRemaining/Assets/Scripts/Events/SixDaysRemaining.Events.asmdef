@@ -3,7 +3,8 @@
   "rootNamespace": "SixDaysRemaining.Events",
   "references": [
     "SixDaysRemaining.Gameplay",
-    "SixDaysRemaining.Shelter"
+    "SixDaysRemaining.Shelter",
+    "SixDaysRemaining.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -5,7 +5,8 @@
     "SixDaysRemaining.Gameplay",
     "SixDaysRemaining.Shelter",
     "SixDaysRemaining.Combat",
-    "SixDaysRemaining.Events"
+    "SixDaysRemaining.Events",
+    "SixDaysRemaining.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

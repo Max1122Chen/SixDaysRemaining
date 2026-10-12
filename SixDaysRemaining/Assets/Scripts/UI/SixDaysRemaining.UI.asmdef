@@ -8,6 +8,7 @@
     "SixDaysRemaining.Shelter",
     "SixDaysRemaining.Combat",
     "SixDaysRemaining.Events",
+    "SixDaysRemaining.Core",
     "Unity.TextMeshPro"
   ],
   "includePlatforms": [],

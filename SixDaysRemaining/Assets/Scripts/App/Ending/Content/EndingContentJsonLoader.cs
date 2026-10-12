@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SixDaysRemaining.Core;
 using UnityEngine;
 
 namespace SixDaysRemaining.App.Ending.Content
@@ -30,7 +31,7 @@ namespace SixDaysRemaining.App.Ending.Content
                 throw new InvalidOperationException("Ending content folder path is empty.");
             }
 
-            if (!Directory.Exists(folderPath))
+            if (!ContentIO.FolderExists(folderPath))
             {
                 throw new FileNotFoundException("Ending content folder missing: " + folderPath);
             }
@@ -66,7 +67,7 @@ namespace SixDaysRemaining.App.Ending.Content
 
         private static T ReadJson<T>(string path)
         {
-            if (!File.Exists(path))
+            if (!ContentIO.FileExists(path))
             {
                 throw new FileNotFoundException("Ending content file missing: " + path);
             }
@@ -74,7 +75,7 @@ namespace SixDaysRemaining.App.Ending.Content
             string text;
             try
             {
-                text = File.ReadAllText(path);
+                text = ContentIO.ReadAllText(path);
             }
             catch (Exception ex)
             {
